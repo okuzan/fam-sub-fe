@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {GOOGLE_OAUTH_CONFIG} from '../config/api';
+import {API_CONFIG} from '../config/api';
 
 interface LoginProps {
     onLoginSuccess?: () => void;
@@ -14,19 +14,12 @@ export default function Login({onLoginSuccess}: LoginProps) {
         setError(null);
 
         try {
-            const params = new URLSearchParams({
-                client_id: GOOGLE_OAUTH_CONFIG.CLIENT_ID,
-                redirect_uri: GOOGLE_OAUTH_CONFIG.REDIRECT_URI,
-                response_type: 'code',
-                scope: GOOGLE_OAUTH_CONFIG.SCOPE,
-                access_type: 'offline',
-                prompt: 'consent'
-            });
-
-            const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
-
-            window.location.href = googleAuthUrl;
-        } catch (err) {
+            const oauthUrl = API_CONFIG.GOOGLE_OAUTH_URL;
+            console.log('Redirecting to:', oauthUrl);
+            // Redirect to backend OAuth endpoint - Spring Security handles the rest
+            window.location.href = oauthUrl;
+            onLoginSuccess?.(); // Call success callback if provided
+        } catch {
             setError('Failed to initiate Google login');
             setIsLoading(false);
         }
