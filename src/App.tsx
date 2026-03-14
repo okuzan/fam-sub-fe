@@ -30,6 +30,30 @@ function App() {
         }
     };
 
+    const handleLogout = async () => {
+        try {
+            const response = await fetch(API_CONFIG.LOGOUT_URL, {
+                method: 'POST',
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                setIsAuthenticated(false);
+                window.location.href = '/login';
+            } else {
+                console.error('Logout failed');
+                // Still clear local state even if backend call fails
+                setIsAuthenticated(false);
+                window.location.href = '/login';
+            }
+        } catch (error) {
+            console.error('Error during logout:', error);
+            // Clear local state on network errors too
+            setIsAuthenticated(false);
+            window.location.href = '/login';
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="loading-container">
@@ -56,10 +80,7 @@ function App() {
                             <div className="dashboard">
                                 <h1>Welcome to FamSub Dashboard</h1>
                                 <p>You are successfully logged in!</p>
-                                <button onClick={() => {
-                                    setIsAuthenticated(false);
-                                    window.location.href = '/login';
-                                }}>
+                                <button onClick={handleLogout}>
                                     Logout
                                 </button>
                             </div> :
