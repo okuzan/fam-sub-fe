@@ -1,12 +1,30 @@
 import {BrowserRouter as Router, Navigate, Route, Routes} from 'react-router-dom';
 import {useEffect, useState} from 'react';
 import Login from './components/Login';
+import AdminDashboard from './components/AdminDashboard';
 import {API_CONFIG} from './config/api';
 import './App.css'
 import './components/Login.css'
+import './components/AdminDashboard.css'
+
+interface AuthMeResponse {
+    authenticated: boolean;
+    accountId: string | null;
+    email: string | null;
+    roles: string[]; // Changed from Set<string> to string[]
+    scopes: string[];
+    principalType: string;
+}
+
+interface User {
+    authenticated: boolean;
+    accountId?: string | null;
+    email?: string | null;
+    role?: 'user' | 'admin';
+}
 
 function App() {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -15,16 +33,39 @@ function App() {
 
     const checkAuthStatus = async () => {
         try {
-            const response = await fetch(`${API_CONFIG.BASE_URL}/auth/status`, {
+            const response = await fetch(API_CONFIG.AUTH_ME_URL, {
                 credentials: 'include'
             });
 
             if (response.ok) {
-                setIsAuthenticated(true);
+                const authData: AuthMeResponse = await response.json();
+                
+                if (authData.authenticated) {
+                    // Check for ADMIN role in the array (case-insensitive)
+                    const userRole = authData.roles.some(role => 
+                        role.toLowerCase() === 'admin'
+                    ) ? 'admin' : 'user';
+                    
+                    console.log('User authenticated:', authData);
+                    console.log('User role:', userRole);
+                    
+                    setUser({
+                        authenticated: true,
+                        accountId: authData.accountId,
+                        email: authData.email,
+                        role: userRole
+                    });
+                } else {
+                    console.log('User not authenticated');
+                    setUser(null);
+                }
+            } else {
+                console.log('Auth check failed, status:', response.status);
+                setUser(null);
             }
         } catch (error) {
             console.error('Error checking auth status:', error);
-            console.log('Not authenticated');
+            setUser(null);
         } finally {
             setIsLoading(false);
         }
@@ -38,20 +79,23 @@ function App() {
             });
 
             if (response.ok) {
-                setIsAuthenticated(false);
+                setUser(null);
                 window.location.href = '/login';
             } else {
                 console.error('Logout failed');
-                // Still clear local state even if backend call fails
-                setIsAuthenticated(false);
+                setUser(null);
                 window.location.href = '/login';
             }
         } catch (error) {
             console.error('Error during logout:', error);
-            // Clear local state on network errors too
-            setIsAuthenticated(false);
+            setUser(null);
             window.location.href = '/login';
         }
+    };
+
+    const getRedirectPath = () => {
+        if (!user) return '/login';
+        return user.role === 'admin' ? '/admin' : '/dashboard';
     };
 
     if (isLoading) {
@@ -68,15 +112,15 @@ function App() {
                 <Route
                     path="/login"
                     element={
-                        isAuthenticated ?
-                            <Navigate to="/dashboard" replace/> :
-                            <Login onLoginSuccess={() => setIsAuthenticated(true)}/>
+                        user ?
+                            <Navigate to={getRedirectPath()} replace/> :
+                            <Login onLoginSuccess={() => checkAuthStatus()}/>
                     }
                 />
                 <Route
                     path="/dashboard"
                     element={
-                        isAuthenticated ?
+                        user && user.role !== 'admin' ?
                             <div className="dashboard">
                                 <h1>Welcome to FamSub Dashboard</h1>
                                 <p>You are successfully logged in!</p>
@@ -84,12 +128,20 @@ function App() {
                                     Logout
                                 </button>
                             </div> :
-                            <Navigate to="/login" replace/>
+                            <Navigate to={getRedirectPath()} replace/>
+                    }
+                />
+                <Route
+                    path="/admin"
+                    element={
+                        user && user.role === 'admin' ?
+                            <AdminDashboard onLogout={handleLogout}/> :
+                            <Navigate to={getRedirectPath()} replace/>
                     }
                 />
                 <Route
                     path="/"
-                    element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace/>}
+                    element={<Navigate to={getRedirectPath()} replace/>}
                 />
             </Routes>
         </Router>

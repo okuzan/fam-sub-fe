@@ -8,6 +8,7 @@ export const API_CONFIG = {
     BASE_URL: API_BASE_URL,
     GOOGLE_OAUTH_URL: `${API_BASE_URL}/auth/google`,
     LOGOUT_URL: `${API_BASE_URL}/auth/logout`,
+    AUTH_ME_URL: `${API_BASE_URL}/public/auth/me`,
     LOGIN_SUCCESS_URL: '/dashboard',
     LOGIN_FAILURE_URL: '/login?error=true',
 } as const;
