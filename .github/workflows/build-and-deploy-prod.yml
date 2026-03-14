@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-and-deploy-prod:
-    name: Build and Deploy FamSubFrontend to VM
+    name: Build and Deploy FamSub Frontend to VM
     runs-on: ubuntu-latest
     environment: prod
 
