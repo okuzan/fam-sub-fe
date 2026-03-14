@@ -169,7 +169,7 @@ export default function SubscriptionServices() {
                                 <input
                                     type="number"
                                     id="price"
-                                    step="0.01"
+                                    step="1"
                                     min="0"
                                     value={formData.price}
                                     onChange={(e) => setFormData({...formData, price: e.target.value})}

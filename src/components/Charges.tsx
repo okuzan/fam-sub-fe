@@ -238,7 +238,7 @@ export default function Charges() {
                                 <input
                                     type="number"
                                     id="amount"
-                                    step="0.01"
+                                    step="1"
                                     min="0"
                                     value={formData.amount}
                                     onChange={(e) => setFormData({...formData, amount: e.target.value})}

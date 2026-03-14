@@ -181,7 +181,7 @@ export default function Subscribers() {
                                 <input
                                     type="number"
                                     id="balance"
-                                    step="0.01"
+                                    step="1"
                                     min="0"
                                     value={formData.balance}
                                     onChange={(e) => setFormData({...formData, balance: e.target.value})}
