@@ -10,6 +10,7 @@ export const API_CONFIG = {
     LOGOUT_URL: `${API_BASE_URL}/auth/logout`,
     AUTH_ME_URL: `${API_BASE_URL}/public/auth/me`,
     SUBSCRIPTION_SERVICES_URL: `${API_BASE_URL}/admin/subscription-services`,
+    SUBSCRIBERS_URL: `${API_BASE_URL}/admin/subscribers`,
     LOGIN_SUCCESS_URL: '/dashboard',
     LOGIN_FAILURE_URL: '/login?error=true',
 } as const;
