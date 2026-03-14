@@ -1,0 +1,50 @@
+name: Build and Deploy (Prod)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy-prod:
+    name: Build and Deploy FamSubFrontend to VM
+    runs-on: ubuntu-latest
+    environment: prod
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build React App for Production
+        run: |
+          npm run build
+        env:
+          VITE_API_BASE_URL: ${{ vars.API_URL }}
+          VITE_GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
+
+      - name: Setup SSH Agent
+        uses: webfactory/ssh-agent@v0.10.0
+        with:
+          ssh-private-key: ${{ secrets.CLOUD_KEY }}
+
+      - name: Create Target Directory on VM (if it doesn't exist)
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ vars.CLOUD_USERNAME }}@${{ vars.CLOUD_HOST }} "mkdir -p ${{ vars.FE_DEPLOY_PATH }}"
+
+      - name: Deploy Built Files using rsync
+        run: |
+          ssh-keyscan -H ${{ vars.CLOUD_HOST }} >> ~/.ssh/known_hosts
+
+          rsync -avz --delete \
+            ./dist/ \
+            ${{ vars.CLOUD_USERNAME }}@${{ vars.CLOUD_HOST }}:${{ vars.FE_DEPLOY_PATH }}/
+
+      - name: Deployment Summary
+        run: echo "Successfully deployed prod frontend to ${{ vars.CLOUD_HOST }}:${{ vars.FE_DEPLOY_PATH }}/"
