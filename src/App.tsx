@@ -1,6 +1,7 @@
 import {BrowserRouter as Router, Navigate, Route, Routes} from 'react-router-dom';
 import {useEffect, useState} from 'react';
 import Login from './components/Login';
+import {API_CONFIG} from './config/api';
 import './App.css'
 import './components/Login.css'
 
@@ -14,7 +15,7 @@ function App() {
 
     const checkAuthStatus = async () => {
         try {
-            const response = await fetch(`${import.meta.env.PROD ? 'https://api.famsub.almonium.com/v1' : 'http://localhost:8888/v1'}/auth/status`, {
+            const response = await fetch(`${API_CONFIG.BASE_URL}/auth/status`, {
                 credentials: 'include'
             });
 
@@ -22,6 +23,7 @@ function App() {
                 setIsAuthenticated(true);
             }
         } catch (error) {
+            console.error('Error checking auth status:', error);
             console.log('Not authenticated');
         } finally {
             setIsLoading(false);
