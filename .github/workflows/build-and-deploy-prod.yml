@@ -81,29 +81,16 @@ jobs:
           path: almonium-infra
           ssh-key: ${{ secrets.INFRA_REPO_CHECKOUT_KEY }}
 
-      - name: Set up SSH Agent for Ansible to connect to VM
-        uses: webfactory/ssh-agent@v0.10.0
-        with:
-          ssh-private-key: ${{ secrets.CLOUD_KEY }}
-
-      - name: Install Ansible and Docker collection
-        run: |
-          python -m venv ansible_venv
-          source ansible_venv/bin/activate
-          pip install ansible
-          ansible-galaxy collection install community.docker
-
       - name: Run Ansible Playbook
-        run: |
-          set -euo pipefail
-
-          source ansible_venv/bin/activate
-          cd almonium-infra/ansible
-
-          ansible-playbook playbook-deploy-fam-sub-fe.yaml \
-            -i inventory/hosts.ini \
-            --limit almonium \
-            --extra-vars "deploy_environment=prod" \
-            --extra-vars "deploy_image_tag=${{ needs.build.outputs.image_tag }}" \
-            --extra-vars "deploy_gh_actor=${{ github.actor }}" \
+        uses: dawidd6/action-ansible-playbook@v3
+        with:
+          playbook: playbook-deploy-fam-sub-fe.yaml
+          directory: almonium-infra/ansible
+          key: ${{ secrets.CLOUD_KEY }}
+          inventory: inventory/hosts.ini
+          options: |
+            --limit almonium
+            --extra-vars "deploy_environment=prod"
+            --extra-vars "deploy_image_tag=${{ needs.build.outputs.image_tag }}"
+            --extra-vars "deploy_gh_actor=${{ github.actor }}"
             --extra-vars "deploy_gh_token=${{ secrets.GITHUB_TOKEN }}"
