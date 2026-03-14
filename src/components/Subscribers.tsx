@@ -12,7 +12,7 @@ export default function Subscribers() {
     const [error, setError] = useState<string | null>(null);
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [editingSubscriber, setEditingSubscriber] = useState<SubscriberResponse | null>(null);
-    const [formData, setFormData] = useState({name: '', email: ''});
+    const [formData, setFormData] = useState({name: '', email: '', balance: ''});
 
     useEffect(() => {
         fetchSubscribers();
@@ -45,7 +45,8 @@ export default function Subscribers() {
         try {
             const request: SubscriberCreateRequest = {
                 name: formData.name,
-                email: formData.email
+                email: formData.email,
+                balance: formData.balance ? parseFloat(formData.balance) : 0
             };
 
             const response = await fetch(API_CONFIG.SUBSCRIBERS_URL, {
@@ -58,7 +59,7 @@ export default function Subscribers() {
             if (response.ok) {
                 await fetchSubscribers();
                 setShowCreateForm(false);
-                setFormData({name: '', email: ''});
+                setFormData({name: '', email: '', balance: ''});
             } else {
                 setError('Failed to create subscriber');
             }
@@ -75,7 +76,8 @@ export default function Subscribers() {
         try {
             const request: SubscriberUpdateRequest = {
                 name: formData.name,
-                email: formData.email
+                email: formData.email,
+                balance: parseFloat(formData.balance)
             };
 
             const response = await fetch(`${API_CONFIG.SUBSCRIBERS_URL}/${editingSubscriber.id}`, {
@@ -88,7 +90,7 @@ export default function Subscribers() {
             if (response.ok) {
                 await fetchSubscribers();
                 setEditingSubscriber(null);
-                setFormData({name: '', email: ''});
+                setFormData({name: '', email: '', balance: ''});
             } else {
                 setError('Failed to update subscriber');
             }
@@ -120,20 +122,20 @@ export default function Subscribers() {
 
     const openEditForm = (subscriber: SubscriberResponse) => {
         setEditingSubscriber(subscriber);
-        setFormData({name: subscriber.name, email: subscriber.email});
+        setFormData({name: subscriber.name, email: subscriber.email, balance: subscriber.balance.toString()});
         setShowCreateForm(false);
     };
 
     const openCreateForm = () => {
         setEditingSubscriber(null);
-        setFormData({name: '', email: ''});
+        setFormData({name: '', email: '', balance: ''});
         setShowCreateForm(true);
     };
 
     const closeForm = () => {
         setShowCreateForm(false);
         setEditingSubscriber(null);
-        setFormData({name: '', email: ''});
+        setFormData({name: '', email: '', balance: ''});
     };
 
     if (loading) return <div className="loading">Loading subscribers...</div>;
@@ -174,6 +176,18 @@ export default function Subscribers() {
                                     required
                                 />
                             </div>
+                            <div className="form-group">
+                                <label htmlFor="balance">Balance</label>
+                                <input
+                                    type="number"
+                                    id="balance"
+                                    step="0.01"
+                                    min="0"
+                                    value={formData.balance}
+                                    onChange={(e) => setFormData({...formData, balance: e.target.value})}
+                                    placeholder="0.00"
+                                />
+                            </div>
                             <div className="form-actions">
                                 <button type="submit" className="btn btn-success">
                                     {editingSubscriber ? 'Update' : 'Create'}
@@ -199,6 +213,7 @@ export default function Subscribers() {
                                 <div className="subscriber-info">
                                     <h3>{subscriber.name}</h3>
                                     <p className="email">{subscriber.email}</p>
+                                    <p className="balance">Balance: ${subscriber.balance.toFixed(2)}</p>
                                     <p className="date">Created: {new Date(subscriber.createdAt).toLocaleDateString()}</p>
                                 </div>
                                 <div className="subscriber-actions">
