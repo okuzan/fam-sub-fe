@@ -1,14 +1,15 @@
 export const API_CONFIG = {
-  BASE_URL: import.meta.env.PROD 
-    ? 'https://api.famsub.almonium.com/v1'
-    : 'http://localhost:8888/v1',
-  
-  GOOGLE_OAUTH_URL: import.meta.env.PROD
-    ? 'https://api.famsub.almonium.com/v1/auth/google'
-    : 'http://localhost:8888/v1/auth/google',
-    
-  LOGIN_SUCCESS_URL: '/dashboard',
-  LOGIN_FAILURE_URL: '/login?error=true'
+    BASE_URL: import.meta.env.VITE_API_BASE_URL ||
+        (import.meta.env.PROD
+            ? 'https://api.famsub.almonium.com/v1'
+            : 'http://localhost:8888/v1'),
+
+    get GOOGLE_OAUTH_URL() {
+        return `${this.BASE_URL}/auth/google`;
+    },
+
+    LOGIN_SUCCESS_URL: '/dashboard',
+    LOGIN_FAILURE_URL: '/login?error=true'
 };
 
 // Google Console OAuth Configuration (for reference only)
