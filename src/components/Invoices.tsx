@@ -325,6 +325,28 @@ export default function Invoices() {
         }
     };
 
+    const getOriginColor = (origin: string) => {
+        switch (origin) {
+            case 'SUBSCRIPTION_LEDGER':
+                return '#17a2b8';
+            case 'OUTSTANDING_BALANCE':
+                return '#fd7e14';
+            default:
+                return '#6c757d';
+        }
+    };
+
+    const formatOrigin = (origin: string) => {
+        switch (origin) {
+            case 'SUBSCRIPTION_LEDGER':
+                return 'Subscription Ledger';
+            case 'OUTSTANDING_BALANCE':
+                return 'Outstanding Balance';
+            default:
+                return origin;
+        }
+    };
+
     return (
         <div className="invoices">
             <div className="invoices-header">
@@ -373,6 +395,9 @@ export default function Invoices() {
                                     <p><strong>Amount:</strong> ${invoice.totalAmount.toFixed(2)}</p>
                                     <p><strong>Status:</strong> <span className="status-badge"
                                                                       style={{backgroundColor: getStatusColor(invoice.status)}}>{invoice.status}</span>
+                                    </p>
+                                    <p><strong>Origin:</strong> <span className="status-badge"
+                                                               style={{backgroundColor: getOriginColor(invoice.origin)}}>{formatOrigin(invoice.origin)}</span>
                                     </p>
                                     <p><strong>Created:</strong> {formatDate(invoice.createdAt)}</p>
                                     {invoice.emailSent &&
@@ -565,9 +590,12 @@ export default function Invoices() {
                             <p>
                                 <strong>Period:</strong> {formatDate(selectedInvoice.invoice.fromMonth)} - {formatDate(selectedInvoice.invoice.toMonth)}
                             </p>
-                            <p><strong>Total Amount:</strong> ${selectedInvoice.invoice.totalAmount.toFixed(2)}</p>
+                            <p><strong>Total Amount:</strong> ₴{selectedInvoice.invoice.totalAmount.toFixed(2)}</p>
                             <p><strong>Status:</strong> <span className="status-badge"
                                                               style={{backgroundColor: getStatusColor(selectedInvoice.invoice.status)}}>{selectedInvoice.invoice.status}</span>
+                            </p>
+                            <p><strong>Origin:</strong> <span className="status-badge"
+                                                       style={{backgroundColor: getOriginColor(selectedInvoice.invoice.origin)}}>{formatOrigin(selectedInvoice.invoice.origin)}</span>
                             </p>
                             <p><strong>Created:</strong> {formatDate(selectedInvoice.invoice.createdAt)}</p>
                             {selectedInvoice.invoice.notes &&
@@ -580,7 +608,7 @@ export default function Invoices() {
                                 <div key={entry.ledgerEntryId} className="ledger-entry">
                                     <p><strong>Service:</strong> {entry.subscriptionServiceName}</p>
                                     <p><strong>Month:</strong> {formatDate(entry.recordedMonth)}</p>
-                                    <p><strong>Amount:</strong> ${entry.amount.toFixed(2)}</p>
+                                    <p><strong>Amount:</strong> ₴{entry.amount.toFixed(2)}</p>
                                     <p><strong>Participants:</strong> {entry.participantCount}</p>
                                 </div>
                             ))}
