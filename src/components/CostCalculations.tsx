@@ -1,8 +1,8 @@
 import {useEffect, useState} from 'react';
 import {API_CONFIG} from '../config/api';
 import type {
+    CostCalculationBatchResponse,
     CostCalculationRequest,
-    CostCalculationResult,
     CostCalculationSuggestion
 } from '../types/costCalculation';
 
@@ -13,7 +13,7 @@ export default function CostCalculations() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
-    const [recentCalculations, setRecentCalculations] = useState<CostCalculationResult[]>([]);
+    const [recentCalculations, setRecentCalculations] = useState<CostCalculationBatchResponse[]>([]);
 
     useEffect(() => {
         fetchSuggestedPeriod();
@@ -105,7 +105,9 @@ export default function CostCalculations() {
                 <h3>Cost Calculations</h3>
                 {suggestion && (
                     <div className="suggestion-banner">
-                        <p><strong>Suggested Period:</strong> {formatDate(suggestion.suggestedFromMonth)} - {formatDate(suggestion.suggestedToMonth)}</p>
+                        <p><strong>Suggested
+                            Period:</strong> {formatDate(suggestion.suggestedFromMonth)} - {formatDate(suggestion.suggestedToMonth)}
+                        </p>
                         <p><em>{suggestion.reason}</em></p>
                         <button type="button" onClick={useSuggestedPeriod} className="btn btn-sm btn-secondary">
                             Use Suggested Period
@@ -156,10 +158,11 @@ export default function CostCalculations() {
                         {recentCalculations.map((calc) => (
                             <div key={calc.id} className="calculation-item">
                                 <div className="calculation-info">
-                                    <p><strong>Period:</strong> {formatDate(calc.fromMonth)} - {formatDate(calc.toMonth)}</p>
-                                    <p><strong>Total Cost:</strong> {calc.currency} {calc.totalCost.toFixed(2)}</p>
-                                    <p><strong>Charges:</strong> {calc.chargeCount}</p>
-                                    <p><strong>Calculated:</strong> {new Date(calc.calculatedAt).toLocaleDateString()}</p>
+                                    <p>
+                                        <strong>Period:</strong> {formatDate(calc.fromMonth)} - {formatDate(calc.toMonth)}
+                                    </p>
+                                    <p><strong>Calculated:</strong> {new Date(calc.createdAt).toLocaleDateString()}</p>
+                                    <p><strong>Batch ID:</strong> {calc.id.slice(0, 8)}...</p>
                                 </div>
                             </div>
                         ))}

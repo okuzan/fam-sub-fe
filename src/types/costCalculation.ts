@@ -19,3 +19,11 @@ export interface CostCalculationSuggestion {
     suggestedToMonth: string;   // YYYY-MM format
     reason: string;
 }
+
+export interface CostCalculationBatchResponse {
+    id: string;
+    fromMonth: string; // YYYY-MM format
+    toMonth: string;   // YYYY-MM format
+    createdAt: string; // ISO timestamp
+    createdByAccountId: string;
+}
