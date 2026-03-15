@@ -135,7 +135,7 @@ function App() {
                     path="/admin"
                     element={
                         user && user.role === 'admin' ?
-                            <AdminDashboard onLogout={handleLogout}/> :
+                            <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
                             <Navigate to={getRedirectPath()} replace/>
                     }
                 />

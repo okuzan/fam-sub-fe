@@ -27,64 +27,78 @@
     max-width: 1200px;
     margin: 0 auto;
     flex: 1;
+    width: 100%;
 }
 
-.admin-section {
-    margin-bottom: 3rem;
-}
-
-.admin-section h2 {
-    font-size: 1.8rem;
-    margin-bottom: 1.5rem;
-    font-weight: 500;
-}
-
-.admin-cards {
+.admin-home-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: 1.5rem;
-    margin-bottom: 2rem;
 }
 
-.admin-card {
+.admin-home-card {
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 12px;
     padding: 1.5rem;
-    text-align: center;
+    text-align: left;
+    color: white;
+    cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.admin-card:hover {
+.admin-home-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
 }
 
-.admin-card h3 {
-    font-size: 1.1rem;
-    margin-bottom: 1rem;
-    font-weight: 500;
-    opacity: 0.9;
-}
-
-.card-value {
-    font-size: 2.5rem;
+.admin-home-card h3 {
+    margin: 0 0 8px;
+    font-size: 1.15rem;
     font-weight: 600;
-    margin: 0;
 }
 
-.status-online {
-    font-size: 1.2rem;
-    font-weight: 500;
-    color: #4ade80;
+.admin-home-card p {
     margin: 0;
+    opacity: 0.9;
+    font-size: 0.95rem;
+    line-height: 1.4;
 }
 
-.admin-actions {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+.admin-section-page {
+    display: flex;
+    flex-direction: column;
     gap: 1rem;
+}
+
+.admin-section-nav {
+    display: flex;
+}
+
+.admin-section-content {
+    width: 100%;
+}
+
+.admin-profile-card {
+    max-width: 520px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.admin-profile-card h3 {
+    margin: 0 0 1rem;
+}
+
+.admin-profile-card p {
+    margin: 0.5rem 0;
+}
+
+.admin-profile-actions {
+    margin-top: 1.25rem;
 }
 
 .admin-btn {
@@ -107,11 +121,6 @@
 .admin-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-}
-
-.admin-footer {
-    text-align: center;
-    margin-top: 3rem;
 }
 
 .logout-btn {
@@ -145,11 +154,7 @@
         font-size: 2rem;
     }
     
-    .admin-cards {
-        grid-template-columns: 1fr;
-    }
-    
-    .admin-actions {
+    .admin-home-grid {
         grid-template-columns: 1fr;
     }
 }
