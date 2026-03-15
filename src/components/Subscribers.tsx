@@ -1,6 +1,6 @@
 import {useEffect, useState} from 'react';
 import {API_CONFIG} from '../config/api';
-import type {SubscriberCreateRequest, SubscriberResponse, SubscriberUpdateRequest} from '../types/subscriber';
+import type {SubscriberCreateRequest, SubscriberResponse, SubscriberUpdateRequest, SubscriberDetailResponse} from '../types/subscriber';
 import type {OutstandingBalanceInvoiceRequest} from '../types/invoice';
 
 export default function Subscribers() {
@@ -10,6 +10,7 @@ export default function Subscribers() {
     const [success, setSuccess] = useState<string | null>(null);
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [editingSubscriber, setEditingSubscriber] = useState<SubscriberResponse | null>(null);
+    const [selectedSubscriber, setSelectedSubscriber] = useState<SubscriberDetailResponse | null>(null);
     const [formData, setFormData] = useState({name: '', email: '', balance: ''});
 
     useEffect(() => {
@@ -46,6 +47,24 @@ export default function Subscribers() {
             setError('Error fetching subscribers');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchSubscriberDetails = async (subscriberId: string) => {
+        try {
+            const response = await fetch(`${API_CONFIG.SUBSCRIBERS_URL}/${subscriberId}/details`, {
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setSelectedSubscriber(data);
+            } else {
+                setError('Failed to fetch subscriber details');
+            }
+        } catch (err) {
+            console.error(err);
+            setError('Error fetching subscriber details');
         }
     };
 
@@ -248,6 +267,58 @@ export default function Subscribers() {
                 </div>
             )}
 
+            {selectedSubscriber && (
+                <div className="form-overlay">
+                    <div className="form-container subscriber-detail">
+                        <h3>Subscriber Details</h3>
+                        <div className="subscriber-detail-info">
+                            <h4>{selectedSubscriber.name}</h4>
+                            <p><strong>Email:</strong> {selectedSubscriber.email}</p>
+                            <p><strong>Balance:</strong> ₴{selectedSubscriber.balance.toFixed(2)}</p>
+                            <p><strong>Total Amount Owed:</strong> ₴{selectedSubscriber.totalAmountOwed.toFixed(2)}</p>
+                        </div>
+
+                        <h5>Active Subscriptions ({selectedSubscriber.activeSubscriptions.length})</h5>
+                        <div className="active-subscriptions">
+                            {selectedSubscriber.activeSubscriptions.length === 0 ? (
+                                <p>No active subscriptions</p>
+                            ) : (
+                                selectedSubscriber.activeSubscriptions.map((subscription) => (
+                                    <div key={subscription.id} className="subscription-card">
+                                        <p><strong>Service:</strong> {subscription.serviceName}</p>
+                                        <p><strong>Price:</strong> ₴{subscription.servicePrice.toFixed(2)}</p>
+                                        <p><strong>Period:</strong> {subscription.startMonth} - {subscription.endMonth || 'Ongoing'}</p>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
+                        <h5>Unpaid Invoices ({selectedSubscriber.unpaidInvoices.length})</h5>
+                        <div className="unpaid-invoices">
+                            {selectedSubscriber.unpaidInvoices.length === 0 ? (
+                                <p>No unpaid invoices</p>
+                            ) : (
+                                selectedSubscriber.unpaidInvoices.map((invoice) => (
+                                    <div key={invoice.id} className="unpaid-invoice-card">
+                                        <p><strong>Amount:</strong> ₴{invoice.totalAmount.toFixed(2)}</p>
+                                        <p><strong>Period:</strong> {invoice.fromMonth} - {invoice.toMonth}</p>
+                                        <p><strong>Status:</strong> {invoice.status}</p>
+                                        <p><strong>Created:</strong> {new Date(invoice.createdAt).toLocaleDateString()}</p>
+                                        {invoice.notes && <p><strong>Notes:</strong> {invoice.notes}</p>}
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
+                        <div className="form-actions">
+                            <button onClick={() => setSelectedSubscriber(null)} className="btn btn-secondary">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="subscribers-list">
                 {subscribers.length === 0 ? (
                     <div className="empty-state">
@@ -264,6 +335,10 @@ export default function Subscribers() {
                                     <p className="date">Created: {new Date(subscriber.createdAt).toLocaleDateString()}</p>
                                 </div>
                                 <div className="subscriber-actions">
+                                    <button onClick={() => fetchSubscriberDetails(subscriber.id)}
+                                            className="btn btn-sm btn-info">
+                                        ℹ️ Info
+                                    </button>
                                     <button onClick={() => openEditForm(subscriber)}
                                             className="btn btn-sm btn-secondary">
                                         Edit

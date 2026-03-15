@@ -183,9 +183,79 @@
     transform: translateY(-1px);
 }
 
+.btn-info {
+    background: #3b82f6;
+    color: white;
+}
+
+.btn-info:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+}
+
+.btn-warning {
+    background: #f59e0b;
+    color: white;
+}
+
+.btn-warning:hover {
+    background: #d97706;
+    transform: translateY(-1px);
+}
+
 .btn-sm {
     padding: 0.5rem 1rem;
     font-size: 0.9rem;
+}
+
+.subscriber-detail {
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.subscriber-detail-info {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+.subscriber-detail-info h4 {
+    margin: 0 0 1rem 0;
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: #333;
+}
+
+.subscriber-detail-info p {
+    margin: 0.5rem 0;
+    color: #555;
+}
+
+.active-subscriptions,
+.unpaid-invoices {
+    margin-bottom: 2rem;
+}
+
+.subscription-card,
+.unpaid-invoice-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.subscription-card p,
+.unpaid-invoice-card p {
+    margin: 0.3rem 0;
+    color: #555;
+}
+
+.subscription-card p strong,
+.unpaid-invoice-card p strong {
+    color: #333;
 }
 
 .error-message {
