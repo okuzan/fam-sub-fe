@@ -27,7 +27,7 @@ export default function Memberships() {
         subscriberId: '',
         serviceId: '',
         startDate: '',
-        endDate: ''
+        endMonth: ''
     });
 
     useEffect(() => {
@@ -120,9 +120,9 @@ export default function Memberships() {
         try {
             const request: MembershipCreateRequest = {
                 subscriberId: formData.subscriberId,
-                serviceId: formData.serviceId,
-                startDate: formData.startDate,
-                endDate: formData.endDate || undefined
+                subscriptionServiceId: formData.serviceId,
+                startMonth: formData.startDate,
+                endMonth: formData.endMonth || undefined
             };
 
             const response = await fetch(API_CONFIG.MEMBERSHIPS_URL, {
@@ -135,7 +135,7 @@ export default function Memberships() {
             if (response.ok) {
                 await fetchMemberships();
                 setShowCreateForm(false);
-                setFormData({subscriberId: '', serviceId: '', startDate: '', endDate: ''});
+                setFormData({subscriberId: '', serviceId: '', startDate: '', endMonth: ''});
             } else {
                 setError('Failed to create membership');
             }
@@ -152,9 +152,9 @@ export default function Memberships() {
         try {
             const request: MembershipUpdateRequest = {
                 subscriberId: formData.subscriberId || undefined,
-                serviceId: formData.serviceId || undefined,
-                startDate: formData.startDate || undefined,
-                endDate: formData.endDate || undefined
+                subscriptionServiceId: formData.serviceId || undefined,
+                startMonth: formData.startDate || undefined,
+                endMonth: formData.endMonth || undefined
             };
 
             const response = await fetch(`${API_CONFIG.MEMBERSHIPS_URL}/${editingMembership.id}`, {
@@ -167,7 +167,7 @@ export default function Memberships() {
             if (response.ok) {
                 await fetchMemberships();
                 setEditingMembership(null);
-                setFormData({subscriberId: '', serviceId: '', startDate: '', endDate: ''});
+                setFormData({subscriberId: '', serviceId: '', startDate: '', endMonth: ''});
             } else {
                 setError('Failed to update membership');
             }
@@ -201,12 +201,8 @@ export default function Memberships() {
         const endDate = prompt('Enter end date (YYYY-MM):');
         if (!endDate) return;
 
-        // Convert YYYY-MM to YYYY-MM-DD format for API
-        const [year, month] = endDate.split('-');
-        const apiEndDate = `${year}-${month}-01`;
-
         try {
-            const request: MembershipEndRequest = {endDate: apiEndDate};
+            const request: MembershipEndRequest = {endMonth: endDate};
 
             const response = await fetch(`${API_CONFIG.MEMBERSHIPS_URL}/${id}/end`, {
                 method: 'POST',
@@ -230,23 +226,23 @@ export default function Memberships() {
         setEditingMembership(membership);
         setFormData({
             subscriberId: membership.subscriberId,
-            serviceId: membership.serviceId,
-            startDate: membership.startDate,
-            endDate: membership.endDate || ''
+            serviceId: membership.subscriptionServiceId,
+            startDate: membership.startMonth,
+            endMonth: membership.endMonth || ''
         });
         setShowCreateForm(false);
     };
 
     const openCreateForm = () => {
         setEditingMembership(null);
-        setFormData({subscriberId: '', serviceId: '', startDate: '', endDate: ''});
+        setFormData({subscriberId: '', serviceId: '', startDate: '', endMonth: ''});
         setShowCreateForm(true);
     };
 
     const closeForm = () => {
         setShowCreateForm(false);
         setEditingMembership(null);
-        setFormData({subscriberId: '', serviceId: '', startDate: '', endDate: ''});
+        setFormData({subscriberId: '', serviceId: '', startDate: '', endMonth: ''});
     };
 
     const getSubscriberName = (subscriberId: string) => {
@@ -254,8 +250,8 @@ export default function Memberships() {
         return subscriber?.name || 'Unknown';
     };
 
-    const getServiceName = (serviceId: string) => {
-        const service = services.find(s => s.id === serviceId);
+    const getServiceName = (subscriptionServiceId: string) => {
+        const service = services.find(s => s.id === subscriptionServiceId);
         return service?.name || 'Unknown';
     };
 
@@ -391,12 +387,12 @@ export default function Memberships() {
                                 />
                             </div>
                             <div className="form-group">
-                                <label htmlFor="endDate">End Date (optional)</label>
+                                <label htmlFor="endMonth">End Date (optional)</label>
                                 <input
                                     type="month"
-                                    id="endDate"
-                                    value={formData.endDate}
-                                    onChange={(e) => setFormData({...formData, endDate: e.target.value})}
+                                    id="endMonth"
+                                    value={formData.endMonth}
+                                    onChange={(e) => setFormData({...formData, endMonth: e.target.value})}
                                     min={formData.startDate}
                                 />
                             </div>
@@ -424,13 +420,13 @@ export default function Memberships() {
                             <div key={membership.id} className="membership-card">
                                 <div className="membership-info">
                                     <h3>{getSubscriberName(membership.subscriberId)}</h3>
-                                    <p className="service">Service: {getServiceName(membership.serviceId)}</p>
-                                    <p className="date">Start: {formatDate(membership.startDate)}</p>
-                                    {membership.endDate && (
-                                        <p className="date">End: {formatDate(membership.endDate)}</p>
+                                    <p className="service">Service: {getServiceName(membership.subscriptionServiceId)}</p>
+                                    <p className="date">Start: {formatDate(membership.startMonth)}</p>
+                                    {membership.endMonth && (
+                                        <p className="date">End: {formatDate(membership.endMonth)}</p>
                                     )}
                                     <p className="date">Created: {new Date(membership.createdAt).toLocaleDateString()}</p>
-                                    {!membership.endDate && (
+                                    {!membership.endMonth && (
                                         <span className="status-active">Active</span>
                                     )}
                                 </div>
@@ -439,7 +435,7 @@ export default function Memberships() {
                                             className="btn btn-sm btn-secondary">
                                         Edit
                                     </button>
-                                    {!membership.endDate && (
+                                    {!membership.endMonth && (
                                         <button onClick={() => handleEndMembership(membership.id)}
                                                 className="btn btn-sm btn-warning">
                                             End
