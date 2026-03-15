@@ -18,7 +18,8 @@ export default function Charges() {
     const [formData, setFormData] = useState({
         subscriptionServiceId: '',
         amount: '',
-        chargeDate: ''
+        chargeMonth: '',
+        description: ''
     });
 
     useEffect(() => {
@@ -80,7 +81,8 @@ export default function Charges() {
             const request: ChargeCreateRequest = {
                 subscriptionServiceId: formData.subscriptionServiceId,
                 amount: parseFloat(formData.amount),
-                chargeDate: formData.chargeDate
+                chargeMonth: formData.chargeMonth,
+                description: formData.description || undefined
             };
 
             const response = await fetch(API_CONFIG.CHARGES_URL, {
@@ -93,7 +95,7 @@ export default function Charges() {
             if (response.ok) {
                 await fetchChargesByService(formData.subscriptionServiceId);
                 setShowCreateForm(false);
-                setFormData({subscriptionServiceId: '', amount: '', chargeDate: ''});
+                setFormData({subscriptionServiceId: '', amount: '', chargeMonth: '', description: ''});
             } else {
                 setError('Failed to create charge');
             }
@@ -109,7 +111,8 @@ export default function Charges() {
 
         try {
             const request: ChargeUpdateRequest = {
-                amount: parseFloat(formData.amount)
+                amount: parseFloat(formData.amount),
+                description: formData.description || undefined
             };
 
             const response = await fetch(`${API_CONFIG.CHARGES_URL}/${editingCharge.id}`, {
@@ -122,7 +125,7 @@ export default function Charges() {
             if (response.ok) {
                 await fetchChargesByService(editingCharge.subscriptionServiceId);
                 setEditingCharge(null);
-                setFormData({subscriptionServiceId: '', amount: '', chargeDate: ''});
+                setFormData({subscriptionServiceId: '', amount: '', chargeMonth: '', description: ''});
             } else {
                 setError('Failed to update charge');
             }
@@ -157,7 +160,8 @@ export default function Charges() {
         setFormData({
             subscriptionServiceId: charge.subscriptionServiceId,
             amount: charge.amount.toString(),
-            chargeDate: charge.chargeDate
+            chargeMonth: charge.chargeMonth,
+            description: charge.description || ''
         });
         setShowCreateForm(false);
     };
@@ -167,7 +171,8 @@ export default function Charges() {
         setFormData({
             subscriptionServiceId: selectedService,
             amount: '',
-            chargeDate: new Date().toISOString().slice(0, 7) // Current month in YYYY-MM format
+            chargeMonth: new Date().toISOString().slice(0, 7), // Current month in YYYY-MM format
+            description: ''
         });
         setShowCreateForm(true);
     };
@@ -175,11 +180,11 @@ export default function Charges() {
     const closeForm = () => {
         setShowCreateForm(false);
         setEditingCharge(null);
-        setFormData({subscriptionServiceId: '', amount: '', chargeDate: ''});
+        setFormData({subscriptionServiceId: '', amount: '', chargeMonth: '', description: ''});
     };
 
-    const formatChargeDate = (chargeDate: string) => {
-        const [year, month] = chargeDate.split('-');
+    const formatChargeMonth = (chargeMonth: string) => {
+        const [year, month] = chargeMonth.split('-');
         const date = new Date(parseInt(year), parseInt(month) - 1);
         return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     };
@@ -246,13 +251,23 @@ export default function Charges() {
                                 />
                             </div>
                             <div className="form-group">
-                                <label htmlFor="chargeDate">Charge Date (Month)</label>
+                                <label htmlFor="chargeMonth">Charge Month</label>
                                 <input
                                     type="month"
-                                    id="chargeDate"
-                                    value={formData.chargeDate}
-                                    onChange={(e) => setFormData({...formData, chargeDate: e.target.value})}
+                                    id="chargeMonth"
+                                    value={formData.chargeMonth}
+                                    onChange={(e) => setFormData({...formData, chargeMonth: e.target.value})}
                                     required
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="description">Description</label>
+                                <input
+                                    type="text"
+                                    id="description"
+                                    value={formData.description}
+                                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                                    placeholder="Optional description"
                                 />
                             </div>
                             <div className="form-actions">
@@ -287,7 +302,10 @@ export default function Charges() {
                                     <div className="charge-info">
                                         <h3>{charge.subscriptionServiceName}</h3>
                                         <p className="amount">${charge.amount.toFixed(2)}</p>
-                                        <p className="date">Charge Period: {formatChargeDate(charge.chargeDate)}</p>
+                                        <p className="date">Charge Period: {formatChargeMonth(charge.chargeMonth)}</p>
+                                        {charge.description && (
+                                            <p className="description">Description: {charge.description}</p>
+                                        )}
                                         <p className="date">Created: {new Date(charge.createdAt).toLocaleDateString()}</p>
                                     </div>
                                     <div className="charge-actions">

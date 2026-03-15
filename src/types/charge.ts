@@ -3,17 +3,19 @@ export interface ChargeResponse {
     subscriptionServiceId: string;
     subscriptionServiceName: string;
     amount: number;
-    chargeDate: string; // Format: "YYYY-MM" for YearMonth
+    chargeMonth: string; // Format: "YYYY-MM" for YearMonth
+    description: string | null;
     createdAt: string;
-    updatedAt: string;
 }
 
 export interface ChargeCreateRequest {
     subscriptionServiceId: string;
     amount: number;
-    chargeDate: string; // Format: "YYYY-MM" for YearMonth
+    chargeMonth: string; // Format: "YYYY-MM" for YearMonth
+    description?: string;
 }
 
 export interface ChargeUpdateRequest {
     amount: number;
+    description?: string;
 }
