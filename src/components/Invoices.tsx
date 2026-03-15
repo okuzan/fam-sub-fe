@@ -14,6 +14,7 @@ export default function Invoices() {
     const [subscribers, setSubscribers] = useState<SubscriberResponse[]>([]);
     const [suggestion, setSuggestion] = useState<InvoiceSuggestion | null>(null);
     const [selectedInvoice, setSelectedInvoice] = useState<InvoiceDetailResponse | null>(null);
+    const [subscriberBalance, setSubscriberBalance] = useState<number | null>(null);
     const [fromMonth, setFromMonth] = useState('');
     const [toMonth, setToMonth] = useState('');
     const [selectedSubscribers, setSelectedSubscribers] = useState<string[]>([]);
@@ -180,6 +181,21 @@ export default function Invoices() {
             setError('Error downloading PDF');
         }
     };
+    const fetchSubscriberBalance = async (subscriberId: string) => {
+        try {
+            const response = await fetch(`${API_CONFIG.SUBSCRIBERS_URL}/${subscriberId}`, {
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const subscriber = await response.json();
+                setSubscriberBalance(subscriber.balance);
+            }
+        } catch (err) {
+            console.error('Failed to fetch subscriber balance:', err);
+        }
+    };
+
     const handleViewInvoice = async (invoiceId: string) => {
         try {
             const response = await fetch(`${API_CONFIG.INVOICES_URL}/${invoiceId}`, {
@@ -189,12 +205,44 @@ export default function Invoices() {
             if (response.ok) {
                 const data = await response.json();
                 setSelectedInvoice(data);
+                // Fetch subscriber balance for this invoice
+                await fetchSubscriberBalance(data.invoice.subscriberId);
             } else {
                 setError('Failed to fetch invoice details');
             }
         } catch (err) {
             console.error(err);
             setError('Error fetching invoice details');
+        }
+    };
+
+    const handlePayFromBalance = async () => {
+        if (!selectedInvoice) return;
+
+        setLoading(true);
+        setError(null);
+        setSuccess(null);
+
+        try {
+            const response = await fetch(`${API_CONFIG.INVOICES_URL}/${selectedInvoice.invoice.id}/pay-from-balance`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                setSuccess(`Invoice paid from subscriber balance successfully`);
+                // Refresh invoice data to show updated status
+                await handleViewInvoice(selectedInvoice.invoice.id);
+                // Refresh invoices list
+                fetchInvoices();
+            } else {
+                setError('Failed to pay invoice from balance');
+            }
+        } catch (err) {
+            console.error(err);
+            setError('Error paying invoice from balance');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -399,11 +447,23 @@ export default function Invoices() {
                                     Mark as Paid
                                 </button>
                             )}
+                            {selectedInvoice.invoice.status.toLowerCase() !== 'paid' && 
+                             subscriberBalance !== null && 
+                             subscriberBalance > selectedInvoice.invoice.totalAmount && (
+                                <button onClick={handlePayFromBalance}
+                                        className="btn btn-info"
+                                        disabled={loading}>
+                                    Pay from Balance (₴{subscriberBalance.toFixed(2)} available)
+                                </button>
+                            )}
                             <button onClick={() => handleDownloadPdf(selectedInvoice.invoice.id)}
                                     className="btn btn-primary">
                                 Download PDF
                             </button>
-                            <button onClick={() => setSelectedInvoice(null)} className="btn btn-secondary">
+                            <button onClick={() => {
+                                setSelectedInvoice(null);
+                                setSubscriberBalance(null);
+                            }} className="btn btn-secondary">
                                 Close
                             </button>
                         </div>
