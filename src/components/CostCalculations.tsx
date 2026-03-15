@@ -74,7 +74,7 @@ export default function CostCalculations() {
 
             if (response.ok) {
                 const result = await response.json();
-                setSuccess(`Cost calculation completed! Total: ${result.currency} ${result.totalCost.toFixed(2)} for ${result.chargeCount} charges`);
+                setSuccess(`Cost calculation completed for period ${formatDate(result.fromMonth)} - ${formatDate(result.toMonth)}`);
                 fetchRecentCalculations();
             } else {
                 setError('Failed to calculate costs');
