@@ -1,10 +1,10 @@
 import {useEffect, useState} from 'react';
-import {API_CONFIG} from '../config/api';
+import {API_CONFIG, getInvoicePdfUrl} from '../config/api';
 import type {
-    InvoiceGenerationRequest,
-    InvoiceResponse,
     InvoiceDetailResponse,
+    InvoiceGenerationRequest,
     InvoiceGenerationResult,
+    InvoiceResponse,
     InvoiceSuggestion
 } from '../types/invoice';
 import type {SubscriberResponse} from '../types/subscriber';
@@ -114,6 +114,30 @@ export default function Invoices() {
         }
     };
 
+    const handleDownloadPdf = async (invoiceId: string) => {
+        try {
+            const response = await fetch(getInvoicePdfUrl(invoiceId), {
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `invoice-${invoiceId}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } else {
+                setError('Failed to download PDF');
+            }
+        } catch (err) {
+            console.error('Error downloading PDF:', err);
+            setError('Error downloading PDF');
+        }
+    };
     const handleViewInvoice = async (invoiceId: string) => {
         try {
             const response = await fetch(`${API_CONFIG.INVOICES_URL}/${invoiceId}`, {
@@ -154,10 +178,14 @@ export default function Invoices() {
 
     const getStatusColor = (status: string) => {
         switch (status.toLowerCase()) {
-            case 'sent': return '#28a745';
-            case 'draft': return '#ffc107';
-            case 'paid': return '#007bff';
-            default: return '#6c757d';
+            case 'sent':
+                return '#28a745';
+            case 'draft':
+                return '#ffc107';
+            case 'paid':
+                return '#007bff';
+            default:
+                return '#6c757d';
         }
     };
 
@@ -172,7 +200,9 @@ export default function Invoices() {
 
             {suggestion && (
                 <div className="suggestion-banner">
-                    <p><strong>Suggested Period:</strong> {suggestion.suggestedFromMonth && formatDate(suggestion.suggestedFromMonth)} - {suggestion.suggestedToMonth && formatDate(suggestion.suggestedToMonth)}</p>
+                    <p><strong>Suggested
+                        Period:</strong> {suggestion.suggestedFromMonth && formatDate(suggestion.suggestedFromMonth)} - {suggestion.suggestedToMonth && formatDate(suggestion.suggestedToMonth)}
+                    </p>
                     {suggestion.lastInvoicedToMonth && (
                         <p><em>Last invoiced to: {formatDate(suggestion.lastInvoicedToMonth)}</em></p>
                     )}
@@ -196,15 +226,26 @@ export default function Invoices() {
                             <div key={invoice.id} className="invoice-card">
                                 <div className="invoice-info">
                                     <h4>{invoice.subscriberName}</h4>
-                                    <p><strong>Period:</strong> {formatDate(invoice.fromMonth)} - {formatDate(invoice.toMonth)}</p>
+                                    <p>
+                                        <strong>Period:</strong> {formatDate(invoice.fromMonth)} - {formatDate(invoice.toMonth)}
+                                    </p>
                                     <p><strong>Amount:</strong> ${invoice.totalAmount.toFixed(2)}</p>
-                                    <p><strong>Status:</strong> <span className="status-badge" style={{backgroundColor: getStatusColor(invoice.status)}}>{invoice.status}</span></p>
+                                    <p><strong>Status:</strong> <span className="status-badge"
+                                                                      style={{backgroundColor: getStatusColor(invoice.status)}}>{invoice.status}</span>
+                                    </p>
                                     <p><strong>Created:</strong> {formatDate(invoice.createdAt)}</p>
-                                    {invoice.emailSent && <p><strong>Email:</strong> Sent {invoice.sentAt && formatDate(invoice.sentAt)}</p>}
+                                    {invoice.emailSent &&
+                                        <p><strong>Email:</strong> Sent {invoice.sentAt && formatDate(invoice.sentAt)}
+                                        </p>}
                                 </div>
                                 <div className="invoice-actions">
-                                    <button onClick={() => handleViewInvoice(invoice.id)} className="btn btn-sm btn-secondary">
+                                    <button onClick={() => handleViewInvoice(invoice.id)}
+                                            className="btn btn-sm btn-secondary">
                                         View Details
+                                    </button>
+                                    <button onClick={() => handleDownloadPdf(invoice.id)}
+                                            className="btn btn-sm btn-primary">
+                                        Download PDF
                                     </button>
                                 </div>
                             </div>
@@ -262,7 +303,8 @@ export default function Invoices() {
                                 <button type="submit" disabled={loading} className="btn btn-success">
                                     {loading ? 'Generating...' : 'Generate Invoices'}
                                 </button>
-                                <button type="button" onClick={() => setShowGenerateForm(false)} className="btn btn-secondary">
+                                <button type="button" onClick={() => setShowGenerateForm(false)}
+                                        className="btn btn-secondary">
                                     Cancel
                                 </button>
                             </div>
@@ -278,11 +320,16 @@ export default function Invoices() {
                         <div className="invoice-detail-info">
                             <h4>{selectedInvoice.invoice.subscriberName}</h4>
                             <p><strong>Invoice ID:</strong> {selectedInvoice.invoice.id}</p>
-                            <p><strong>Period:</strong> {formatDate(selectedInvoice.invoice.fromMonth)} - {formatDate(selectedInvoice.invoice.toMonth)}</p>
+                            <p>
+                                <strong>Period:</strong> {formatDate(selectedInvoice.invoice.fromMonth)} - {formatDate(selectedInvoice.invoice.toMonth)}
+                            </p>
                             <p><strong>Total Amount:</strong> ${selectedInvoice.invoice.totalAmount.toFixed(2)}</p>
-                            <p><strong>Status:</strong> <span className="status-badge" style={{backgroundColor: getStatusColor(selectedInvoice.invoice.status)}}>{selectedInvoice.invoice.status}</span></p>
+                            <p><strong>Status:</strong> <span className="status-badge"
+                                                              style={{backgroundColor: getStatusColor(selectedInvoice.invoice.status)}}>{selectedInvoice.invoice.status}</span>
+                            </p>
                             <p><strong>Created:</strong> {formatDate(selectedInvoice.invoice.createdAt)}</p>
-                            {selectedInvoice.invoice.notes && <p><strong>Notes:</strong> {selectedInvoice.invoice.notes}</p>}
+                            {selectedInvoice.invoice.notes &&
+                                <p><strong>Notes:</strong> {selectedInvoice.invoice.notes}</p>}
                         </div>
 
                         <h5>Ledger Entries ({selectedInvoice.entries.length})</h5>
@@ -298,6 +345,10 @@ export default function Invoices() {
                         </div>
 
                         <div className="form-actions">
+                            <button onClick={() => handleDownloadPdf(selectedInvoice.invoice.id)}
+                                    className="btn btn-primary">
+                                Download PDF
+                            </button>
                             <button onClick={() => setSelectedInvoice(null)} className="btn btn-secondary">
                                 Close
                             </button>

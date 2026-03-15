@@ -19,6 +19,11 @@ export const API_CONFIG = {
     LOGIN_FAILURE_URL: '/login?error=true',
 } as const;
 
+// Helper function to get invoice PDF URL
+export const getInvoicePdfUrl = (invoiceId: string) => {
+    return `${API_CONFIG.INVOICES_URL}/${invoiceId}/pdf`;
+};
+
 
 // Google Console OAuth Configuration (for reference only)
 // Local redirect URI: http://localhost:8888/v1/login/oauth2/code/google
