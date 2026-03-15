@@ -72,3 +72,11 @@ export interface InvoiceSuggestion {
     suggestedFromMonth?: string;
     suggestedToMonth?: string;
 }
+
+export interface InvoiceFilterRequest {
+    subscriberId?: string;
+    status?: string;
+    dateFrom?: string; // ISO date string
+    dateTo?: string;   // ISO date string
+    origin?: string;
+}

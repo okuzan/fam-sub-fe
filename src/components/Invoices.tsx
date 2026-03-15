@@ -5,7 +5,8 @@ import type {
     InvoiceGenerationRequest,
     InvoiceGenerationResult,
     InvoiceResponse,
-    InvoiceSuggestion
+    InvoiceSuggestion,
+    InvoiceFilterRequest
 } from '../types/invoice';
 import type {SubscriberResponse} from '../types/subscriber';
 
@@ -22,6 +23,8 @@ export default function Invoices() {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
     const [showGenerateForm, setShowGenerateForm] = useState(false);
+    const [showFilterForm, setShowFilterForm] = useState(false);
+    const [filters, setFilters] = useState<InvoiceFilterRequest>({});
 
     useEffect(() => {
         fetchInvoices();
@@ -42,11 +45,21 @@ export default function Invoices() {
         return () => window.removeEventListener('invoice-refresh-needed', customEventListener);
     }, []);
 
-    const fetchInvoices = async () => {
+    const fetchInvoices = async (applyFilters: boolean = false) => {
         try {
-            const response = await fetch(API_CONFIG.INVOICES_URL, {
+            let url: string = API_CONFIG.INVOICES_URL;
+            const options: RequestInit = {
                 credentials: 'include'
-            });
+            };
+
+            if (applyFilters && Object.keys(filters).length > 0) {
+                url = `${API_CONFIG.INVOICES_URL}/filter`;
+                options.method = 'POST';
+                options.headers = {'Content-Type': 'application/json'};
+                options.body = JSON.stringify(filters);
+            }
+
+            const response = await fetch(url, options);
 
             if (response.ok) {
                 const data = await response.json();
@@ -116,7 +129,7 @@ export default function Invoices() {
                 setSuccess(`Generated ${result.invoicesCreated} invoices totaling $${result.totalAmount.toFixed(2)} with ${result.ledgerEntriesAssigned} ledger entries`);
                 setShowGenerateForm(false);
                 setSelectedSubscribers([]);
-                fetchInvoices();
+                fetchInvoices(hasActiveFilters);
             } else {
                 setError('Failed to generate invoices');
             }
@@ -137,7 +150,7 @@ export default function Invoices() {
 
             if (response.ok) {
                 setSuccess('Invoice marked as paid successfully');
-                fetchInvoices();
+                fetchInvoices(hasActiveFilters);
                 if (selectedInvoice?.invoice.id === invoiceId) {
                     // Update the selected invoice if it's currently open
                     setSelectedInvoice({
@@ -234,7 +247,7 @@ export default function Invoices() {
                 // Refresh invoice data to show updated status
                 await handleViewInvoice(selectedInvoice.invoice.id);
                 // Refresh invoices list
-                fetchInvoices();
+                fetchInvoices(hasActiveFilters);
                 // Refresh subscriber balance to show updated amount
                 if (selectedInvoice) {
                     await fetchSubscriberBalance(selectedInvoice.invoice.subscriberId);
@@ -267,6 +280,33 @@ export default function Invoices() {
         }
     };
 
+    const handleFilterChange = (field: keyof InvoiceFilterRequest, value: string) => {
+        setFilters(prev => ({
+            ...prev,
+            [field]: value || undefined
+        }));
+    };
+
+    const applyFilters = async () => {
+        setLoading(true);
+        await fetchInvoices(true);
+        setLoading(false);
+        setShowFilterForm(false);
+    };
+
+    const clearFilters = async () => {
+        setFilters({});
+        setLoading(true);
+        await fetchInvoices(false);
+        setLoading(false);
+        setShowFilterForm(false);
+    };
+
+    const hasActiveFilters = Object.keys(filters).some(key => {
+        const value = filters[key as keyof InvoiceFilterRequest];
+        return value !== undefined && value !== '';
+    });
+
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
         return date.toLocaleDateString('en-US', {year: 'numeric', month: 'long'});
@@ -289,9 +329,14 @@ export default function Invoices() {
         <div className="invoices">
             <div className="invoices-header">
                 <h3>Invoices</h3>
-                <button onClick={() => setShowGenerateForm(true)} className="btn btn-primary">
-                    Generate Invoices
-                </button>
+                <div className="header-actions">
+                    <button onClick={() => setShowFilterForm(true)} className="btn btn-secondary">
+                        {hasActiveFilters ? '🔍 Filters (Active)' : '🔍 Filters'}
+                    </button>
+                    <button onClick={() => setShowGenerateForm(true)} className="btn btn-primary">
+                        Generate Invoices
+                    </button>
+                </div>
             </div>
 
             {suggestion && (
@@ -415,6 +460,101 @@ export default function Invoices() {
                 </div>
             )}
 
+            {(showFilterForm) && (
+                <div className="form-overlay">
+                    <div className="form-container">
+                        <h3>Filter Invoices</h3>
+                        <form onSubmit={(e) => {
+                            e.preventDefault();
+                            applyFilters();
+                        }}>
+                            <div className="form-group">
+                                <label htmlFor="subscriberId">Subscriber</label>
+                                <select
+                                    id="subscriberId"
+                                    value={filters.subscriberId || ''}
+                                    onChange={(e) => handleFilterChange('subscriberId', e.target.value)}
+                                    className="form-control"
+                                >
+                                    <option value="">All Subscribers</option>
+                                    {subscribers.map((subscriber) => (
+                                        <option key={subscriber.id} value={subscriber.id}>
+                                            {subscriber.name} ({subscriber.email})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="form-group">
+                                <label htmlFor="status">Status</label>
+                                <select
+                                    id="status"
+                                    value={filters.status || ''}
+                                    onChange={(e) => handleFilterChange('status', e.target.value)}
+                                    className="form-control"
+                                >
+                                    <option value="">All Statuses</option>
+                                    <option value="DRAFT">Draft</option>
+                                    <option value="SENT">Sent</option>
+                                    <option value="PAID">Paid</option>
+                                </select>
+                            </div>
+
+                            <div className="form-group">
+                                <label htmlFor="origin">Origin</label>
+                                <select
+                                    id="origin"
+                                    value={filters.origin || ''}
+                                    onChange={(e) => handleFilterChange('origin', e.target.value)}
+                                    className="form-control"
+                                >
+                                    <option value="">All Origins</option>
+                                    <option value="SUBSCRIPTION_LEDGER">Subscription Ledger</option>
+                                    <option value="OUTSTANDING_BALANCE">Outstanding Balance</option>
+                                </select>
+                            </div>
+
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label htmlFor="dateFrom">Date From</label>
+                                    <input
+                                        type="date"
+                                        id="dateFrom"
+                                        value={filters.dateFrom || ''}
+                                        onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
+                                        className="form-control"
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor="dateTo">Date To</label>
+                                    <input
+                                        type="date"
+                                        id="dateTo"
+                                        value={filters.dateTo || ''}
+                                        onChange={(e) => handleFilterChange('dateTo', e.target.value)}
+                                        min={filters.dateFrom || ''}
+                                        className="form-control"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="form-actions">
+                                <button type="submit" disabled={loading} className="btn btn-primary">
+                                    {loading ? 'Applying...' : 'Apply Filters'}
+                                </button>
+                                <button type="button" onClick={clearFilters} className="btn btn-secondary">
+                                    Clear Filters
+                                </button>
+                                <button type="button" onClick={() => setShowFilterForm(false)}
+                                        className="btn btn-secondary">
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
             {selectedInvoice && (
                 <div className="form-overlay">
                     <div className="form-container invoice-detail">
@@ -453,15 +593,15 @@ export default function Invoices() {
                                     Mark as Paid
                                 </button>
                             )}
-                            {selectedInvoice.invoice.status.toLowerCase() !== 'paid' && 
-                             subscriberBalance !== null && 
-                             subscriberBalance > selectedInvoice.invoice.totalAmount && (
-                                <button onClick={handlePayFromBalance}
-                                        className="btn btn-info"
-                                        disabled={loading}>
-                                    Pay from Balance (₴{subscriberBalance.toFixed(2)} available)
-                                </button>
-                            )}
+                            {selectedInvoice.invoice.status.toLowerCase() !== 'paid' &&
+                                subscriberBalance !== null &&
+                                subscriberBalance > selectedInvoice.invoice.totalAmount && (
+                                    <button onClick={handlePayFromBalance}
+                                            className="btn btn-info"
+                                            disabled={loading}>
+                                        Pay from Balance (₴{subscriberBalance.toFixed(2)} available)
+                                    </button>
+                                )}
                             <button onClick={() => handleDownloadPdf(selectedInvoice.invoice.id)}
                                     className="btn btn-primary">
                                 Download PDF
