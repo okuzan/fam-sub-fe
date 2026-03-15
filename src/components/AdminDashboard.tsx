@@ -2,9 +2,11 @@ import { useState } from 'react';
 import SubscriptionServices from './SubscriptionServices';
 import Subscribers from './Subscribers';
 import Charges from './Charges';
+import Memberships from './Memberships';
 import './SubscriptionServices.css';
 import './Subscribers.css';
 import './Charges.css';
+import './Memberships.css';
 
 interface AdminDashboardProps {
     onLogout?: () => void;
@@ -34,6 +36,11 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 <div className="admin-section">
                     <h2>Subscribers Management</h2>
                     <Subscribers />
+                </div>
+
+                <div className="admin-section">
+                    <h2>Memberships Management</h2>
+                    <Memberships />
                 </div>
 
                 <div className="admin-section">
