@@ -200,7 +200,7 @@ export default function SubscriptionServices() {
                             <div key={service.id} className="service-card">
                                 <div className="service-info">
                                     <h3>{service.name}</h3>
-                                    <p className="price">${service.price.toFixed(2)}</p>
+                                    <p className="price">₴{service.price.toFixed(2)}</p>
                                     <p className="date">Created: {new Date(service.createdAt).toLocaleDateString()}</p>
                                 </div>
                                 <div className="service-actions">

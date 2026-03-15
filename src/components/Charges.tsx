@@ -301,7 +301,7 @@ export default function Charges() {
                                 <div key={charge.id} className="charge-card">
                                     <div className="charge-info">
                                         <h3>{charge.subscriptionServiceName}</h3>
-                                        <p className="amount">${charge.amount.toFixed(2)}</p>
+                                        <p className="amount">₴{charge.amount.toFixed(2)}</p>
                                         <p className="date">Charge Period: {formatChargeMonth(charge.chargeMonth)}</p>
                                         {charge.description && (
                                             <p className="description">Description: {charge.description}</p>
