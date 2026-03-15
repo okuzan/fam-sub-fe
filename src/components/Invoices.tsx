@@ -114,6 +114,35 @@ export default function Invoices() {
         }
     };
 
+    const handleMarkAsPaid = async (invoiceId: string) => {
+        try {
+            const response = await fetch(`${API_CONFIG.INVOICES_URL}/${invoiceId}/mark-paid`, {
+                method: 'PATCH',
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                setSuccess('Invoice marked as paid successfully');
+                fetchInvoices();
+                if (selectedInvoice?.invoice.id === invoiceId) {
+                    // Update the selected invoice if it's currently open
+                    setSelectedInvoice({
+                        ...selectedInvoice,
+                        invoice: {
+                            ...selectedInvoice.invoice,
+                            status: 'paid'
+                        }
+                    });
+                }
+            } else {
+                setError('Failed to mark invoice as paid');
+            }
+        } catch (err) {
+            console.error('Error marking invoice as paid:', err);
+            setError('Error marking invoice as paid');
+        }
+    };
+
     const handleDownloadPdf = async (invoiceId: string) => {
         try {
             const response = await fetch(getInvoicePdfUrl(invoiceId), {
@@ -247,6 +276,12 @@ export default function Invoices() {
                                             className="btn btn-sm btn-primary">
                                         Download PDF
                                     </button>
+                                    {invoice.status.toLowerCase() !== 'paid' && (
+                                        <button onClick={() => handleMarkAsPaid(invoice.id)}
+                                                className="btn btn-sm btn-success">
+                                            Mark as Paid
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         ))}
@@ -345,6 +380,12 @@ export default function Invoices() {
                         </div>
 
                         <div className="form-actions">
+                            {selectedInvoice.invoice.status.toLowerCase() !== 'paid' && (
+                                <button onClick={() => handleMarkAsPaid(selectedInvoice.invoice.id)}
+                                        className="btn btn-success">
+                                    Mark as Paid
+                                </button>
+                            )}
                             <button onClick={() => handleDownloadPdf(selectedInvoice.invoice.id)}
                                     className="btn btn-primary">
                                 Download PDF
