@@ -16,6 +16,19 @@ export default function Subscribers() {
         fetchSubscribers();
     }, []);
 
+    useEffect(() => {
+        const handleSubscriberRefresh = () => {
+            fetchSubscribers();
+        };
+
+        const customEventListener = () => {
+            handleSubscriberRefresh();
+        };
+
+        window.addEventListener('subscriber-refresh-needed', customEventListener);
+        return () => window.removeEventListener('subscriber-refresh-needed', customEventListener);
+    }, []);
+
     const fetchSubscribers = async () => {
         try {
             const response = await fetch(API_CONFIG.SUBSCRIBERS_URL, {

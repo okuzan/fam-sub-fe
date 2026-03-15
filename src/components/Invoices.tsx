@@ -235,6 +235,12 @@ export default function Invoices() {
                 await handleViewInvoice(selectedInvoice.invoice.id);
                 // Refresh invoices list
                 fetchInvoices();
+                // Refresh subscriber balance to show updated amount
+                if (selectedInvoice) {
+                    await fetchSubscriberBalance(selectedInvoice.invoice.subscriberId);
+                }
+                // Trigger subscriber list refresh in Subscribers component
+                window.dispatchEvent(new CustomEvent('subscriber-refresh-needed'));
             } else {
                 setError('Failed to pay invoice from balance');
             }
