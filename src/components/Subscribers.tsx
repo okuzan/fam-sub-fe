@@ -247,7 +247,7 @@ export default function Subscribers() {
                                 <div className="subscriber-info">
                                     <h3>{subscriber.name}</h3>
                                     <p className="email">{subscriber.email}</p>
-                                    <p className="balance">Balance: ${subscriber.balance.toFixed(2)}</p>
+                                    <p className="balance">Balance: ₴{subscriber.balance.toFixed(2)}</p>
                                     <p className="date">Created: {new Date(subscriber.createdAt).toLocaleDateString()}</p>
                                 </div>
                                 <div className="subscriber-actions">
