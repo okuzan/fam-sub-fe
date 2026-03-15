@@ -186,6 +186,31 @@ export default function Subscribers() {
         }
     };
 
+    const handleEmailSubscriberSituation = async (subscriberId: string, subscriberName: string) => {
+        setLoading(true);
+        setError(null);
+        setSuccess(null);
+
+        try {
+            const response = await fetch(`${API_CONFIG.SUBSCRIBERS_URL}/${subscriberId}/email-situation`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                setSuccess(`Email sent to ${subscriberName}: ${result.message || 'Situation email sent successfully'}`);
+            } else {
+                setError('Failed to send situation email');
+            }
+        } catch (err) {
+            console.error(err);
+            setError('Error sending situation email');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const openEditForm = (subscriber: SubscriberResponse) => {
         setEditingSubscriber(subscriber);
         setFormData({name: subscriber.name, email: subscriber.email, balance: subscriber.balance.toString()});
@@ -357,6 +382,13 @@ export default function Subscribers() {
                     </div>
 
                     <div className="form-actions">
+                        <button 
+                            onClick={() => handleEmailSubscriberSituation(selectedSubscriber.id, selectedSubscriber.name)}
+                            className="btn btn-primary"
+                            disabled={loading}
+                        >
+                            {loading ? 'Sending...' : '📧 Email Situation'}
+                        </button>
                         <button onClick={() => setSelectedSubscriber(null)} className="btn btn-secondary">
                             Close
                         </button>
