@@ -1,4 +1,5 @@
 import {useEffect, useState} from 'react';
+import {createPortal} from 'react-dom';
 import {API_CONFIG} from '../config/api';
 import type {SubscriberCreateRequest, SubscriberResponse, SubscriberUpdateRequest, SubscriberDetailResponse} from '../types/subscriber';
 import type {OutstandingBalanceInvoiceRequest} from '../types/invoice';
@@ -206,6 +207,7 @@ export default function Subscribers() {
     if (loading) return <div className="loading">Loading subscribers...</div>;
 
     return (
+        <>
         <div className="subscribers">
             <div className="subscribers-header">
                 <h2>Subscribers</h2>
@@ -216,108 +218,6 @@ export default function Subscribers() {
 
             {error && <div className="error-message">{error}</div>}
             {success && <div className="success-message">{success}</div>}
-
-            {(showCreateForm || editingSubscriber) && (
-                <div className="form-overlay">
-                    <div className="form-container">
-                        <h3>{editingSubscriber ? 'Edit Subscriber' : 'Create New Subscriber'}</h3>
-                        <form onSubmit={editingSubscriber ? handleUpdate : handleCreate}>
-                            <div className="form-group">
-                                <label htmlFor="name">Name</label>
-                                <input
-                                    type="text"
-                                    id="name"
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                                    required
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label htmlFor="email">Email</label>
-                                <input
-                                    type="email"
-                                    id="email"
-                                    value={formData.email}
-                                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                                    required
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label htmlFor="balance">Balance</label>
-                                <input
-                                    type="number"
-                                    id="balance"
-                                    step="1"
-                                    min="0"
-                                    value={formData.balance}
-                                    onChange={(e) => setFormData({...formData, balance: e.target.value})}
-                                    placeholder="0.00"
-                                />
-                            </div>
-                            <div className="form-actions">
-                                <button type="submit" className="btn btn-success">
-                                    {editingSubscriber ? 'Update' : 'Create'}
-                                </button>
-                                <button type="button" onClick={closeForm} className="btn btn-secondary">
-                                    Cancel
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {selectedSubscriber && (
-                <div className="form-overlay">
-                    <div className="form-container subscriber-detail">
-                        <h3>Subscriber Details</h3>
-                        <div className="subscriber-detail-info">
-                            <h4>{selectedSubscriber.name}</h4>
-                            <p><strong>Email:</strong> {selectedSubscriber.email}</p>
-                            <p><strong>Balance:</strong> ₴{selectedSubscriber.balance.toFixed(2)}</p>
-                            <p><strong>Total Amount Owed:</strong> ₴{selectedSubscriber.totalAmountOwed.toFixed(2)}</p>
-                        </div>
-
-                        <h5>Active Subscriptions ({selectedSubscriber.activeSubscriptions.length})</h5>
-                        <div className="active-subscriptions">
-                            {selectedSubscriber.activeSubscriptions.length === 0 ? (
-                                <p>No active subscriptions</p>
-                            ) : (
-                                selectedSubscriber.activeSubscriptions.map((subscription) => (
-                                    <div key={subscription.id} className="subscription-card">
-                                        <p><strong>Service:</strong> {subscription.serviceName}</p>
-                                        <p><strong>Price:</strong> ₴{subscription.servicePrice.toFixed(2)}</p>
-                                        <p><strong>Period:</strong> {subscription.startMonth} - {subscription.endMonth || 'Ongoing'}</p>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-
-                        <h5>Unpaid Invoices ({selectedSubscriber.unpaidInvoices.length})</h5>
-                        <div className="unpaid-invoices">
-                            {selectedSubscriber.unpaidInvoices.length === 0 ? (
-                                <p>No unpaid invoices</p>
-                            ) : (
-                                selectedSubscriber.unpaidInvoices.map((invoice) => (
-                                    <div key={invoice.id} className="unpaid-invoice-card">
-                                        <p><strong>Amount:</strong> ₴{invoice.totalAmount.toFixed(2)}</p>
-                                        <p><strong>Period:</strong> {invoice.fromMonth} - {invoice.toMonth}</p>
-                                        <p><strong>Status:</strong> {invoice.status}</p>
-                                        <p><strong>Created:</strong> {new Date(invoice.createdAt).toLocaleDateString()}</p>
-                                        {invoice.notes && <p><strong>Notes:</strong> {invoice.notes}</p>}
-                                    </div>
-                                ))
-                            )}
-                        </div>
-
-                        <div className="form-actions">
-                            <button onClick={() => setSelectedSubscriber(null)} className="btn btn-secondary">
-                                Close
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             <div className="subscribers-list">
                 {subscribers.length === 0 ? (
@@ -363,5 +263,108 @@ export default function Subscribers() {
                 )}
             </div>
         </div>
+        {(showCreateForm || editingSubscriber) && createPortal(
+            <div className="form-overlay">
+                <div className="form-container">
+                    <h3>{editingSubscriber ? 'Edit Subscriber' : 'Create New Subscriber'}</h3>
+                    <form onSubmit={editingSubscriber ? handleUpdate : handleCreate}>
+                        <div className="form-group">
+                            <label htmlFor="name">Name</label>
+                            <input
+                                type="text"
+                                id="name"
+                                value={formData.name}
+                                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                                required
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="email">Email</label>
+                            <input
+                                type="email"
+                                id="email"
+                                value={formData.email}
+                                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                                required
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="balance">Balance</label>
+                            <input
+                                type="number"
+                                id="balance"
+                                step="1"
+                                min="0"
+                                value={formData.balance}
+                                onChange={(e) => setFormData({...formData, balance: e.target.value})}
+                                placeholder="0.00"
+                            />
+                        </div>
+                        <div className="form-actions">
+                            <button type="submit" className="btn btn-success">
+                                {editingSubscriber ? 'Update' : 'Create'}
+                            </button>
+                            <button type="button" onClick={closeForm} className="btn btn-secondary">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>,
+            document.body
+        )}
+        {selectedSubscriber && createPortal(
+            <div className="form-overlay">
+                <div className="form-container subscriber-detail">
+                    <h3>Subscriber Details</h3>
+                    <div className="subscriber-detail-info">
+                        <h4>{selectedSubscriber.name}</h4>
+                        <p><strong>Email:</strong> {selectedSubscriber.email}</p>
+                        <p><strong>Balance:</strong> ₴{selectedSubscriber.balance.toFixed(2)}</p>
+                        <p><strong>Total Amount Owed:</strong> ₴{selectedSubscriber.totalAmountOwed.toFixed(2)}</p>
+                    </div>
+
+                    <h5>Active Subscriptions ({selectedSubscriber.activeSubscriptions.length})</h5>
+                    <div className="active-subscriptions">
+                        {selectedSubscriber.activeSubscriptions.length === 0 ? (
+                            <p>No active subscriptions</p>
+                        ) : (
+                            selectedSubscriber.activeSubscriptions.map((subscription) => (
+                                <div key={subscription.id} className="subscription-card">
+                                    <p><strong>Service:</strong> {subscription.serviceName}</p>
+                                    <p><strong>Price:</strong> ₴{subscription.servicePrice.toFixed(2)}</p>
+                                    <p><strong>Period:</strong> {subscription.startMonth} - {subscription.endMonth || 'Ongoing'}</p>
+                                </div>
+                            ))
+                        )}
+                    </div>
+
+                    <h5>Unpaid Invoices ({selectedSubscriber.unpaidInvoices.length})</h5>
+                    <div className="unpaid-invoices">
+                        {selectedSubscriber.unpaidInvoices.length === 0 ? (
+                            <p>No unpaid invoices</p>
+                        ) : (
+                            selectedSubscriber.unpaidInvoices.map((invoice) => (
+                                <div key={invoice.id} className="unpaid-invoice-card">
+                                    <p><strong>Amount:</strong> ₴{invoice.totalAmount.toFixed(2)}</p>
+                                    <p><strong>Period:</strong> {invoice.fromMonth} - {invoice.toMonth}</p>
+                                    <p><strong>Status:</strong> {invoice.status}</p>
+                                    <p><strong>Created:</strong> {new Date(invoice.createdAt).toLocaleDateString()}</p>
+                                    {invoice.notes && <p><strong>Notes:</strong> {invoice.notes}</p>}
+                                </div>
+                            ))
+                        )}
+                    </div>
+
+                    <div className="form-actions">
+                        <button onClick={() => setSelectedSubscriber(null)} className="btn btn-secondary">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>,
+            document.body
+        )}
+        </>
     );
 }

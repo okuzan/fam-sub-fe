@@ -1,4 +1,5 @@
 import {useEffect, useState} from 'react';
+import {createPortal} from 'react-dom';
 import {API_CONFIG} from '../config/api';
 import type {
     SubscriptionServiceCreateRequest,
@@ -149,7 +150,7 @@ export default function SubscriptionServices() {
 
             {error && <div className="error-message">{error}</div>}
 
-            {(showCreateForm || editingService) && (
+            {(showCreateForm || editingService) && createPortal(
                 <div className="form-overlay">
                     <div className="form-container">
                         <h3>{editingService ? 'Edit Service' : 'Create New Service'}</h3>
@@ -186,7 +187,8 @@ export default function SubscriptionServices() {
                             </div>
                         </form>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             <div className="services-list">
