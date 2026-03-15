@@ -28,6 +28,19 @@ export default function Invoices() {
         fetchSuggestedPeriod();
     }, []);
 
+    useEffect(() => {
+        const handleInvoiceRefresh = () => {
+            fetchInvoices();
+        };
+
+        const customEventListener = () => {
+            handleInvoiceRefresh();
+        };
+
+        window.addEventListener('invoice-refresh-needed', customEventListener);
+        return () => window.removeEventListener('invoice-refresh-needed', customEventListener);
+    }, []);
+
     const fetchInvoices = async () => {
         try {
             const response = await fetch(API_CONFIG.INVOICES_URL, {
