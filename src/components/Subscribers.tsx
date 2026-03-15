@@ -1,15 +1,13 @@
 import {useEffect, useState} from 'react';
 import {API_CONFIG} from '../config/api';
-import type {
-    SubscriberCreateRequest,
-    SubscriberResponse,
-    SubscriberUpdateRequest
-} from '../types/subscriber';
+import type {SubscriberCreateRequest, SubscriberResponse, SubscriberUpdateRequest} from '../types/subscriber';
+import type {OutstandingBalanceInvoiceRequest} from '../types/invoice';
 
 export default function Subscribers() {
     const [subscribers, setSubscribers] = useState<SubscriberResponse[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState<string | null>(null);
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [editingSubscriber, setEditingSubscriber] = useState<SubscriberResponse | null>(null);
     const [formData, setFormData] = useState({name: '', email: '', balance: ''});
@@ -120,6 +118,37 @@ export default function Subscribers() {
         }
     };
 
+    const handleGenerateOutstandingBalanceInvoice = async (subscriberId: string, subscriberName: string) => {
+        setLoading(true);
+        setError(null);
+        setSuccess(null);
+
+        try {
+            const request: OutstandingBalanceInvoiceRequest = {
+                subscriberId: subscriberId
+            };
+
+            const response = await fetch(`${API_CONFIG.INVOICES_URL}/outstanding-balance`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                credentials: 'include',
+                body: JSON.stringify(request)
+            });
+
+            if (response.ok) {
+                const invoice = await response.json();
+                setSuccess(`Generated outstanding balance invoice for ${subscriberName} totaling $${invoice.totalAmount.toFixed(2)}`);
+            } else {
+                setError('Failed to generate outstanding balance invoice');
+            }
+        } catch (err) {
+            console.error(err);
+            setError('Error generating outstanding balance invoice');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const openEditForm = (subscriber: SubscriberResponse) => {
         setEditingSubscriber(subscriber);
         setFormData({name: subscriber.name, email: subscriber.email, balance: subscriber.balance.toString()});
@@ -150,6 +179,7 @@ export default function Subscribers() {
             </div>
 
             {error && <div className="error-message">{error}</div>}
+            {success && <div className="success-message">{success}</div>}
 
             {(showCreateForm || editingSubscriber) && (
                 <div className="form-overlay">
@@ -217,10 +247,21 @@ export default function Subscribers() {
                                     <p className="date">Created: {new Date(subscriber.createdAt).toLocaleDateString()}</p>
                                 </div>
                                 <div className="subscriber-actions">
-                                    <button onClick={() => openEditForm(subscriber)} className="btn btn-sm btn-secondary">
+                                    <button onClick={() => openEditForm(subscriber)}
+                                            className="btn btn-sm btn-secondary">
                                         Edit
                                     </button>
-                                    <button onClick={() => handleDelete(subscriber.id)} className="btn btn-sm btn-danger">
+                                    {subscriber.balance < 0 && (
+                                        <button
+                                            onClick={() => handleGenerateOutstandingBalanceInvoice(subscriber.id, subscriber.name)}
+                                            className="btn btn-sm btn-warning"
+                                            disabled={loading}
+                                        >
+                                            Invoice Outstanding Balance
+                                        </button>
+                                    )}
+                                    <button onClick={() => handleDelete(subscriber.id)}
+                                            className="btn btn-sm btn-danger">
                                         Delete
                                     </button>
                                 </div>

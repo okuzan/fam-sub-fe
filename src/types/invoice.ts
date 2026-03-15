@@ -1,7 +1,18 @@
+export const InvoiceOrigin = {
+    SUBSCRIPTION_LEDGER: 'SUBSCRIPTION_LEDGER',
+    OUTSTANDING_BALANCE: 'OUTSTANDING_BALANCE'
+} as const;
+
+export type InvoiceOrigin = typeof InvoiceOrigin[keyof typeof InvoiceOrigin];
+
 export interface InvoiceGenerationRequest {
     fromMonth: string; // YYYY-MM format
     toMonth: string;   // YYYY-MM format
     subscriberIds?: string[]; // Optional: generate for specific subscribers only
+}
+
+export interface OutstandingBalanceInvoiceRequest {
+    subscriberId: string;
 }
 
 export interface InvoiceResponse {
@@ -17,6 +28,7 @@ export interface InvoiceResponse {
     sentAt?: string;
     emailSent: boolean;
     notes?: string;
+    origin: InvoiceOrigin;
 }
 
 export interface InvoiceLedgerEntryResponse {
