@@ -47,49 +47,6 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     <h2>Charges Management</h2>
                     <Charges />
                 </div>
-
-                <div className="admin-section">
-                    <h2>User Management</h2>
-                    <div className="admin-cards">
-                        <div className="admin-card">
-                            <h3>Total Users</h3>
-                            <p className="card-value">--</p>
-                        </div>
-                        <div className="admin-card">
-                            <h3>Active Sessions</h3>
-                            <p className="card-value">--</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="admin-section">
-                    <h2>System Overview</h2>
-                    <div className="admin-cards">
-                        <div className="admin-card">
-                            <h3>API Status</h3>
-                            <p className="status-online">Online</p>
-                        </div>
-                        <div className="admin-card">
-                            <h3>Database</h3>
-                            <p className="status-online">Connected</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="admin-section">
-                    <h2>Quick Actions</h2>
-                    <div className="admin-actions">
-                        <button className="admin-btn" disabled>
-                            View All Users
-                        </button>
-                        <button className="admin-btn" disabled>
-                            System Logs
-                        </button>
-                        <button className="admin-btn" disabled>
-                            Settings
-                        </button>
-                    </div>
-                </div>
             </div>
 
             <div className="admin-footer">
