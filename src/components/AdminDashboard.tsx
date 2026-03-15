@@ -3,10 +3,12 @@ import SubscriptionServices from './SubscriptionServices';
 import Subscribers from './Subscribers';
 import Charges from './Charges';
 import Memberships from './Memberships';
+import CostCalculations from './CostCalculations';
 import './SubscriptionServices.css';
 import './Subscribers.css';
 import './Charges.css';
 import './Memberships.css';
+import './CostCalculations.css';
 
 interface AdminDashboardProps {
     onLogout?: () => void;
@@ -46,6 +48,11 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 <div className="admin-section">
                     <h2>Charges Management</h2>
                     <Charges />
+                </div>
+
+                <div className="admin-section">
+                    <h2>Cost Calculations</h2>
+                    <CostCalculations />
                 </div>
             </div>
 
