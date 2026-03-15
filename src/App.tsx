@@ -39,16 +39,16 @@ function App() {
 
             if (response.ok) {
                 const authData: AuthMeResponse = await response.json();
-                
+
                 if (authData.authenticated) {
                     // Check for ADMIN role in the array (case-insensitive)
-                    const userRole = authData.roles.some(role => 
+                    const userRole = authData.roles.some(role =>
                         role.toLowerCase() === 'admin'
                     ) ? 'admin' : 'user';
-                    
+
                     console.log('User authenticated:', authData);
                     console.log('User role:', userRole);
-                    
+
                     setUser({
                         authenticated: true,
                         accountId: authData.accountId,
@@ -138,7 +138,43 @@ function App() {
                             <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
                             <Navigate to={getRedirectPath()} replace/>
                     }
-                />
+                >
+                    <Route path="services" element={
+                        user && user.role === 'admin' ?
+                            <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
+                            <Navigate to={getRedirectPath()} replace/>
+                    }/>
+                    <Route path="subscribers" element={
+                        user && user.role === 'admin' ?
+                            <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
+                            <Navigate to={getRedirectPath()} replace/>
+                    }/>
+                    <Route path="memberships" element={
+                        user && user.role === 'admin' ?
+                            <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
+                            <Navigate to={getRedirectPath()} replace/>
+                    }/>
+                    <Route path="charges" element={
+                        user && user.role === 'admin' ?
+                            <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
+                            <Navigate to={getRedirectPath()} replace/>
+                    }/>
+                    <Route path="cost-calculations" element={
+                        user && user.role === 'admin' ?
+                            <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
+                            <Navigate to={getRedirectPath()} replace/>
+                    }/>
+                    <Route path="invoices" element={
+                        user && user.role === 'admin' ?
+                            <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
+                            <Navigate to={getRedirectPath()} replace/>
+                    }/>
+                    <Route path="profile" element={
+                        user && user.role === 'admin' ?
+                            <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
+                            <Navigate to={getRedirectPath()} replace/>
+                    }/>
+                </Route>
                 <Route
                     path="/"
                     element={<Navigate to={getRedirectPath()} replace/>}
