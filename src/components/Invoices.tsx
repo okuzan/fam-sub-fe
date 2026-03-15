@@ -20,6 +20,8 @@ export default function Invoices() {
     const [toMonth, setToMonth] = useState('');
     const [selectedSubscribers, setSelectedSubscribers] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
+    const [emailingInvoices, setEmailingInvoices] = useState<Set<string>>(new Set());
+    const [emailingDetailInvoice, setEmailingDetailInvoice] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
     const [showGenerateForm, setShowGenerateForm] = useState(false);
@@ -192,6 +194,75 @@ export default function Invoices() {
         } catch (err) {
             console.error('Error downloading PDF:', err);
             setError('Error downloading PDF');
+        }
+    };
+
+    const handleEmailInvoice = async (invoiceId: string, subscriberName: string) => {
+        setError(null);
+        setSuccess(null);
+        
+        // Add this invoice to the loading set
+        setEmailingInvoices(prev => new Set(prev).add(invoiceId));
+
+        try {
+            const response = await fetch(`${API_CONFIG.INVOICES_URL}/${invoiceId}/email`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                setSuccess(`Invoice email sent to ${subscriberName}: ${result.message || 'Invoice email sent successfully'}`);
+                // Refresh invoice data to show updated email status
+                if (selectedInvoice?.invoice.id === invoiceId) {
+                    await handleViewInvoice(invoiceId);
+                }
+                // Refresh invoices list to show updated email status
+                fetchInvoices(hasActiveFilters);
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                setError(errorData.error || 'Failed to send invoice email');
+            }
+        } catch (err) {
+            console.error('Error sending invoice email:', err);
+            setError('Error sending invoice email');
+        } finally {
+            // Remove this invoice from the loading set
+            setEmailingInvoices(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(invoiceId);
+                return newSet;
+            });
+        }
+    };
+
+    const handleEmailInvoiceFromDetail = async (invoiceId: string, subscriberName: string) => {
+        setError(null);
+        setSuccess(null);
+        setEmailingDetailInvoice(true);
+
+        try {
+            const response = await fetch(`${API_CONFIG.INVOICES_URL}/${invoiceId}/email`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                setSuccess(`Invoice email sent to ${subscriberName}: ${result.message || 'Invoice email sent successfully'}`);
+                // Refresh invoice data to show updated email status
+                await handleViewInvoice(invoiceId);
+                // Refresh invoices list to show updated email status
+                fetchInvoices(hasActiveFilters);
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                setError(errorData.error || 'Failed to send invoice email');
+            }
+        } catch (err) {
+            console.error('Error sending invoice email:', err);
+            setError('Error sending invoice email');
+        } finally {
+            setEmailingDetailInvoice(false);
         }
     };
     const fetchSubscriberBalance = async (subscriberId: string) => {
@@ -409,6 +480,11 @@ export default function Invoices() {
                                             className="btn btn-sm btn-secondary">
                                         View Details
                                     </button>
+                                    <button onClick={() => handleEmailInvoice(invoice.id, invoice.subscriberName)}
+                                            className="btn btn-sm btn-info"
+                                            disabled={emailingInvoices.has(invoice.id)}>
+                                        {emailingInvoices.has(invoice.id) ? 'Sending...' : '📧 Email'}
+                                    </button>
                                     <button onClick={() => handleDownloadPdf(invoice.id)}
                                             className="btn btn-sm btn-primary">
                                         Download PDF
@@ -615,6 +691,11 @@ export default function Invoices() {
                         </div>
 
                         <div className="form-actions">
+                            <button onClick={() => handleEmailInvoiceFromDetail(selectedInvoice.invoice.id, selectedInvoice.invoice.subscriberName)}
+                                    className="btn btn-info"
+                                    disabled={emailingDetailInvoice}>
+                                {emailingDetailInvoice ? 'Sending...' : '📧 Email Invoice'}
+                            </button>
                             {selectedInvoice.invoice.status.toLowerCase() !== 'paid' && (
                                 <button onClick={() => handleMarkAsPaid(selectedInvoice.invoice.id)}
                                         className="btn btn-success">
