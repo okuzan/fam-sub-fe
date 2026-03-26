@@ -463,7 +463,7 @@ export default function Invoices() {
                                     <p>
                                         <strong>Period:</strong> {formatDate(invoice.fromMonth)} - {formatDate(invoice.toMonth)}
                                     </p>
-                                    <p><strong>Amount:</strong> ${invoice.totalAmount.toFixed(2)}</p>
+                                    <p><strong>Amount:</strong> ₴{invoice.totalAmount.toFixed(2)}</p>
                                     <p><strong>Status:</strong> <span className="status-badge"
                                                                       style={{backgroundColor: getStatusColor(invoice.status)}}>{invoice.status}</span>
                                     </p>
