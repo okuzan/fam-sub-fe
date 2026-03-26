@@ -80,3 +80,7 @@ export interface InvoiceFilterRequest {
     dateTo?: string;   // ISO date string
     origin?: string;
 }
+
+export interface InvoiceNotesUpdateRequest {
+    notes?: string; // nullable - can be undefined to clear notes
+}

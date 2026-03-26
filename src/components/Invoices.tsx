@@ -4,6 +4,7 @@ import type {
     InvoiceDetailResponse,
     InvoiceGenerationRequest,
     InvoiceGenerationResult,
+    InvoiceNotesUpdateRequest,
     InvoiceResponse,
     InvoiceSuggestion,
     InvoiceFilterRequest
@@ -27,6 +28,8 @@ export default function Invoices() {
     const [showGenerateForm, setShowGenerateForm] = useState(false);
     const [showFilterForm, setShowFilterForm] = useState(false);
     const [filters, setFilters] = useState<InvoiceFilterRequest>({});
+    const [editingNotes, setEditingNotes] = useState(false);
+    const [notesInput, setNotesInput] = useState('');
 
     useEffect(() => {
         fetchInvoices();
@@ -331,6 +334,43 @@ export default function Invoices() {
         } catch (err) {
             console.error(err);
             setError('Error paying invoice from balance');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleUpdateInvoiceNotes = async () => {
+        if (!selectedInvoice) return;
+
+        setLoading(true);
+        setError(null);
+        setSuccess(null);
+
+        try {
+            const request: InvoiceNotesUpdateRequest = {
+                notes: notesInput.trim() || undefined
+            };
+
+            const response = await fetch(`${API_CONFIG.INVOICES_URL}/${selectedInvoice.invoice.id}/notes`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                credentials: 'include',
+                body: JSON.stringify(request)
+            });
+
+            if (response.ok) {
+                setSuccess('Invoice notes updated successfully');
+                setEditingNotes(false);
+                // Refresh invoice data to show updated notes
+                await handleViewInvoice(selectedInvoice.invoice.id);
+                // Refresh invoices list to show updated notes
+                fetchInvoices(hasActiveFilters);
+            } else {
+                setError('Failed to update invoice notes');
+            }
+        } catch (err) {
+            console.error(err);
+            setError('Error updating invoice notes');
         } finally {
             setLoading(false);
         }
@@ -674,8 +714,51 @@ export default function Invoices() {
                                                        style={{backgroundColor: getOriginColor(selectedInvoice.invoice.origin)}}>{formatOrigin(selectedInvoice.invoice.origin)}</span>
                             </p>
                             <p><strong>Created:</strong> {formatDate(selectedInvoice.invoice.createdAt)}</p>
-                            {selectedInvoice.invoice.notes &&
-                                <p><strong>Notes:</strong> {selectedInvoice.invoice.notes}</p>}
+                            <div className="notes-section">
+                                <p><strong>Notes:</strong></p>
+                                {editingNotes ? (
+                                    <div className="notes-edit-form">
+                                        <textarea
+                                            value={notesInput}
+                                            onChange={(e) => setNotesInput(e.target.value)}
+                                            placeholder="Add invoice notes..."
+                                            rows={3}
+                                            className="notes-textarea"
+                                        />
+                                        <div className="notes-edit-actions">
+                                            <button 
+                                                onClick={handleUpdateInvoiceNotes}
+                                                disabled={loading}
+                                                className="btn btn-sm btn-success"
+                                            >
+                                                {loading ? 'Saving...' : 'Save'}
+                                            </button>
+                                            <button 
+                                                onClick={() => {
+                                                    setEditingNotes(false);
+                                                    setNotesInput(selectedInvoice.invoice.notes || '');
+                                                }}
+                                                className="btn btn-sm btn-secondary"
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="notes-display">
+                                        <p>{selectedInvoice.invoice.notes || <em>No notes</em>}</p>
+                                        <button 
+                                            onClick={() => {
+                                                setEditingNotes(true);
+                                                setNotesInput(selectedInvoice.invoice.notes || '');
+                                            }}
+                                            className="btn btn-sm btn-outline-secondary"
+                                        >
+                                            Edit Notes
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         <h5>Ledger Entries ({selectedInvoice.entries.length})</h5>
