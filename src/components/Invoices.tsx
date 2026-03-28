@@ -30,6 +30,12 @@ export default function Invoices() {
     const [filters, setFilters] = useState<InvoiceFilterRequest>({});
     const [editingNotes, setEditingNotes] = useState(false);
     const [notesInput, setNotesInput] = useState('');
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteInvoiceData, setDeleteInvoiceData] = useState<{
+        invoiceId: string;
+        subscriberName: string;
+        addToBalance: boolean;
+    } | null>(null);
 
     useEffect(() => {
         fetchInvoices();
@@ -172,6 +178,57 @@ export default function Invoices() {
         } catch (err) {
             console.error('Error marking invoice as paid:', err);
             setError('Error marking invoice as paid');
+        }
+    };
+
+    const openDeleteModal = (invoice: InvoiceResponse) => {
+        setDeleteInvoiceData({
+            invoiceId: invoice.id,
+            subscriberName: invoice.subscriberName,
+            addToBalance: true // default value
+        });
+        setShowDeleteModal(true);
+    };
+
+    const handleDeleteInvoice = async () => {
+        if (!deleteInvoiceData) return;
+
+        setLoading(true);
+        setError(null);
+        setSuccess(null);
+
+        try {
+            const addToBalance = deleteInvoiceData.addToBalance;
+            const response = await fetch(
+                `${API_CONFIG.INVOICES_URL}/${deleteInvoiceData.invoiceId}?addToBalance=${addToBalance}`,
+                {
+                    method: 'DELETE',
+                    credentials: 'include'
+                }
+            );
+
+            if (response.ok) {
+                const result = await response.json();
+                setSuccess(result.message || 'Invoice deleted successfully');
+                setShowDeleteModal(false);
+                setDeleteInvoiceData(null);
+                fetchInvoices(hasActiveFilters);
+                if (selectedInvoice?.invoice.id === deleteInvoiceData.invoiceId) {
+                    setSelectedInvoice(null);
+                }
+            } else if (response.status === 400) {
+                const errorData = await response.json();
+                setError(errorData.message || 'Only outstanding balance invoices with DRAFT status can be deleted');
+            } else if (response.status === 404) {
+                setError('Invoice not found');
+            } else {
+                setError('Failed to delete invoice');
+            }
+        } catch (err) {
+            console.error('Error deleting invoice:', err);
+            setError('Error deleting invoice');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -535,6 +592,12 @@ export default function Invoices() {
                                             Mark as Paid
                                         </button>
                                     )}
+                                    {invoice.origin === 'OUTSTANDING_BALANCE' && invoice.status === 'DRAFT' && (
+                                        <button onClick={() => openDeleteModal(invoice)}
+                                                className="btn btn-sm btn-danger">
+                                            Delete
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         ))}
@@ -803,6 +866,57 @@ export default function Invoices() {
                                 setSubscriberBalance(null);
                             }} className="btn btn-secondary">
                                 Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Invoice Modal */}
+            {showDeleteModal && deleteInvoiceData && (
+                <div className="form-overlay">
+                    <div className="form-container">
+                        <h3>Delete Outstanding Balance Invoice</h3>
+                        <p>Subscriber: <strong>{deleteInvoiceData.subscriberName}</strong></p>
+                        <p className="warning-text">
+                            This action cannot be undone. The invoice will be permanently deleted.
+                        </p>
+
+                        <div className="form-group">
+                            <label>
+                                <input
+                                    type="checkbox"
+                                    checked={deleteInvoiceData.addToBalance}
+                                    onChange={(e) => setDeleteInvoiceData({
+                                        ...deleteInvoiceData,
+                                        addToBalance: e.target.checked
+                                    })}
+                                />
+                                Restore outstanding balance to subscriber's account
+                            </label>
+                            <small className="form-help">
+                                When checked, the subscriber's debt will be restored to their balance.
+                                When unchecked, the invoice is removed without affecting the balance.
+                            </small>
+                        </div>
+
+                        <div className="form-actions">
+                            <button
+                                onClick={handleDeleteInvoice}
+                                className="btn btn-danger"
+                                disabled={loading}
+                            >
+                                {loading ? 'Deleting...' : 'Delete Invoice'}
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setShowDeleteModal(false);
+                                    setDeleteInvoiceData(null);
+                                }}
+                                className="btn btn-secondary"
+                                disabled={loading}
+                            >
+                                Cancel
                             </button>
                         </div>
                     </div>

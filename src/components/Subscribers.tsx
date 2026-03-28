@@ -509,8 +509,8 @@ export default function Subscribers() {
                             />
                         </div>
 
-                        <div className="form-group">
-                            <label>
+                        <div className="form-group checkbox-group">
+                            <label className="checkbox-label">
                                 <input
                                     type="checkbox"
                                     checked={outstandingBalanceData.sendEmail}
@@ -519,7 +519,7 @@ export default function Subscribers() {
                                         sendEmail: e.target.checked
                                     })}
                                 />
-                                Send email to subscriber
+                                <span>Send email to subscriber</span>
                             </label>
                         </div>
 
