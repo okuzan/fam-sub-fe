@@ -188,7 +188,7 @@ export default function Subscribers() {
 
             if (response.ok) {
                 const invoice = await response.json();
-                setSuccess(`Generated outstanding balance invoice for ${subscriberName} totaling $${invoice.totalAmount.toFixed(2)}`);
+                setSuccess(`Generated outstanding balance invoice for ${subscriberName} totaling ₴${invoice.totalAmount.toFixed(2)}`);
                 // Refresh subscribers to show updated balance (should be 0)
                 fetchSubscribers();
                 // Trigger invoice refresh in Invoices component using custom event

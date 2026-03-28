@@ -131,7 +131,7 @@ export default function Invoices() {
 
             if (response.ok) {
                 const result: InvoiceGenerationResult = await response.json();
-                setSuccess(`Generated ${result.invoicesCreated} invoices totaling $${result.totalAmount.toFixed(2)} with ${result.ledgerEntriesAssigned} ledger entries`);
+                setSuccess(`Generated ${result.invoicesCreated} invoices totaling ₴${result.totalAmount.toFixed(2)} with ${result.ledgerEntriesAssigned} ledger entries`);
                 setShowGenerateForm(false);
                 setSelectedSubscribers([]);
                 fetchInvoices(hasActiveFilters);
