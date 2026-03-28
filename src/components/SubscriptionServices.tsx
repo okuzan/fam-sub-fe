@@ -1,6 +1,7 @@
 import {useEffect, useState} from 'react';
 import {createPortal} from 'react-dom';
 import {API_CONFIG} from '../config/api';
+import {useToast} from './Toast';
 import type {
     SubscriptionServiceCreateRequest,
     SubscriptionServiceResponse,
@@ -8,9 +9,9 @@ import type {
 } from '../types/subscription';
 
 export default function SubscriptionServices() {
+    const {showError, showSuccess} = useToast();
     const [services, setServices] = useState<SubscriptionServiceResponse[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [editingService, setEditingService] = useState<SubscriptionServiceResponse | null>(null);
     const [formData, setFormData] = useState({name: '', price: ''});
@@ -29,11 +30,11 @@ export default function SubscriptionServices() {
                 const data = await response.json();
                 setServices(data);
             } else {
-                setError('Failed to fetch services');
+                showError('Failed to fetch services');
             }
         } catch (err) {
             console.error(err)
-            setError('Error fetching services');
+            showError('Error fetching services');
         } finally {
             setLoading(false);
         }
@@ -41,7 +42,6 @@ export default function SubscriptionServices() {
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError(null);
 
         try {
             const request: SubscriptionServiceCreateRequest = {
@@ -60,12 +60,13 @@ export default function SubscriptionServices() {
                 await fetchServices();
                 setShowCreateForm(false);
                 setFormData({name: '', price: ''});
+                showSuccess('Service created successfully');
             } else {
-                setError('Failed to create service');
+                showError('Failed to create service');
             }
         } catch (err) {
             console.error(err)
-            setError('Error creating service');
+            showError('Error creating service');
         }
     };
 
@@ -90,12 +91,13 @@ export default function SubscriptionServices() {
                 await fetchServices();
                 setEditingService(null);
                 setFormData({name: '', price: ''});
+                showSuccess('Service updated successfully');
             } else {
-                setError('Failed to update service');
+                showError('Failed to update service');
             }
         } catch (err) {
             console.error(err)
-            setError('Error updating service');
+            showError('Error updating service');
         }
     };
 
@@ -110,12 +112,13 @@ export default function SubscriptionServices() {
 
             if (response.ok) {
                 await fetchServices();
+                showSuccess('Service deleted successfully');
             } else {
-                setError('Failed to delete service');
+                showError('Failed to delete service');
             }
         } catch (err) {
             console.error(err)
-            setError('Error deleting service');
+            showError('Error deleting service');
         }
     };
 
@@ -147,8 +150,6 @@ export default function SubscriptionServices() {
                     Add New Service
                 </button>
             </div>
-
-            {error && <div className="error-message">{error}</div>}
 
             {(showCreateForm || editingService) && createPortal(
                 <div className="form-overlay">

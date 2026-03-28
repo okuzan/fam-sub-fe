@@ -1,5 +1,6 @@
 import {useEffect, useState} from 'react';
 import {API_CONFIG} from '../config/api';
+import {useToast} from './Toast';
 import type {
     ChargeCreateRequest,
     ChargeResponse,
@@ -8,10 +9,10 @@ import type {
 import type {SubscriptionServiceResponse} from '../types/subscription';
 
 export default function Charges() {
+    const {showError, showSuccess} = useToast();
     const [charges, setCharges] = useState<ChargeResponse[]>([]);
     const [services, setServices] = useState<SubscriptionServiceResponse[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [editingCharge, setEditingCharge] = useState<ChargeResponse | null>(null);
     const [selectedService, setSelectedService] = useState<string>('');
@@ -44,11 +45,11 @@ export default function Charges() {
                 const data = await response.json();
                 setServices(data);
             } else {
-                setError('Failed to fetch services');
+                showError('Failed to fetch services');
             }
         } catch (err) {
             console.error(err);
-            setError('Error fetching services');
+            showError('Error fetching services');
         }
     };
 
@@ -63,11 +64,11 @@ export default function Charges() {
                 const data = await response.json();
                 setCharges(data);
             } else {
-                setError('Failed to fetch charges');
+                showError('Failed to fetch charges');
             }
         } catch (err) {
             console.error(err);
-            setError('Error fetching charges');
+            showError('Error fetching charges');
         } finally {
             setLoading(false);
         }
@@ -75,7 +76,6 @@ export default function Charges() {
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError(null);
 
         try {
             const request: ChargeCreateRequest = {
@@ -96,12 +96,13 @@ export default function Charges() {
                 await fetchChargesByService(formData.subscriptionServiceId);
                 setShowCreateForm(false);
                 setFormData({subscriptionServiceId: '', amount: '', chargeMonth: '', description: ''});
+                showSuccess('Charge created successfully');
             } else {
-                setError('Failed to create charge');
+                showError('Failed to create charge');
             }
         } catch (err) {
             console.error(err);
-            setError('Error creating charge');
+            showError('Error creating charge');
         }
     };
 
@@ -126,12 +127,13 @@ export default function Charges() {
                 await fetchChargesByService(editingCharge.subscriptionServiceId);
                 setEditingCharge(null);
                 setFormData({subscriptionServiceId: '', amount: '', chargeMonth: '', description: ''});
+                showSuccess('Charge updated successfully');
             } else {
-                setError('Failed to update charge');
+                showError('Failed to update charge');
             }
         } catch (err) {
             console.error(err);
-            setError('Error updating charge');
+            showError('Error updating charge');
         }
     };
 
@@ -146,12 +148,13 @@ export default function Charges() {
 
             if (response.ok) {
                 await fetchChargesByService(selectedService);
+                showSuccess('Charge deleted successfully');
             } else {
-                setError('Failed to delete charge');
+                showError('Failed to delete charge');
             }
         } catch (err) {
             console.error(err);
-            setError('Error deleting charge');
+            showError('Error deleting charge');
         }
     };
 
@@ -213,8 +216,6 @@ export default function Charges() {
                     )}
                 </div>
             </div>
-
-            {error && <div className="error-message">{error}</div>}
 
             {(showCreateForm || editingCharge) && (
                 <div className="form-overlay">

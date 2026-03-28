@@ -1,5 +1,6 @@
 import {useEffect, useState} from 'react';
 import {API_CONFIG, getInvoicePdfUrl} from '../config/api';
+import {useToast} from './Toast';
 import type {
     InvoiceDetailResponse,
     InvoiceGenerationRequest,
@@ -12,6 +13,7 @@ import type {
 import type {SubscriberResponse} from '../types/subscriber';
 
 export default function Invoices() {
+    const {showError, showSuccess} = useToast();
     const [invoices, setInvoices] = useState<InvoiceResponse[]>([]);
     const [subscribers, setSubscribers] = useState<SubscriberResponse[]>([]);
     const [suggestion, setSuggestion] = useState<InvoiceSuggestion | null>(null);
@@ -23,8 +25,6 @@ export default function Invoices() {
     const [loading, setLoading] = useState(false);
     const [emailingInvoices, setEmailingInvoices] = useState<Set<string>>(new Set());
     const [emailingDetailInvoice, setEmailingDetailInvoice] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState<string | null>(null);
     const [showGenerateForm, setShowGenerateForm] = useState(false);
     const [showFilterForm, setShowFilterForm] = useState(false);
     const [filters, setFilters] = useState<InvoiceFilterRequest>({});
@@ -118,8 +118,6 @@ export default function Invoices() {
     const handleGenerate = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        setError(null);
-        setSuccess(null);
 
         try {
             const request: InvoiceGenerationRequest = {
@@ -137,16 +135,16 @@ export default function Invoices() {
 
             if (response.ok) {
                 const result: InvoiceGenerationResult = await response.json();
-                setSuccess(`Generated ${result.invoicesCreated} invoices totaling ₴${result.totalAmount.toFixed(2)} with ${result.ledgerEntriesAssigned} ledger entries`);
+                showSuccess(`Generated ${result.invoicesCreated} invoices totaling ₴${result.totalAmount.toFixed(2)} with ${result.ledgerEntriesAssigned} ledger entries`);
                 setShowGenerateForm(false);
                 setSelectedSubscribers([]);
                 fetchInvoices(hasActiveFilters);
             } else {
-                setError('Failed to generate invoices');
+                showError('Failed to generate invoices');
             }
         } catch (err) {
             console.error(err);
-            setError('Error generating invoices');
+            showError('Error generating invoices');
         } finally {
             setLoading(false);
         }
@@ -160,7 +158,7 @@ export default function Invoices() {
             });
 
             if (response.ok) {
-                setSuccess('Invoice marked as paid successfully');
+                showSuccess('Invoice marked as paid successfully');
                 fetchInvoices(hasActiveFilters);
                 if (selectedInvoice?.invoice.id === invoiceId) {
                     // Update the selected invoice if it's currently open
@@ -173,11 +171,11 @@ export default function Invoices() {
                     });
                 }
             } else {
-                setError('Failed to mark invoice as paid');
+                showError('Failed to mark invoice as paid');
             }
         } catch (err) {
             console.error('Error marking invoice as paid:', err);
-            setError('Error marking invoice as paid');
+            showError('Error marking invoice as paid');
         }
     };
 
@@ -194,8 +192,6 @@ export default function Invoices() {
         if (!deleteInvoiceData) return;
 
         setLoading(true);
-        setError(null);
-        setSuccess(null);
 
         try {
             const addToBalance = deleteInvoiceData.addToBalance;
@@ -209,7 +205,7 @@ export default function Invoices() {
 
             if (response.ok) {
                 const result = await response.json();
-                setSuccess(result.message || 'Invoice deleted successfully');
+                showSuccess(result.message || 'Invoice deleted successfully');
                 setShowDeleteModal(false);
                 setDeleteInvoiceData(null);
                 fetchInvoices(hasActiveFilters);
@@ -218,15 +214,15 @@ export default function Invoices() {
                 }
             } else if (response.status === 400) {
                 const errorData = await response.json();
-                setError(errorData.message || 'Only outstanding balance invoices with DRAFT status can be deleted');
+                showError(errorData.message || 'Only outstanding balance invoices with DRAFT status can be deleted');
             } else if (response.status === 404) {
-                setError('Invoice not found');
+                showError('Invoice not found');
             } else {
-                setError('Failed to delete invoice');
+                showError('Failed to delete invoice');
             }
         } catch (err) {
             console.error('Error deleting invoice:', err);
-            setError('Error deleting invoice');
+            showError('Error deleting invoice');
         } finally {
             setLoading(false);
         }
@@ -249,17 +245,15 @@ export default function Invoices() {
                 window.URL.revokeObjectURL(url);
                 document.body.removeChild(a);
             } else {
-                setError('Failed to download PDF');
+                showError('Failed to download PDF');
             }
         } catch (err) {
             console.error('Error downloading PDF:', err);
-            setError('Error downloading PDF');
+            showError('Error downloading PDF');
         }
     };
 
     const handleEmailInvoice = async (invoiceId: string, subscriberName: string) => {
-        setError(null);
-        setSuccess(null);
         
         // Add this invoice to the loading set
         setEmailingInvoices(prev => new Set(prev).add(invoiceId));
@@ -272,7 +266,7 @@ export default function Invoices() {
 
             if (response.ok) {
                 const result = await response.json();
-                setSuccess(`Invoice email sent to ${subscriberName}: ${result.message || 'Invoice email sent successfully'}`);
+                showSuccess(`Invoice email sent to ${subscriberName}: ${result.message || 'Invoice email sent successfully'}`);
                 // Refresh invoice data to show updated email status
                 if (selectedInvoice?.invoice.id === invoiceId) {
                     await handleViewInvoice(invoiceId);
@@ -281,11 +275,11 @@ export default function Invoices() {
                 fetchInvoices(hasActiveFilters);
             } else {
                 const errorData = await response.json().catch(() => ({}));
-                setError(errorData.error || 'Failed to send invoice email');
+                showError(errorData.error || 'Failed to send invoice email');
             }
         } catch (err) {
             console.error('Error sending invoice email:', err);
-            setError('Error sending invoice email');
+            showError('Error sending invoice email');
         } finally {
             // Remove this invoice from the loading set
             setEmailingInvoices(prev => {
@@ -297,8 +291,6 @@ export default function Invoices() {
     };
 
     const handleEmailInvoiceFromDetail = async (invoiceId: string, subscriberName: string) => {
-        setError(null);
-        setSuccess(null);
         setEmailingDetailInvoice(true);
 
         try {
@@ -309,18 +301,18 @@ export default function Invoices() {
 
             if (response.ok) {
                 const result = await response.json();
-                setSuccess(`Invoice email sent to ${subscriberName}: ${result.message || 'Invoice email sent successfully'}`);
+                showSuccess(`Invoice email sent to ${subscriberName}: ${result.message || 'Invoice email sent successfully'}`);
                 // Refresh invoice data to show updated email status
                 await handleViewInvoice(invoiceId);
                 // Refresh invoices list to show updated email status
                 fetchInvoices(hasActiveFilters);
             } else {
                 const errorData = await response.json().catch(() => ({}));
-                setError(errorData.error || 'Failed to send invoice email');
+                showError(errorData.error || 'Failed to send invoice email');
             }
         } catch (err) {
             console.error('Error sending invoice email:', err);
-            setError('Error sending invoice email');
+            showError('Error sending invoice email');
         } finally {
             setEmailingDetailInvoice(false);
         }
@@ -352,11 +344,11 @@ export default function Invoices() {
                 // Fetch subscriber balance for this invoice
                 await fetchSubscriberBalance(data.invoice.subscriberId);
             } else {
-                setError('Failed to fetch invoice details');
+                showError('Failed to fetch invoice details');
             }
         } catch (err) {
             console.error(err);
-            setError('Error fetching invoice details');
+            showError('Error fetching invoice details');
         }
     };
 
@@ -364,8 +356,6 @@ export default function Invoices() {
         if (!selectedInvoice) return;
 
         setLoading(true);
-        setError(null);
-        setSuccess(null);
 
         try {
             const response = await fetch(`${API_CONFIG.INVOICES_URL}/${selectedInvoice.invoice.id}/pay-from-balance`, {
@@ -374,7 +364,7 @@ export default function Invoices() {
             });
 
             if (response.ok) {
-                setSuccess(`Invoice paid from subscriber balance successfully`);
+                showSuccess(`Invoice paid from subscriber balance successfully`);
                 // Refresh invoice data to show updated status
                 await handleViewInvoice(selectedInvoice.invoice.id);
                 // Refresh invoices list
@@ -386,11 +376,11 @@ export default function Invoices() {
                 // Trigger subscriber list refresh in Subscribers component
                 window.dispatchEvent(new CustomEvent('subscriber-refresh-needed'));
             } else {
-                setError('Failed to pay invoice from balance');
+                showError('Failed to pay invoice from balance');
             }
         } catch (err) {
             console.error(err);
-            setError('Error paying invoice from balance');
+            showError('Error paying invoice from balance');
         } finally {
             setLoading(false);
         }
@@ -400,8 +390,6 @@ export default function Invoices() {
         if (!selectedInvoice) return;
 
         setLoading(true);
-        setError(null);
-        setSuccess(null);
 
         try {
             const request: InvoiceNotesUpdateRequest = {
@@ -416,18 +404,18 @@ export default function Invoices() {
             });
 
             if (response.ok) {
-                setSuccess('Invoice notes updated successfully');
+                showSuccess('Invoice notes updated successfully');
                 setEditingNotes(false);
                 // Refresh invoice data to show updated notes
                 await handleViewInvoice(selectedInvoice.invoice.id);
                 // Refresh invoices list to show updated notes
                 fetchInvoices(hasActiveFilters);
             } else {
-                setError('Failed to update invoice notes');
+                showError('Failed to update invoice notes');
             }
         } catch (err) {
             console.error(err);
-            setError('Error updating invoice notes');
+            showError('Error updating invoice notes');
         } finally {
             setLoading(false);
         }
@@ -542,9 +530,6 @@ export default function Invoices() {
                     </button>
                 </div>
             )}
-
-            {error && <div className="error-message">{error}</div>}
-            {success && <div className="success-message">{success}</div>}
 
             <div className="invoices-list">
                 {invoices.length === 0 ? (

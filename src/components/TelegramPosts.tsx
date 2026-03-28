@@ -1,17 +1,15 @@
 import {useState} from 'react';
 import {API_CONFIG} from '../config/api';
+import {useToast} from './Toast';
 
 export default function TelegramPosts() {
+    const {showError, showSuccess} = useToast();
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState<string | null>(null);
     const [generatedContent, setGeneratedContent] = useState<string | null>(null);
     const [copySuccess, setCopySuccess] = useState(false);
 
     const generatePinnedPost = async () => {
         setLoading(true);
-        setError(null);
-        setSuccess(null);
         setGeneratedContent(null);
 
         try {
@@ -23,13 +21,13 @@ export default function TelegramPosts() {
             if (response.ok) {
                 const result = await response.json();
                 setGeneratedContent(result.content);
-                setSuccess('Telegram post generated successfully!');
+                showSuccess('Telegram post generated successfully!');
             } else {
-                setError('Failed to generate Telegram post');
+                showError('Failed to generate Telegram post');
             }
         } catch (err) {
             console.error('Error generating Telegram post:', err);
-            setError('Error generating Telegram post');
+            showError('Error generating Telegram post');
         } finally {
             setLoading(false);
         }
@@ -44,7 +42,7 @@ export default function TelegramPosts() {
             setTimeout(() => setCopySuccess(false), 2000);
         } catch (err) {
             console.error('Failed to copy to clipboard:', err);
-            setError('Failed to copy to clipboard');
+            showError('Failed to copy to clipboard');
         }
     };
 
@@ -54,9 +52,6 @@ export default function TelegramPosts() {
                 <h3>Telegram Posts</h3>
                 <p>Generate templated update posts for Telegram channel</p>
             </div>
-
-            {error && <div className="error-message">{error}</div>}
-            {success && <div className="success-message">{success}</div>}
 
             <div className="telegram-posts-content">
                 <div className="generate-section">

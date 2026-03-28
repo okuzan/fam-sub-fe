@@ -3,6 +3,7 @@ import {useEffect, useState} from 'react';
 import Login from './components/Login';
 import AdminDashboard from './components/AdminDashboard';
 import {API_CONFIG} from './config/api';
+import {ToastProvider} from './components/Toast';
 import './App.css'
 import './components/Login.css'
 import './components/AdminDashboard.css'
@@ -107,85 +108,87 @@ function App() {
     }
 
     return (
-        <Router>
-            <Routes>
-                <Route
-                    path="/login"
-                    element={
-                        user ?
-                            <Navigate to={getRedirectPath()} replace/> :
-                            <Login onLoginSuccess={() => checkAuthStatus()}/>
-                    }
-                />
-                <Route
-                    path="/dashboard"
-                    element={
-                        user && user.role !== 'admin' ?
-                            <div className="dashboard">
-                                <h1>Welcome to FamSub Dashboard</h1>
-                                <p>You are successfully logged in!</p>
-                                <button onClick={handleLogout}>
-                                    Logout
-                                </button>
-                            </div> :
-                            <Navigate to={getRedirectPath()} replace/>
-                    }
-                />
-                <Route
-                    path="/admin"
-                    element={
-                        user && user.role === 'admin' ?
-                            <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
-                            <Navigate to={getRedirectPath()} replace/>
-                    }
-                >
-                    <Route path="services" element={
-                        user && user.role === 'admin' ?
-                            <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
-                            <Navigate to={getRedirectPath()} replace/>
-                    }/>
-                    <Route path="subscribers" element={
-                        user && user.role === 'admin' ?
-                            <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
-                            <Navigate to={getRedirectPath()} replace/>
-                    }/>
-                    <Route path="memberships" element={
-                        user && user.role === 'admin' ?
-                            <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
-                            <Navigate to={getRedirectPath()} replace/>
-                    }/>
-                    <Route path="charges" element={
-                        user && user.role === 'admin' ?
-                            <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
-                            <Navigate to={getRedirectPath()} replace/>
-                    }/>
-                    <Route path="cost-calculations" element={
-                        user && user.role === 'admin' ?
-                            <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
-                            <Navigate to={getRedirectPath()} replace/>
-                    }/>
-                    <Route path="invoices" element={
-                        user && user.role === 'admin' ?
-                            <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
-                            <Navigate to={getRedirectPath()} replace/>
-                    }/>
-                    <Route path="telegram-posts" element={
-                        user && user.role === 'admin' ?
-                            <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
-                            <Navigate to={getRedirectPath()} replace/>
-                    }/>
-                    <Route path="profile" element={
-                        user && user.role === 'admin' ?
-                            <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
-                            <Navigate to={getRedirectPath()} replace/>
-                    }/>
-                </Route>
-                <Route
-                    path="/"
-                    element={<Navigate to={getRedirectPath()} replace/>}
-                />
-            </Routes>
-        </Router>
+        <ToastProvider>
+            <Router>
+                <Routes>
+                    <Route
+                        path="/login"
+                        element={
+                            user ?
+                                <Navigate to={getRedirectPath()} replace/> :
+                                <Login onLoginSuccess={() => checkAuthStatus()}/>
+                        }
+                    />
+                    <Route
+                        path="/dashboard"
+                        element={
+                            user && user.role !== 'admin' ?
+                                <div className="dashboard">
+                                    <h1>Welcome to FamSub Dashboard</h1>
+                                    <p>You are successfully logged in!</p>
+                                    <button onClick={handleLogout}>
+                                        Logout
+                                    </button>
+                                </div> :
+                                <Navigate to={getRedirectPath()} replace/>
+                        }
+                    />
+                    <Route
+                        path="/admin"
+                        element={
+                            user && user.role === 'admin' ?
+                                <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
+                                <Navigate to={getRedirectPath()} replace/>
+                        }
+                    >
+                        <Route path="services" element={
+                            user && user.role === 'admin' ?
+                                <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
+                                <Navigate to={getRedirectPath()} replace/>
+                        }/>
+                        <Route path="subscribers" element={
+                            user && user.role === 'admin' ?
+                                <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
+                                <Navigate to={getRedirectPath()} replace/>
+                        }/>
+                        <Route path="memberships" element={
+                            user && user.role === 'admin' ?
+                                <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
+                                <Navigate to={getRedirectPath()} replace/>
+                        }/>
+                        <Route path="charges" element={
+                            user && user.role === 'admin' ?
+                                <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
+                                <Navigate to={getRedirectPath()} replace/>
+                        }/>
+                        <Route path="cost-calculations" element={
+                            user && user.role === 'admin' ?
+                                <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
+                                <Navigate to={getRedirectPath()} replace/>
+                        }/>
+                        <Route path="invoices" element={
+                            user && user.role === 'admin' ?
+                                <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
+                                <Navigate to={getRedirectPath()} replace/>
+                        }/>
+                        <Route path="telegram-posts" element={
+                            user && user.role === 'admin' ?
+                                <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
+                                <Navigate to={getRedirectPath()} replace/>
+                        }/>
+                        <Route path="profile" element={
+                            user && user.role === 'admin' ?
+                                <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
+                                <Navigate to={getRedirectPath()} replace/>
+                        }/>
+                    </Route>
+                    <Route
+                        path="/"
+                        element={<Navigate to={getRedirectPath()} replace/>}
+                    />
+                </Routes>
+            </Router>
+        </ToastProvider>
     );
 }
 

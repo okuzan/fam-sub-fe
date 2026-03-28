@@ -1,6 +1,7 @@
 import {useEffect, useState} from 'react';
 import {createPortal} from 'react-dom';
 import {API_CONFIG} from '../config/api';
+import {useToast} from './Toast';
 import type {
     SubscriberCreateRequest,
     SubscriberResponse,
@@ -10,10 +11,9 @@ import type {
 import type {OutstandingBalanceInvoiceRequest} from '../types/invoice';
 
 export default function Subscribers() {
+    const {showError, showSuccess} = useToast();
     const [subscribers, setSubscribers] = useState<SubscriberResponse[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState<string | null>(null);
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [editingSubscriber, setEditingSubscriber] = useState<SubscriberResponse | null>(null);
     const [selectedSubscriber, setSelectedSubscriber] = useState<SubscriberDetailResponse | null>(null);
@@ -66,11 +66,11 @@ export default function Subscribers() {
                 const data = await response.json();
                 setSubscribers(data);
             } else {
-                setError('Failed to fetch subscribers');
+                showError('Failed to fetch subscribers');
             }
         } catch (err) {
             console.error(err);
-            setError('Error fetching subscribers');
+            showError('Error fetching subscribers');
         } finally {
             setLoading(false);
         }
@@ -86,17 +86,16 @@ export default function Subscribers() {
                 const data = await response.json();
                 setSelectedSubscriber(data);
             } else {
-                setError('Failed to fetch subscriber details');
+                showError('Failed to fetch subscriber details');
             }
         } catch (err) {
             console.error(err);
-            setError('Error fetching subscriber details');
+            showError('Error fetching subscriber details');
         }
     };
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError(null);
 
         try {
             const request: SubscriberCreateRequest = {
@@ -116,12 +115,13 @@ export default function Subscribers() {
                 await fetchSubscribers();
                 setShowCreateForm(false);
                 setFormData({name: '', email: '', balance: ''});
+                showSuccess('Subscriber created successfully');
             } else {
-                setError('Failed to create subscriber');
+                showError('Failed to create subscriber');
             }
         } catch (err) {
             console.error(err);
-            setError('Error creating subscriber');
+            showError('Error creating subscriber');
         }
     };
 
@@ -147,12 +147,13 @@ export default function Subscribers() {
                 await fetchSubscribers();
                 setEditingSubscriber(null);
                 setFormData({name: '', email: '', balance: ''});
+                showSuccess('Subscriber updated successfully');
             } else {
-                setError('Failed to update subscriber');
+                showError('Failed to update subscriber');
             }
         } catch (err) {
             console.error(err);
-            setError('Error updating subscriber');
+            showError('Error updating subscriber');
         }
     };
 
@@ -167,12 +168,13 @@ export default function Subscribers() {
 
             if (response.ok) {
                 await fetchSubscribers();
+                showSuccess('Subscriber deleted successfully');
             } else {
-                setError('Failed to delete subscriber');
+                showError('Failed to delete subscriber');
             }
         } catch (err) {
             console.error(err);
-            setError('Error deleting subscriber');
+            showError('Error deleting subscriber');
         }
     };
 
@@ -188,8 +190,6 @@ export default function Subscribers() {
 
     const handleConfirmOutstandingBalanceInvoice = async () => {
         setLoading(true);
-        setError(null);
-        setSuccess(null);
 
         try {
             const request: OutstandingBalanceInvoiceRequest = {
@@ -207,18 +207,16 @@ export default function Subscribers() {
 
             if (response.ok) {
                 const invoice = await response.json();
-                setSuccess(`Generated outstanding balance invoice for ${outstandingBalanceData.subscriberName} totaling ₴${invoice.totalAmount.toFixed(2)}`);
+                showSuccess(`Generated outstanding balance invoice for ${outstandingBalanceData.subscriberName} totaling ₴${invoice.totalAmount.toFixed(2)}`);
                 setShowOutstandingBalanceModal(false);
-                // Refresh subscribers to show updated balance (should be 0)
                 fetchSubscribers();
-                // Trigger invoice refresh in Invoices component using custom event
                 window.dispatchEvent(new CustomEvent('invoice-refresh-needed'));
             } else {
-                setError('Failed to generate outstanding balance invoice');
+                showError('Failed to generate outstanding balance invoice');
             }
         } catch (err) {
             console.error(err);
-            setError('Error generating outstanding balance invoice');
+            showError('Error generating outstanding balance invoice');
         } finally {
             setLoading(false);
         }
@@ -226,8 +224,6 @@ export default function Subscribers() {
 
     const handleEmailSubscriberSituation = async (subscriberId: string, subscriberName: string) => {
         setLoading(true);
-        setError(null);
-        setSuccess(null);
 
         try {
             const response = await fetch(`${API_CONFIG.SUBSCRIBERS_URL}/${subscriberId}/email-situation`, {
@@ -237,13 +233,13 @@ export default function Subscribers() {
 
             if (response.ok) {
                 const result = await response.json();
-                setSuccess(`Email sent to ${subscriberName}: ${result.message || 'Situation email sent successfully'}`);
+                showSuccess(`Email sent to ${subscriberName}: ${result.message || 'Situation email sent successfully'}`);
             } else {
-                setError('Failed to send situation email');
+                showError('Failed to send situation email');
             }
         } catch (err) {
             console.error(err);
-            setError('Error sending situation email');
+            showError('Error sending situation email');
         } finally {
             setLoading(false);
         }
@@ -328,9 +324,6 @@ export default function Subscribers() {
                         </div>
                     </div>
                 </div>
-
-                {error && <div className="error-message">{error}</div>}
-                {success && <div className="success-message">{success}</div>}
 
                 <div className="subscribers-list">
                     {subscribers.length === 0 ? (

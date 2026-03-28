@@ -1,5 +1,6 @@
 import {useEffect, useState} from 'react';
 import {API_CONFIG} from '../config/api';
+import {useToast} from './Toast';
 import type {
     MembershipCreateRequest,
     MembershipEndRequest,
@@ -10,11 +11,11 @@ import type {SubscriberResponse} from '../types/subscriber';
 import type {SubscriptionServiceResponse} from '../types/subscription';
 
 export default function Memberships() {
+    const {showError, showSuccess} = useToast();
     const [memberships, setMemberships] = useState<MembershipResponse[]>([]);
     const [subscribers, setSubscribers] = useState<SubscriberResponse[]>([]);
     const [services, setServices] = useState<SubscriptionServiceResponse[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [editingMembership, setEditingMembership] = useState<MembershipResponse | null>(null);
     const [filterMode, setFilterMode] = useState<'service' | 'subscriber' | 'all'>('all');
@@ -69,12 +70,12 @@ export default function Memberships() {
                 const data = await response.json();
                 setMemberships(Array.isArray(data) ? data : []);
             } else {
-                setError('Failed to fetch memberships');
+                showError('Failed to fetch memberships');
                 setMemberships([]);
             }
         } catch (err) {
             console.error(err);
-            setError('Error fetching memberships');
+            showError('Error fetching memberships');
             setMemberships([]);
         } finally {
             setLoading(false);
@@ -115,7 +116,6 @@ export default function Memberships() {
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError(null);
 
         try {
             const request: MembershipCreateRequest = {
@@ -136,12 +136,13 @@ export default function Memberships() {
                 await fetchMemberships();
                 setShowCreateForm(false);
                 setFormData({subscriberId: '', serviceId: '', startDate: '', endMonth: ''});
+                showSuccess('Membership created successfully');
             } else {
-                setError('Failed to create membership');
+                showError('Failed to create membership');
             }
         } catch (err) {
             console.error(err);
-            setError('Error creating membership');
+            showError('Error creating membership');
         }
     };
 
@@ -168,12 +169,13 @@ export default function Memberships() {
                 await fetchMemberships();
                 setEditingMembership(null);
                 setFormData({subscriberId: '', serviceId: '', startDate: '', endMonth: ''});
+                showSuccess('Membership updated successfully');
             } else {
-                setError('Failed to update membership');
+                showError('Failed to update membership');
             }
         } catch (err) {
             console.error(err);
-            setError('Error updating membership');
+            showError('Error updating membership');
         }
     };
 
@@ -188,12 +190,13 @@ export default function Memberships() {
 
             if (response.ok) {
                 await fetchMemberships();
+                showSuccess('Membership deleted successfully');
             } else {
-                setError('Failed to delete membership');
+                showError('Failed to delete membership');
             }
         } catch (err) {
             console.error(err);
-            setError('Error deleting membership');
+            showError('Error deleting membership');
         }
     };
 
@@ -213,12 +216,13 @@ export default function Memberships() {
 
             if (response.ok) {
                 await fetchMemberships();
+                showSuccess('Membership ended successfully');
             } else {
-                setError('Failed to end membership');
+                showError('Failed to end membership');
             }
         } catch (err) {
             console.error(err);
-            setError('Error ending membership');
+            showError('Error ending membership');
         }
     };
 
@@ -336,8 +340,6 @@ export default function Memberships() {
                     )}
                 </div>
             </div>
-
-            {error && <div className="error-message">{error}</div>}
 
             {(showCreateForm || editingMembership) && (
                 <div className="form-overlay">
