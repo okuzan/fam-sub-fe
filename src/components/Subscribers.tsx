@@ -20,6 +20,13 @@ export default function Subscribers() {
     const [formData, setFormData] = useState({name: '', email: '', balance: ''});
     const [searchName, setSearchName] = useState('');
     const [showOnlyDebtors, setShowOnlyDebtors] = useState(false);
+    const [showOutstandingBalanceModal, setShowOutstandingBalanceModal] = useState(false);
+    const [outstandingBalanceData, setOutstandingBalanceData] = useState({
+        subscriberId: '',
+        subscriberName: '',
+        notes: '',
+        sendEmail: false
+    });
 
     useEffect(() => {
         fetchSubscribers();
@@ -169,14 +176,26 @@ export default function Subscribers() {
         }
     };
 
-    const handleGenerateOutstandingBalanceInvoice = async (subscriberId: string, subscriberName: string) => {
+    const handleGenerateOutstandingBalanceInvoice = (subscriberId: string, subscriberName: string) => {
+        setOutstandingBalanceData({
+            subscriberId,
+            subscriberName,
+            notes: '',
+            sendEmail: false
+        });
+        setShowOutstandingBalanceModal(true);
+    };
+
+    const handleConfirmOutstandingBalanceInvoice = async () => {
         setLoading(true);
         setError(null);
         setSuccess(null);
 
         try {
             const request: OutstandingBalanceInvoiceRequest = {
-                subscriberId: subscriberId
+                subscriberId: outstandingBalanceData.subscriberId,
+                sendEmail: outstandingBalanceData.sendEmail,
+                notes: outstandingBalanceData.notes || undefined
             };
 
             const response = await fetch(`${API_CONFIG.INVOICES_URL}/outstanding-balance`, {
@@ -188,7 +207,8 @@ export default function Subscribers() {
 
             if (response.ok) {
                 const invoice = await response.json();
-                setSuccess(`Generated outstanding balance invoice for ${subscriberName} totaling ₴${invoice.totalAmount.toFixed(2)}`);
+                setSuccess(`Generated outstanding balance invoice for ${outstandingBalanceData.subscriberName} totaling ₴${invoice.totalAmount.toFixed(2)}`);
+                setShowOutstandingBalanceModal(false);
                 // Refresh subscribers to show updated balance (should be 0)
                 fetchSubscribers();
                 // Trigger invoice refresh in Invoices component using custom event
@@ -461,6 +481,62 @@ export default function Subscribers() {
                             </button>
                             <button onClick={() => setSelectedSubscriber(null)} className="btn btn-secondary">
                                 Close
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {/* Outstanding Balance Invoice Modal */}
+            {showOutstandingBalanceModal && createPortal(
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h3>Generate Outstanding Balance Invoice</h3>
+                        <p>Subscriber: <strong>{outstandingBalanceData.subscriberName}</strong></p>
+                        
+                        <div className="form-group">
+                            <label htmlFor="outstanding-notes">Notes (optional)</label>
+                            <textarea
+                                id="outstanding-notes"
+                                value={outstandingBalanceData.notes}
+                                onChange={(e) => setOutstandingBalanceData({
+                                    ...outstandingBalanceData,
+                                    notes: e.target.value
+                                })}
+                                placeholder="Describe what this outstanding balance invoice is for..."
+                                rows={3}
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label>
+                                <input
+                                    type="checkbox"
+                                    checked={outstandingBalanceData.sendEmail}
+                                    onChange={(e) => setOutstandingBalanceData({
+                                        ...outstandingBalanceData,
+                                        sendEmail: e.target.checked
+                                    })}
+                                />
+                                Send email to subscriber
+                            </label>
+                        </div>
+
+                        <div className="form-actions">
+                            <button
+                                onClick={handleConfirmOutstandingBalanceInvoice}
+                                className="btn btn-primary"
+                                disabled={loading}
+                            >
+                                {loading ? 'Generating...' : 'Generate Invoice'}
+                            </button>
+                            <button
+                                onClick={() => setShowOutstandingBalanceModal(false)}
+                                className="btn btn-secondary"
+                                disabled={loading}
+                            >
+                                Cancel
                             </button>
                         </div>
                     </div>

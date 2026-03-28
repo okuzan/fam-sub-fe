@@ -13,6 +13,8 @@ export interface InvoiceGenerationRequest {
 
 export interface OutstandingBalanceInvoiceRequest {
     subscriberId: string;
+    sendEmail?: boolean;
+    notes?: string;
 }
 
 export interface InvoiceResponse {
