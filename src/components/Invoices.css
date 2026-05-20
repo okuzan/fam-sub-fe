@@ -113,6 +113,32 @@
     white-space: normal;
 }
 
+.invoice-status-control {
+    display: grid;
+    gap: 4px;
+    align-items: center;
+    color: #555;
+    font-size: 0.85em;
+}
+
+.invoice-status-control span {
+    font-weight: 600;
+}
+
+.invoice-status-control select {
+    width: 100%;
+    min-height: 34px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    background: white;
+    color: #333;
+    padding: 6px 8px;
+}
+
+.invoice-status-control-detail {
+    min-width: 140px;
+}
+
 .form-overlay {
     position: fixed;
     top: 0;

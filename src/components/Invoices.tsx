@@ -9,6 +9,8 @@ import type {
     InvoiceOrigin,
     InvoiceGenerationRequest,
     InvoiceGenerationResult,
+    InvoiceStatus,
+    InvoiceStatusUpdateRequest,
     InvoiceVoidRequest,
     ManualInvoiceCreateRequest,
     InvoiceNotesUpdateRequest,
@@ -58,6 +60,8 @@ const createManualInvoiceInitialState = () => ({
     sendEmail: false
 });
 
+const INVOICE_STATUS_OPTIONS: InvoiceStatus[] = ['DRAFT', 'SENT', 'PAID', 'VOID'];
+
 export default function Invoices() {
     const {showError, showSuccess} = useToast();
     const [invoices, setInvoices] = useState<InvoiceResponse[]>([]);
@@ -72,6 +76,7 @@ export default function Invoices() {
     const [emailingInvoices, setEmailingInvoices] = useState<Set<string>>(new Set());
     const [emailingDetailInvoice, setEmailingDetailInvoice] = useState(false);
     const [emailingDraftInvoices, setEmailingDraftInvoices] = useState(false);
+    const [updatingInvoiceStatuses, setUpdatingInvoiceStatuses] = useState<Set<string>>(new Set());
     const [showGenerateForm, setShowGenerateForm] = useState(false);
     const [showManualInvoiceForm, setShowManualInvoiceForm] = useState(false);
     const [showFilterForm, setShowFilterForm] = useState(false);
@@ -213,32 +218,52 @@ export default function Invoices() {
         }
     };
 
-    const handleMarkAsPaid = async (invoiceId: string) => {
+    const applyUpdatedInvoice = (updatedInvoice: InvoiceResponse) => {
+        setInvoices(prev => prev.map(invoice =>
+            invoice.id === updatedInvoice.id ? updatedInvoice : invoice
+        ));
+
+        setSelectedInvoice(prev => {
+            if (!prev || prev.invoice.id !== updatedInvoice.id) {
+                return prev;
+            }
+
+            return {
+                ...prev,
+                invoice: updatedInvoice
+            };
+        });
+    };
+
+    const handleUpdateInvoiceStatus = async (invoiceId: string, status: InvoiceStatus) => {
+        const request: InvoiceStatusUpdateRequest = {status};
+
+        setUpdatingInvoiceStatuses(prev => new Set(prev).add(invoiceId));
+
         try {
-            const response = await fetch(`${API_CONFIG.INVOICES_URL}/${invoiceId}/mark-paid`, {
+            const response = await fetch(`${API_CONFIG.INVOICES_URL}/${invoiceId}/status`, {
                 method: 'PATCH',
-                credentials: 'include'
+                headers: {'Content-Type': 'application/json'},
+                credentials: 'include',
+                body: JSON.stringify(request)
             });
 
             if (response.ok) {
-                showSuccess('Invoice marked as paid successfully');
-                fetchInvoices(hasActiveFilters);
-                if (selectedInvoice?.invoice.id === invoiceId) {
-                    // Update the selected invoice if it's currently open
-                    setSelectedInvoice({
-                        ...selectedInvoice,
-                        invoice: {
-                            ...selectedInvoice.invoice,
-                            status: 'PAID'
-                        }
-                    });
-                }
+                const updatedInvoice: InvoiceResponse = await response.json();
+                applyUpdatedInvoice(updatedInvoice);
+                showSuccess(`Invoice status updated to ${updatedInvoice.status}`);
             } else {
-                showError(await getResponseErrorMessage(response, 'Failed to mark invoice as paid'));
+                showError(await getResponseErrorMessage(response, 'Failed to update invoice status'));
             }
         } catch (err) {
-            console.error('Error marking invoice as paid:', err);
-            showError('Error marking invoice as paid');
+            console.error('Error updating invoice status:', err);
+            showError('Error updating invoice status');
+        } finally {
+            setUpdatingInvoiceStatuses(prev => {
+                const next = new Set(prev);
+                next.delete(invoiceId);
+                return next;
+            });
         }
     };
 
@@ -801,16 +826,22 @@ export default function Invoices() {
                                             className="btn btn-sm btn-primary">
                                         Download PDF
                                     </button>
+                                    <label className="invoice-status-control">
+                                        <span>Status</span>
+                                        <select
+                                            value={invoice.status}
+                                            onChange={(event) => handleUpdateInvoiceStatus(invoice.id, event.target.value as InvoiceStatus)}
+                                            disabled={updatingInvoiceStatuses.has(invoice.id)}
+                                        >
+                                            {INVOICE_STATUS_OPTIONS.map(status => (
+                                                <option key={status} value={status}>{status}</option>
+                                            ))}
+                                        </select>
+                                    </label>
                                     {canVoidInvoice(invoice) && (
                                         <button onClick={() => openVoidModal(invoice)}
                                                 className="btn btn-sm btn-warning">
                                             Void
-                                        </button>
-                                    )}
-                                    {!isInvoiceClosed(invoice) && (
-                                        <button onClick={() => handleMarkAsPaid(invoice.id)}
-                                                className="btn btn-sm btn-success">
-                                            Mark as Paid
                                         </button>
                                     )}
                                     {canDeleteInvoice(invoice) && (
@@ -1198,12 +1229,18 @@ export default function Invoices() {
                                     Delete Invoice
                                 </button>
                             )}
-                            {!isInvoiceClosed(selectedInvoice.invoice) && (
-                                <button onClick={() => handleMarkAsPaid(selectedInvoice.invoice.id)}
-                                        className="btn btn-success">
-                                    Mark as Paid
-                                </button>
-                            )}
+                            <label className="invoice-status-control invoice-status-control-detail">
+                                <span>Status</span>
+                                <select
+                                    value={selectedInvoice.invoice.status}
+                                    onChange={(event) => handleUpdateInvoiceStatus(selectedInvoice.invoice.id, event.target.value as InvoiceStatus)}
+                                    disabled={updatingInvoiceStatuses.has(selectedInvoice.invoice.id)}
+                                >
+                                    {INVOICE_STATUS_OPTIONS.map(status => (
+                                        <option key={status} value={status}>{status}</option>
+                                    ))}
+                                </select>
+                            </label>
                             {!isInvoiceClosed(selectedInvoice.invoice) &&
                                 subscriberBalance !== null &&
                                 subscriberBalance > selectedInvoice.invoice.totalAmount && (

@@ -39,6 +39,10 @@ export interface InvoiceVoidRequest {
     reason?: string;
 }
 
+export interface InvoiceStatusUpdateRequest {
+    status: InvoiceStatus;
+}
+
 export interface InvoiceResponse {
     id: string;
     subscriberId: string;
