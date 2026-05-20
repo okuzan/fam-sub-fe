@@ -16,6 +16,8 @@
 
 .header-actions {
     display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
     gap: 10px;
 }
 
@@ -353,6 +355,11 @@
     text-decoration: none;
     display: inline-block;
     transition: background-color 0.2s;
+}
+
+.btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
 }
 
 .btn-primary {

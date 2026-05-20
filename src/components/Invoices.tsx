@@ -4,6 +4,7 @@ import {API_CONFIG, getInvoicePdfUrl} from '../config/api';
 import {getResponseErrorMessage} from '../utils/errors';
 import {useToast} from './Toast';
 import type {
+    DraftInvoiceBulkEmailResult,
     InvoiceDetailResponse,
     InvoiceOrigin,
     InvoiceGenerationRequest,
@@ -70,6 +71,7 @@ export default function Invoices() {
     const [loading, setLoading] = useState(false);
     const [emailingInvoices, setEmailingInvoices] = useState<Set<string>>(new Set());
     const [emailingDetailInvoice, setEmailingDetailInvoice] = useState(false);
+    const [emailingDraftInvoices, setEmailingDraftInvoices] = useState(false);
     const [showGenerateForm, setShowGenerateForm] = useState(false);
     const [showManualInvoiceForm, setShowManualInvoiceForm] = useState(false);
     const [showFilterForm, setShowFilterForm] = useState(false);
@@ -439,6 +441,42 @@ export default function Invoices() {
         }
     };
 
+    const handleEmailDraftInvoices = async () => {
+        setEmailingDraftInvoices(true);
+
+        try {
+            const response = await fetch(`${API_CONFIG.INVOICES_URL}/drafts/email`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const result: DraftInvoiceBulkEmailResult = await response.json();
+                const failedInvoiceIds = result.failedInvoiceIds ?? result.items
+                    .filter((item) => item.success === false || Boolean(item.error))
+                    .map((item) => item.invoiceId)
+                    .filter(Boolean);
+
+                if (result.failedCount > 0) {
+                    showError(
+                        `Sent ${result.sentCount}/${result.attemptedCount} draft invoice emails. Failed: ${failedInvoiceIds.join(', ') || result.failedCount}`
+                    );
+                } else {
+                    showSuccess(`Sent ${result.sentCount} draft invoice emails${result.dryRun ? ' (dry run)' : ''}`);
+                }
+
+                fetchInvoices(hasActiveFilters);
+            } else {
+                showError(await getResponseErrorMessage(response, 'Failed to email draft invoices'));
+            }
+        } catch (err) {
+            console.error('Error emailing draft invoices:', err);
+            showError('Error emailing draft invoices');
+        } finally {
+            setEmailingDraftInvoices(false);
+        }
+    };
+
     const handleEmailInvoiceFromDetail = async (invoiceId: string, subscriberName: string) => {
         setEmailingDetailInvoice(true);
 
@@ -697,6 +735,10 @@ export default function Invoices() {
                     </button>
                     <button onClick={() => setShowManualInvoiceForm(true)} className="btn btn-info">
                         Create Manual Invoice
+                    </button>
+                    <button onClick={handleEmailDraftInvoices} className="btn btn-success"
+                            disabled={emailingDraftInvoices}>
+                        {emailingDraftInvoices ? 'Sending Draft Emails...' : 'Email Draft Invoices'}
                     </button>
                     <button onClick={() => setShowGenerateForm(true)} className="btn btn-primary">
                         Generate Invoices

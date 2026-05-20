@@ -93,6 +93,27 @@ export interface InvoiceGenerationItemResult {
     message: string;
 }
 
+export interface DraftInvoiceBulkEmailItemResult {
+    invoiceId: string;
+    subscriberId?: string;
+    subscriberName?: string;
+    success?: boolean;
+    emailSent?: boolean;
+    statusUpdated?: boolean;
+    message?: string;
+    error?: string;
+}
+
+export interface DraftInvoiceBulkEmailResult {
+    attemptedCount: number;
+    sentCount: number;
+    updatedCount: number;
+    failedCount: number;
+    dryRun: boolean;
+    items: DraftInvoiceBulkEmailItemResult[];
+    failedInvoiceIds?: string[];
+}
+
 export interface InvoiceSuggestion {
     lastInvoicedToMonth?: string;
     suggestedFromMonth?: string;
