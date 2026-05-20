@@ -3,14 +3,26 @@ import {API_CONFIG, getInvoicePdfUrl} from '../config/api';
 import {useToast} from './Toast';
 import type {
     InvoiceDetailResponse,
+    InvoiceOrigin,
     InvoiceGenerationRequest,
     InvoiceGenerationResult,
+    ManualInvoiceCreateRequest,
     InvoiceNotesUpdateRequest,
     InvoiceResponse,
     InvoiceSuggestion,
     InvoiceFilterRequest
 } from '../types/invoice';
 import type {SubscriberResponse} from '../types/subscriber';
+
+const getCurrentMonth = () => new Date().toISOString().slice(0, 7);
+
+const createManualInvoiceInitialState = () => ({
+    subscriberId: '',
+    amount: '',
+    invoiceMonth: getCurrentMonth(),
+    notes: '',
+    sendEmail: false
+});
 
 export default function Invoices() {
     const {showError, showSuccess} = useToast();
@@ -26,14 +38,17 @@ export default function Invoices() {
     const [emailingInvoices, setEmailingInvoices] = useState<Set<string>>(new Set());
     const [emailingDetailInvoice, setEmailingDetailInvoice] = useState(false);
     const [showGenerateForm, setShowGenerateForm] = useState(false);
+    const [showManualInvoiceForm, setShowManualInvoiceForm] = useState(false);
     const [showFilterForm, setShowFilterForm] = useState(false);
     const [filters, setFilters] = useState<InvoiceFilterRequest>({});
     const [editingNotes, setEditingNotes] = useState(false);
     const [notesInput, setNotesInput] = useState('');
+    const [manualInvoiceData, setManualInvoiceData] = useState(createManualInvoiceInitialState);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteInvoiceData, setDeleteInvoiceData] = useState<{
         invoiceId: string;
         subscriberName: string;
+        origin: InvoiceOrigin;
         addToBalance: boolean;
     } | null>(null);
 
@@ -183,9 +198,52 @@ export default function Invoices() {
         setDeleteInvoiceData({
             invoiceId: invoice.id,
             subscriberName: invoice.subscriberName,
-            addToBalance: true // default value
+            origin: invoice.origin,
+            addToBalance: invoice.origin === 'OUTSTANDING_BALANCE'
         });
         setShowDeleteModal(true);
+    };
+
+    const closeManualInvoiceForm = () => {
+        setShowManualInvoiceForm(false);
+        setManualInvoiceData(createManualInvoiceInitialState());
+    };
+
+    const handleCreateManualInvoice = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+
+        try {
+            const request: ManualInvoiceCreateRequest = {
+                subscriberId: manualInvoiceData.subscriberId,
+                amount: parseFloat(manualInvoiceData.amount),
+                invoiceMonth: manualInvoiceData.invoiceMonth,
+                notes: manualInvoiceData.notes.trim(),
+                sendEmail: manualInvoiceData.sendEmail
+            };
+
+            const response = await fetch(`${API_CONFIG.INVOICES_URL}/manual`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                credentials: 'include',
+                body: JSON.stringify(request)
+            });
+
+            if (response.ok) {
+                const invoice: InvoiceResponse = await response.json();
+                showSuccess(`Created manual invoice for ${invoice.subscriberName} totaling ₴${invoice.totalAmount.toFixed(2)}`);
+                closeManualInvoiceForm();
+                fetchInvoices(hasActiveFilters);
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                showError(errorData.message || 'Failed to create manual invoice');
+            }
+        } catch (err) {
+            console.error('Error creating manual invoice:', err);
+            showError('Error creating manual invoice');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleDeleteInvoice = async () => {
@@ -214,7 +272,7 @@ export default function Invoices() {
                 }
             } else if (response.status === 400) {
                 const errorData = await response.json();
-                showError(errorData.message || 'Only outstanding balance invoices with DRAFT status can be deleted');
+                showError(errorData.message || 'Only draft manual or outstanding balance invoices can be deleted');
             } else if (response.status === 404) {
                 showError('Invoice not found');
             } else {
@@ -487,6 +545,8 @@ export default function Invoices() {
                 return '#17a2b8';
             case 'OUTSTANDING_BALANCE':
                 return '#fd7e14';
+            case 'MANUAL':
+                return '#6f42c1';
             default:
                 return '#6c757d';
         }
@@ -498,10 +558,27 @@ export default function Invoices() {
                 return 'Subscription Ledger';
             case 'OUTSTANDING_BALANCE':
                 return 'Outstanding Balance';
+            case 'MANUAL':
+                return 'Manual';
             default:
                 return origin;
         }
     };
+
+    const formatInvoicePeriod = (invoice: Pick<InvoiceResponse, 'fromMonth' | 'toMonth' | 'origin'>) => {
+        if (invoice.origin === 'MANUAL' && invoice.fromMonth === invoice.toMonth) {
+            return formatDate(invoice.fromMonth);
+        }
+
+        return `${formatDate(invoice.fromMonth)} - ${formatDate(invoice.toMonth)}`;
+    };
+
+    const canDeleteInvoice = (invoice: InvoiceResponse) =>
+        invoice.status === 'DRAFT' && (invoice.origin === 'OUTSTANDING_BALANCE' || invoice.origin === 'MANUAL');
+
+    const selectedSubscriberName = subscribers.find(
+        (subscriber) => subscriber.id === manualInvoiceData.subscriberId
+    )?.name;
 
     return (
         <div className="invoices">
@@ -510,6 +587,9 @@ export default function Invoices() {
                 <div className="header-actions">
                     <button onClick={() => setShowFilterForm(true)} className="btn btn-secondary">
                         {hasActiveFilters ? '🔍 Filters (Active)' : '🔍 Filters'}
+                    </button>
+                    <button onClick={() => setShowManualInvoiceForm(true)} className="btn btn-info">
+                        Create Manual Invoice
                     </button>
                     <button onClick={() => setShowGenerateForm(true)} className="btn btn-primary">
                         Generate Invoices
@@ -543,7 +623,7 @@ export default function Invoices() {
                                 <div className="invoice-info">
                                     <h4>{invoice.subscriberName}</h4>
                                     <p>
-                                        <strong>Period:</strong> {formatDate(invoice.fromMonth)} - {formatDate(invoice.toMonth)}
+                                        <strong>Period:</strong> {formatInvoicePeriod(invoice)}
                                     </p>
                                     <p><strong>Amount:</strong> ₴{invoice.totalAmount.toFixed(2)}</p>
                                     <p><strong>Status:</strong> <span className="status-badge"
@@ -577,7 +657,7 @@ export default function Invoices() {
                                             Mark as Paid
                                         </button>
                                     )}
-                                    {invoice.origin === 'OUTSTANDING_BALANCE' && invoice.status === 'DRAFT' && (
+                                    {canDeleteInvoice(invoice) && (
                                         <button onClick={() => openDeleteModal(invoice)}
                                                 className="btn btn-sm btn-danger">
                                             Delete
@@ -649,6 +729,116 @@ export default function Invoices() {
                 </div>
             )}
 
+            {showManualInvoiceForm && (
+                <div className="form-overlay">
+                    <div className="form-container">
+                        <h3>Create Manual Invoice</h3>
+                        <form onSubmit={handleCreateManualInvoice}>
+                            <div className="manual-invoice-help">
+                                Create a one-off invoice without subscription ledger calculations. This does not depend on subscriber balance.
+                            </div>
+
+                            <div className="form-group">
+                                <label htmlFor="manualSubscriberId">Subscriber</label>
+                                <select
+                                    id="manualSubscriberId"
+                                    value={manualInvoiceData.subscriberId}
+                                    onChange={(e) => setManualInvoiceData((prev) => ({
+                                        ...prev,
+                                        subscriberId: e.target.value
+                                    }))}
+                                    required
+                                >
+                                    <option value="">Select subscriber</option>
+                                    {subscribers.map((subscriber) => (
+                                        <option key={subscriber.id} value={subscriber.id}>
+                                            {subscriber.name} ({subscriber.email})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label htmlFor="manualAmount">Amount (UAH)</label>
+                                    <input
+                                        type="number"
+                                        id="manualAmount"
+                                        min="1"
+                                        step="1"
+                                        value={manualInvoiceData.amount}
+                                        onChange={(e) => setManualInvoiceData((prev) => ({
+                                            ...prev,
+                                            amount: e.target.value
+                                        }))}
+                                        placeholder="0"
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor="manualInvoiceMonth">Invoice Month</label>
+                                    <input
+                                        type="month"
+                                        id="manualInvoiceMonth"
+                                        value={manualInvoiceData.invoiceMonth}
+                                        onChange={(e) => setManualInvoiceData((prev) => ({
+                                            ...prev,
+                                            invoiceMonth: e.target.value
+                                        }))}
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label htmlFor="manualNotes">Note</label>
+                                <textarea
+                                    id="manualNotes"
+                                    value={manualInvoiceData.notes}
+                                    onChange={(e) => setManualInvoiceData((prev) => ({
+                                        ...prev,
+                                        notes: e.target.value
+                                    }))}
+                                    placeholder="What is this invoice for?"
+                                    rows={4}
+                                    className="notes-textarea"
+                                    required
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label className="checkbox-label">
+                                    <input
+                                        type="checkbox"
+                                        checked={manualInvoiceData.sendEmail}
+                                        onChange={(e) => setManualInvoiceData((prev) => ({
+                                            ...prev,
+                                            sendEmail: e.target.checked
+                                        }))}
+                                    />
+                                    Send invoice email immediately
+                                </label>
+                                {selectedSubscriberName && (
+                                    <small className="form-help">
+                                        The invoice will be created for {selectedSubscriberName}.
+                                    </small>
+                                )}
+                            </div>
+
+                            <div className="form-actions">
+                                <button type="submit" disabled={loading} className="btn btn-success">
+                                    {loading ? 'Creating...' : 'Create Manual Invoice'}
+                                </button>
+                                <button type="button" onClick={closeManualInvoiceForm}
+                                        className="btn btn-secondary">
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
             {(showFilterForm) && (
                 <div className="form-overlay">
                     <div className="form-container">
@@ -700,6 +890,7 @@ export default function Invoices() {
                                     <option value="">All Origins</option>
                                     <option value="SUBSCRIPTION_LEDGER">Subscription Ledger</option>
                                     <option value="OUTSTANDING_BALANCE">Outstanding Balance</option>
+                                    <option value="MANUAL">Manual</option>
                                 </select>
                             </div>
 
@@ -752,7 +943,7 @@ export default function Invoices() {
                             <h4>{selectedInvoice.invoice.subscriberName}</h4>
                             <p><strong>Invoice ID:</strong> {selectedInvoice.invoice.id}</p>
                             <p>
-                                <strong>Period:</strong> {formatDate(selectedInvoice.invoice.fromMonth)} - {formatDate(selectedInvoice.invoice.toMonth)}
+                                <strong>Period:</strong> {formatInvoicePeriod(selectedInvoice.invoice)}
                             </p>
                             <p><strong>Total Amount:</strong> ₴{selectedInvoice.invoice.totalAmount.toFixed(2)}</p>
                             <p><strong>Status:</strong> <span className="status-badge"
@@ -810,16 +1001,24 @@ export default function Invoices() {
                         </div>
 
                         <h5>Ledger Entries ({selectedInvoice.entries.length})</h5>
-                        <div className="ledger-entries">
-                            {selectedInvoice.entries.map((entry) => (
-                                <div key={entry.ledgerEntryId} className="ledger-entry">
-                                    <p><strong>Service:</strong> {entry.subscriptionServiceName}</p>
-                                    <p><strong>Month:</strong> {formatDate(entry.recordedMonth)}</p>
-                                    <p><strong>Amount:</strong> ₴{entry.amount.toFixed(2)}</p>
-                                    <p><strong>Participants:</strong> {entry.participantCount}</p>
-                                </div>
-                            ))}
-                        </div>
+                        {selectedInvoice.entries.length > 0 ? (
+                            <div className="ledger-entries">
+                                {selectedInvoice.entries.map((entry) => (
+                                    <div key={entry.ledgerEntryId} className="ledger-entry">
+                                        <p><strong>Service:</strong> {entry.subscriptionServiceName}</p>
+                                        <p><strong>Month:</strong> {formatDate(entry.recordedMonth)}</p>
+                                        <p><strong>Amount:</strong> ₴{entry.amount.toFixed(2)}</p>
+                                        <p><strong>Participants:</strong> {entry.participantCount}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="empty-ledger-state">
+                                {selectedInvoice.invoice.origin === 'MANUAL'
+                                    ? 'This invoice was created manually and has no ledger entries.'
+                                    : 'No ledger entries linked to this invoice.'}
+                            </div>
+                        )}
 
                         <div className="form-actions">
                             <button onClick={() => handleEmailInvoiceFromDetail(selectedInvoice.invoice.id, selectedInvoice.invoice.subscriberName)}
@@ -861,29 +1060,35 @@ export default function Invoices() {
             {showDeleteModal && deleteInvoiceData && (
                 <div className="form-overlay">
                     <div className="form-container">
-                        <h3>Delete Outstanding Balance Invoice</h3>
+                        <h3>Delete Draft Invoice</h3>
                         <p>Subscriber: <strong>{deleteInvoiceData.subscriberName}</strong></p>
                         <p className="warning-text">
                             This action cannot be undone. The invoice will be permanently deleted.
                         </p>
 
-                        <div className="form-group">
-                            <label>
-                                <input
-                                    type="checkbox"
-                                    checked={deleteInvoiceData.addToBalance}
-                                    onChange={(e) => setDeleteInvoiceData({
-                                        ...deleteInvoiceData,
-                                        addToBalance: e.target.checked
-                                    })}
-                                />
-                                Restore outstanding balance to subscriber's account
-                            </label>
+                        {deleteInvoiceData.origin === 'OUTSTANDING_BALANCE' ? (
+                            <div className="form-group">
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        checked={deleteInvoiceData.addToBalance}
+                                        onChange={(e) => setDeleteInvoiceData({
+                                            ...deleteInvoiceData,
+                                            addToBalance: e.target.checked
+                                        })}
+                                    />
+                                    Restore outstanding balance to subscriber's account
+                                </label>
+                                <small className="form-help">
+                                    When checked, the subscriber's debt will be restored to their balance.
+                                    When unchecked, the invoice is removed without affecting the balance.
+                                </small>
+                            </div>
+                        ) : (
                             <small className="form-help">
-                                When checked, the subscriber's debt will be restored to their balance.
-                                When unchecked, the invoice is removed without affecting the balance.
+                                Manual invoices are removed without touching subscriber balance.
                             </small>
-                        </div>
+                        )}
 
                         <div className="form-actions">
                             <button

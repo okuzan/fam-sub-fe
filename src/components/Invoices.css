@@ -51,6 +51,16 @@
     color: #666;
 }
 
+.manual-invoice-help {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin-bottom: 20px;
+    color: #495057;
+    line-height: 1.4;
+}
+
 .invoices-grid {
     display: grid;
     gap: 20px;
@@ -231,6 +241,14 @@
     color: #333;
 }
 
+.empty-ledger-state {
+    background: #f8f9fa;
+    border: 1px dashed #ced4da;
+    border-radius: 6px;
+    padding: 16px;
+    color: #6c757d;
+}
+
 .notes-section {
     margin-top: 15px;
     padding-top: 15px;
@@ -334,6 +352,15 @@
     background: #0056b3;
 }
 
+.btn-info {
+    background: #17a2b8;
+    color: white;
+}
+
+.btn-info:hover {
+    background: #117a8b;
+}
+
 .btn-success {
     background: #28a745;
     color: white;
@@ -352,9 +379,30 @@
     background: #545b62;
 }
 
+.btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c82333;
+}
+
 .btn-sm {
     padding: 6px 12px;
     font-size: 13px;
+}
+
+.warning-text {
+    color: #a61e2a;
+    margin: 12px 0;
+}
+
+.form-help {
+    display: block;
+    margin-top: 8px;
+    color: #6c757d;
+    line-height: 1.4;
 }
 
 @media (max-width: 768px) {

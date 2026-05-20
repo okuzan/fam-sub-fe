@@ -395,14 +395,14 @@ export default function Subscribers() {
                                 />
                             </div>
                             <div className="form-group">
-                                <label htmlFor="balance">Balance</label>
+                                <label htmlFor="balance">Balance (UAH)</label>
                                 <input
                                     type="number"
                                     id="balance"
                                     step="1"
                                     value={formData.balance}
                                     onChange={(e) => setFormData({...formData, balance: e.target.value})}
-                                    placeholder="0.00"
+                                    placeholder="0"
                                 />
                             </div>
                             <div className="form-actions">
