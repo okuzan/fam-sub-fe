@@ -131,8 +131,48 @@ const getActionTypeBadgeClass = (type: AdminActionType) => {
             return 'admin-actions-badge admin-actions-badge-invoice';
         case 'INVOICE_GENERATION_RUN_UNDONE':
             return 'admin-actions-badge admin-actions-badge-undone';
+        case 'INVOICE_VOIDED':
+        case 'INVOICE_DELETED':
+            return 'admin-actions-badge admin-actions-badge-danger';
+        case 'INVOICE_MARKED_PAID':
+        case 'INVOICE_PAID_FROM_BALANCE':
+        case 'INVOICE_BULK_PAID_FROM_BALANCE':
+            return 'admin-actions-badge admin-actions-badge-success';
+        case 'INVOICE_EMAIL_SENT':
+        case 'INVOICE_BULK_EMAIL_SENT':
+            return 'admin-actions-badge admin-actions-badge-info';
+        case 'INVOICE_STATUS_UPDATED':
+        case 'INVOICE_NOTES_UPDATED':
+        case 'MANUAL_INVOICE_CREATED':
+        case 'OUTSTANDING_BALANCE_INVOICE_CREATED':
+            return 'admin-actions-badge admin-actions-badge-invoice';
+        case 'SUBSCRIBER_CREATED':
+        case 'SUBSCRIBER_UPDATED':
+            return 'admin-actions-badge admin-actions-badge-subscriber';
+        case 'SUBSCRIBER_DELETED':
+            return 'admin-actions-badge admin-actions-badge-danger';
+        case 'SUBSCRIBER_SITUATION_EMAIL_SENT':
+            return 'admin-actions-badge admin-actions-badge-subscriber';
+        case 'CHARGE_CREATED':
+        case 'CHARGE_UPDATED':
+            return 'admin-actions-badge admin-actions-badge-charge';
+        case 'CHARGE_DELETED':
+            return 'admin-actions-badge admin-actions-badge-danger';
+        case 'MEMBERSHIP_CREATED':
+        case 'MEMBERSHIP_UPDATED':
+        case 'MEMBERSHIP_ENDED':
+            return 'admin-actions-badge admin-actions-badge-membership';
+        case 'MEMBERSHIP_DELETED':
+            return 'admin-actions-badge admin-actions-badge-danger';
+        case 'SUBSCRIPTION_SERVICE_CREATED':
+        case 'SUBSCRIPTION_SERVICE_UPDATED':
+            return 'admin-actions-badge admin-actions-badge-service';
+        case 'SUBSCRIPTION_SERVICE_DELETED':
+            return 'admin-actions-badge admin-actions-badge-danger';
+        case 'PINNED_POST_GENERATED':
+            return 'admin-actions-badge admin-actions-badge-pinned-post';
         default:
-            return 'admin-actions-badge';
+            return 'admin-actions-badge admin-actions-badge-default';
     }
 };
 
