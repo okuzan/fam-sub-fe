@@ -21,12 +21,6 @@ export interface InvoiceGenerationRequest {
     subscriberIds?: string[]; // Optional: generate for specific subscribers only
 }
 
-export interface OutstandingBalanceInvoiceRequest {
-    subscriberId: string;
-    sendEmail?: boolean;
-    notes?: string;
-}
-
 export interface ManualInvoiceCreateRequest {
     subscriberId: string;
     amount: number;

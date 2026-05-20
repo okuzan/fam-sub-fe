@@ -9,7 +9,6 @@ import type {
     SubscriberUpdateRequest,
     SubscriberDetailResponse
 } from '../types/subscriber';
-import type {OutstandingBalanceInvoiceRequest} from '../types/invoice';
 
 export default function Subscribers() {
     const {showError, showSuccess} = useToast();
@@ -21,13 +20,15 @@ export default function Subscribers() {
     const [formData, setFormData] = useState({name: '', email: '', balance: '', autoPayInvoices: false});
     const [searchName, setSearchName] = useState('');
     const [showOnlyDebtors, setShowOnlyDebtors] = useState(false);
-    const [showOutstandingBalanceModal, setShowOutstandingBalanceModal] = useState(false);
-    const [outstandingBalanceData, setOutstandingBalanceData] = useState({
-        subscriberId: '',
-        subscriberName: '',
-        notes: '',
-        sendEmail: false
-    });
+
+    const parseCreditBalance = () => {
+        if (!formData.balance) {
+            return 0;
+        }
+
+        const creditBalance = parseFloat(formData.balance);
+        return Number.isFinite(creditBalance) ? creditBalance : 0;
+    };
 
     useEffect(() => {
         fetchSubscribers();
@@ -99,10 +100,16 @@ export default function Subscribers() {
         e.preventDefault();
 
         try {
+            const creditBalance = parseCreditBalance();
+            if (creditBalance < 0) {
+                showError('Credit balance cannot be negative. Use a manual invoice to record debt.');
+                return;
+            }
+
             const request: SubscriberCreateRequest = {
                 name: formData.name,
                 email: formData.email,
-                balance: formData.balance ? parseFloat(formData.balance) : 0,
+                balance: creditBalance,
                 autoPayInvoices: formData.autoPayInvoices
             };
 
@@ -132,10 +139,16 @@ export default function Subscribers() {
         if (!editingSubscriber) return;
 
         try {
+            const creditBalance = parseCreditBalance();
+            if (creditBalance < 0) {
+                showError('Credit balance cannot be negative. Use a manual invoice to record debt.');
+                return;
+            }
+
             const request: SubscriberUpdateRequest = {
                 name: formData.name,
                 email: formData.email,
-                balance: parseFloat(formData.balance),
+                balance: creditBalance,
                 autoPayInvoices: formData.autoPayInvoices
             };
 
@@ -178,50 +191,6 @@ export default function Subscribers() {
         } catch (err) {
             console.error(err);
             showError('Error deleting subscriber');
-        }
-    };
-
-    const handleGenerateOutstandingBalanceInvoice = (subscriberId: string, subscriberName: string) => {
-        setOutstandingBalanceData({
-            subscriberId,
-            subscriberName,
-            notes: '',
-            sendEmail: false
-        });
-        setShowOutstandingBalanceModal(true);
-    };
-
-    const handleConfirmOutstandingBalanceInvoice = async () => {
-        setLoading(true);
-
-        try {
-            const request: OutstandingBalanceInvoiceRequest = {
-                subscriberId: outstandingBalanceData.subscriberId,
-                sendEmail: outstandingBalanceData.sendEmail,
-                notes: outstandingBalanceData.notes || undefined
-            };
-
-            const response = await fetch(`${API_CONFIG.INVOICES_URL}/outstanding-balance`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                credentials: 'include',
-                body: JSON.stringify(request)
-            });
-
-            if (response.ok) {
-                const invoice = await response.json();
-                showSuccess(`Generated outstanding balance invoice for ${outstandingBalanceData.subscriberName} totaling ₴${invoice.totalAmount.toFixed(2)}`);
-                setShowOutstandingBalanceModal(false);
-                fetchSubscribers();
-                window.dispatchEvent(new CustomEvent('invoice-refresh-needed'));
-            } else {
-                showError(await getResponseErrorMessage(response, 'Failed to generate outstanding balance invoice'));
-            }
-        } catch (err) {
-            console.error(err);
-            showError('Error generating outstanding balance invoice');
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -345,7 +314,9 @@ export default function Subscribers() {
                                     <div className="subscriber-info">
                                         <h3>{subscriber.name}</h3>
                                         <p className="email">{subscriber.email}</p>
-                                        <p className="balance">Balance: ₴{subscriber.balance.toFixed(2)}</p>
+                                        <p className="balance">
+                                            {subscriber.balance < 0 ? 'Legacy balance debt' : 'Credit balance'}: ₴{Math.abs(subscriber.balance).toFixed(2)}
+                                        </p>
                                         <p className={`auto-pay ${subscriber.autoPayInvoices ? 'enabled' : ''}`}>
                                             Auto-pay invoices: {subscriber.autoPayInvoices ? 'On' : 'Off'}
                                         </p>
@@ -360,15 +331,6 @@ export default function Subscribers() {
                                                 className="btn btn-sm btn-secondary">
                                             Edit
                                         </button>
-                                        {subscriber.balance < 0 && (
-                                            <button
-                                                onClick={() => handleGenerateOutstandingBalanceInvoice(subscriber.id, subscriber.name)}
-                                                className="btn btn-sm btn-warning"
-                                                disabled={loading}
-                                            >
-                                                Invoice Outstanding Balance
-                                            </button>
-                                        )}
                                         <button onClick={() => handleDelete(subscriber.id)}
                                                 className="btn btn-sm btn-danger">
                                             Delete
@@ -406,11 +368,12 @@ export default function Subscribers() {
                                 />
                             </div>
                             <div className="form-group">
-                                <label htmlFor="balance">Balance (UAH)</label>
+                                <label htmlFor="balance">Credit Balance (UAH)</label>
                                 <input
                                     type="number"
                                     id="balance"
                                     step="1"
+                                    min="0"
                                     value={formData.balance}
                                     onChange={(e) => setFormData({...formData, balance: e.target.value})}
                                     placeholder="0"
@@ -450,7 +413,10 @@ export default function Subscribers() {
                         <div className="subscriber-detail-info">
                             <h4>{selectedSubscriber.name}</h4>
                             <p><strong>Email:</strong> {selectedSubscriber.email}</p>
-                            <p><strong>Balance:</strong> ₴{selectedSubscriber.balance.toFixed(2)}</p>
+                            <p>
+                                <strong>{selectedSubscriber.balance < 0 ? 'Legacy balance debt' : 'Credit balance'}:</strong>{' '}
+                                ₴{Math.abs(selectedSubscriber.balance).toFixed(2)}
+                            </p>
                             <p><strong>Auto-pay invoices:</strong> {selectedSubscriber.autoPayInvoices ? 'On' : 'Off'}</p>
                             <p><strong>Total Amount Owed:</strong> ₴{selectedSubscriber.totalAmountOwed.toFixed(2)}</p>
                         </div>
@@ -507,61 +473,6 @@ export default function Subscribers() {
                 document.body
             )}
 
-            {/* Outstanding Balance Invoice Modal */}
-            {showOutstandingBalanceModal && createPortal(
-                <div className="modal-overlay">
-                    <div className="modal-content">
-                        <h3>Generate Outstanding Balance Invoice</h3>
-                        <p>Subscriber: <strong>{outstandingBalanceData.subscriberName}</strong></p>
-                        
-                        <div className="form-group">
-                            <label htmlFor="outstanding-notes">Notes (optional)</label>
-                            <textarea
-                                id="outstanding-notes"
-                                value={outstandingBalanceData.notes}
-                                onChange={(e) => setOutstandingBalanceData({
-                                    ...outstandingBalanceData,
-                                    notes: e.target.value
-                                })}
-                                placeholder="Describe what this outstanding balance invoice is for..."
-                                rows={3}
-                            />
-                        </div>
-
-                        <div className="form-group checkbox-group">
-                            <label className="checkbox-label">
-                                <input
-                                    type="checkbox"
-                                    checked={outstandingBalanceData.sendEmail}
-                                    onChange={(e) => setOutstandingBalanceData({
-                                        ...outstandingBalanceData,
-                                        sendEmail: e.target.checked
-                                    })}
-                                />
-                                <span>Send email to subscriber</span>
-                            </label>
-                        </div>
-
-                        <div className="form-actions">
-                            <button
-                                onClick={handleConfirmOutstandingBalanceInvoice}
-                                className="btn btn-primary"
-                                disabled={loading}
-                            >
-                                {loading ? 'Generating...' : 'Generate Invoice'}
-                            </button>
-                            <button
-                                onClick={() => setShowOutstandingBalanceModal(false)}
-                                className="btn btn-secondary"
-                                disabled={loading}
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                </div>,
-                document.body
-            )}
         </>
     );
 }

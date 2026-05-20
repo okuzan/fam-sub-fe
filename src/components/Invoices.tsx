@@ -554,7 +554,7 @@ export default function Invoices() {
             return `Paid ${result.paidCount} of ${result.attemptedCount} draft invoices. Skipped ${result.skippedCount}, failed ${result.failedCount}. ${total}`;
         }
 
-        return `Paid ${result.paidCount} of ${result.attemptedCount} draft invoices from balance. Skipped ${result.skippedCount} due to insufficient balance. ${total}`;
+        return `Paid ${result.paidCount} of ${result.attemptedCount} draft invoices from credit balance. Skipped ${result.skippedCount} due to insufficient credit balance. ${total}`;
     };
 
     const getDraftBalancePaymentItemResult = (item: InvoiceBulkBalancePaymentItemResult) => {
@@ -606,11 +606,11 @@ export default function Invoices() {
 
                 window.dispatchEvent(new CustomEvent('subscriber-refresh-needed'));
             } else {
-                showError(await getResponseErrorMessage(response, 'Could not pay draft invoices from balance.'));
+                showError(await getResponseErrorMessage(response, 'Could not pay draft invoices from credit balance.'));
             }
         } catch (err) {
-            console.error('Error paying draft invoices from balance:', err);
-            showError('Could not pay draft invoices from balance.');
+            console.error('Error paying draft invoices from credit balance:', err);
+            showError('Could not pay draft invoices from credit balance.');
         } finally {
             setPayingDraftInvoicesFromBalance(false);
         }
@@ -652,10 +652,10 @@ export default function Invoices() {
                 const subscriber = await response.json();
                 setSubscriberBalance(subscriber.balance);
             } else {
-                showError(await getResponseErrorMessage(response, 'Failed to fetch subscriber balance'));
+                showError(await getResponseErrorMessage(response, 'Failed to fetch subscriber credit balance'));
             }
         } catch (err) {
-            console.error('Failed to fetch subscriber balance:', err);
+            console.error('Failed to fetch subscriber credit balance:', err);
         }
     };
 
@@ -668,7 +668,7 @@ export default function Invoices() {
             if (response.ok) {
                 const data = await response.json();
                 setSelectedInvoice(data);
-                // Fetch subscriber balance for this invoice
+                // Fetch subscriber credit balance for this invoice
                 await fetchSubscriberBalance(data.invoice.subscriberId);
             } else {
                 showError(await getResponseErrorMessage(response, 'Failed to fetch invoice details'));
@@ -717,23 +717,23 @@ export default function Invoices() {
             });
 
             if (response.ok) {
-                showSuccess(`Invoice paid from subscriber balance successfully`);
+                showSuccess(`Invoice paid from subscriber credit balance successfully`);
                 // Refresh invoice data to show updated status
                 await handleViewInvoice(selectedInvoice.invoice.id);
                 // Refresh invoices list
                 fetchInvoices(hasActiveFilters);
-                // Refresh subscriber balance to show updated amount
+                // Refresh subscriber credit balance to show updated amount
                 if (selectedInvoice) {
                     await fetchSubscriberBalance(selectedInvoice.invoice.subscriberId);
                 }
                 // Trigger subscriber list refresh in Subscribers component
                 window.dispatchEvent(new CustomEvent('subscriber-refresh-needed'));
             } else {
-                showError(await getResponseErrorMessage(response, 'Failed to pay invoice from balance'));
+                showError(await getResponseErrorMessage(response, 'Failed to pay invoice from credit balance'));
             }
         } catch (err) {
             console.error(err);
-            showError('Error paying invoice from balance');
+            showError('Error paying invoice from credit balance');
         } finally {
             setLoading(false);
         }
@@ -923,7 +923,7 @@ export default function Invoices() {
                     </button>
                     <button onClick={openDraftBalancePaymentModal} className="btn btn-warning"
                             disabled={payingDraftInvoicesFromBalance}>
-                        {payingDraftInvoicesFromBalance ? 'Paying Drafts...' : 'Pay drafts from balance'}
+                        {payingDraftInvoicesFromBalance ? 'Paying Drafts...' : 'Pay drafts from credit'}
                     </button>
                     <button onClick={() => setShowGenerateForm(true)} className="btn btn-primary">
                         Generate Invoices
@@ -1091,7 +1091,7 @@ export default function Invoices() {
                         <h3>Create Manual Invoice</h3>
                         <form onSubmit={handleCreateManualInvoice}>
                             <div className="manual-invoice-help">
-                                Create a one-off invoice without subscription ledger calculations. This does not depend on subscriber balance.
+                                Create a one-off invoice without subscription ledger calculations. Use this for pre-system debt instead of negative subscriber credit.
                             </div>
 
                             <div className="form-group">
@@ -1355,14 +1355,14 @@ export default function Invoices() {
             {showDraftBalancePaymentModal && createPortal(
                 <div className="form-overlay">
                     <div className="form-container draft-balance-payment-modal">
-                        <h3>Pay draft invoices from balance?</h3>
+                        <h3>Pay draft invoices from credit balance?</h3>
 
                         {!draftBalancePaymentResult ? (
                             <>
                                 <p className="draft-balance-payment-copy">
                                     This will check all DRAFT invoices and pay the ones fully covered by subscriber
-                                    balance. Subscriber balances will be reduced by the invoice amount. Invoices
-                                    without enough balance will be skipped. No emails will be sent.
+                                    credit balance. Credit balances will be reduced by the invoice amount. Invoices
+                                    without enough credit will be skipped. No emails will be sent.
                                 </p>
 
                                 <div className="form-actions">
@@ -1393,8 +1393,8 @@ export default function Invoices() {
                                         <div className="draft-balance-payment-header">
                                             <span>Subscriber</span>
                                             <span>Invoice amount</span>
-                                            <span>Balance before</span>
-                                            <span>Balance after</span>
+                                            <span>Credit before</span>
+                                            <span>Credit after</span>
                                             <span>Result</span>
                                             <span>Message</span>
                                         </div>
@@ -1549,7 +1549,7 @@ export default function Invoices() {
                                     <button onClick={handlePayFromBalance}
                                             className="btn btn-info"
                                             disabled={loading}>
-                                        Pay from Balance (₴{subscriberBalance.toFixed(2)} available)
+                                        Pay from Credit (₴{subscriberBalance.toFixed(2)} available)
                                     </button>
                                 )}
                             <button onClick={() => handleDownloadPdf(selectedInvoice.invoice.id)}
@@ -1693,16 +1693,16 @@ export default function Invoices() {
                                             addToBalance: e.target.checked
                                         })}
                                     />
-                                    Restore outstanding balance to subscriber's account
+                                    Restore legacy balance debt to subscriber's account
                                 </label>
                                 <small className="form-help">
-                                    When checked, the subscriber's debt will be restored to their balance.
-                                    When unchecked, the invoice is removed without affecting the balance.
+                                    When checked, this legacy invoice amount will be restored as negative balance debt.
+                                    When unchecked, the invoice is removed without affecting subscriber credit.
                                 </small>
                             </div>
                         ) : (
                             <small className="form-help">
-                                Manual invoices are removed without touching subscriber balance.
+                                Manual invoices are removed without touching subscriber credit.
                             </small>
                         )}
 
