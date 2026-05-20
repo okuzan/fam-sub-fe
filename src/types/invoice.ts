@@ -40,6 +40,7 @@ export interface InvoiceResponse {
     emailSent: boolean;
     notes?: string;
     origin: InvoiceOrigin;
+    invoiceGenerationRunId?: string | null;
 }
 
 export interface InvoiceLedgerEntryResponse {
@@ -59,6 +60,7 @@ export interface InvoiceDetailResponse {
 }
 
 export interface InvoiceGenerationResult {
+    runId?: string;
     invoicesCreated: number;
     ledgerEntriesAssigned: number;
     totalAmount: number;
