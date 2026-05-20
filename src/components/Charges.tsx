@@ -1,4 +1,5 @@
 import {useEffect, useState} from 'react';
+import {createPortal} from 'react-dom';
 import {API_CONFIG} from '../config/api';
 import {useToast} from './Toast';
 import type {
@@ -217,7 +218,7 @@ export default function Charges() {
                 </div>
             </div>
 
-            {(showCreateForm || editingCharge) && (
+            {(showCreateForm || editingCharge) && createPortal(
                 <div className="form-overlay">
                     <div className="form-container">
                         <h3>{editingCharge ? 'Edit Charge' : 'Create New Charge'}</h3>
@@ -281,7 +282,8 @@ export default function Charges() {
                             </div>
                         </form>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             {!selectedService ? (
