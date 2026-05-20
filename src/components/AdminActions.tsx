@@ -55,12 +55,43 @@ const createInitialFilters = (): AdminActionFilterForm => ({
     limit: String(ACTION_LIMIT)
 });
 
-const formatEnumLabel = (value: string) =>
+const toTitleCase = (value: string) =>
     value
-        .toLowerCase()
-        .split('_')
-        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .split(' ')
+        .filter(Boolean)
+        .map((word) => {
+            if (word.toUpperCase() === word) {
+                return word;
+            }
+
+            return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        })
         .join(' ');
+
+const formatEnumLabel = (value: string) => {
+    if (!value) {
+        return value;
+    }
+
+    if (value.includes('_')) {
+        return value
+            .toLowerCase()
+            .split('_')
+            .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+            .join(' ');
+    }
+
+    if (value.includes('-')) {
+        return toTitleCase(value.replace(/-/g, ' '));
+    }
+
+    // camelCase / PascalCase / mixed keys from BE, e.g. skippedCount -> Skipped Count
+    const spaced = value
+        .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+        .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2');
+
+    return toTitleCase(spaced);
+};
 
 const getActionTypeLabel = (type: AdminActionType) => {
     switch (type) {
