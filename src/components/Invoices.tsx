@@ -18,7 +18,8 @@ import type {
     InvoiceNotesUpdateRequest,
     InvoiceResponse,
     InvoiceSuggestion,
-    InvoiceFilterRequest
+    InvoiceFilterRequest,
+    InvoiceStatusHistoryResponse
 } from '../types/invoice';
 import type {SubscriberResponse} from '../types/subscriber';
 
@@ -81,6 +82,9 @@ export default function Invoices() {
     const [payingDraftInvoicesFromBalance, setPayingDraftInvoicesFromBalance] = useState(false);
     const [loadingDraftInvoicePreview, setLoadingDraftInvoicePreview] = useState(false);
     const [updatingInvoiceStatuses, setUpdatingInvoiceStatuses] = useState<Set<string>>(new Set());
+    const [loadingStatusHistory, setLoadingStatusHistory] = useState(false);
+    const [statusHistoryInvoice, setStatusHistoryInvoice] = useState<InvoiceResponse | null>(null);
+    const [statusHistory, setStatusHistory] = useState<InvoiceStatusHistoryResponse[]>([]);
     const [showGenerateForm, setShowGenerateForm] = useState(false);
     const [showManualInvoiceForm, setShowManualInvoiceForm] = useState(false);
     const [showFilterForm, setShowFilterForm] = useState(false);
@@ -675,6 +679,32 @@ export default function Invoices() {
         }
     };
 
+    const handleViewStatusHistory = async (invoice: InvoiceResponse) => {
+        setStatusHistoryInvoice(invoice);
+        setStatusHistory([]);
+        setLoadingStatusHistory(true);
+
+        try {
+            const response = await fetch(`${API_CONFIG.INVOICES_URL}/${invoice.id}/status-history`, {
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setStatusHistory(Array.isArray(data) ? data : []);
+            } else {
+                showError(await getResponseErrorMessage(response, 'Failed to fetch invoice status history'));
+                setStatusHistoryInvoice(null);
+            }
+        } catch (err) {
+            console.error('Error fetching invoice status history:', err);
+            showError('Error fetching invoice status history');
+            setStatusHistoryInvoice(null);
+        } finally {
+            setLoadingStatusHistory(false);
+        }
+    };
+
     const handlePayFromBalance = async () => {
         if (!selectedInvoice) return;
 
@@ -792,6 +822,20 @@ export default function Invoices() {
         const date = new Date(dateString);
         return date.toLocaleDateString('en-US', {year: 'numeric', month: 'long'});
     };
+
+    const formatDateTime = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
+    const getStatusChangedAtLabel = (invoice: Pick<InvoiceResponse, 'status'>) =>
+        invoice.status === 'PAID' ? 'Paid at' : 'Status changed';
 
     const getStatusColor = (status: string) => {
         switch (status.toLowerCase()) {
@@ -920,6 +964,9 @@ export default function Invoices() {
                                     <p><strong>Status:</strong> <span className="status-badge"
                                                                       style={{backgroundColor: getStatusColor(invoice.status)}}>{invoice.status}</span>
                                     </p>
+                                    <p>
+                                        <strong>{getStatusChangedAtLabel(invoice)}:</strong> {formatDateTime(invoice.statusChangedAt)}
+                                    </p>
                                     <p><strong>Origin:</strong> <span className="status-badge"
                                                                style={{backgroundColor: getOriginColor(invoice.origin)}}>{formatOrigin(invoice.origin)}</span>
                                     </p>
@@ -941,6 +988,11 @@ export default function Invoices() {
                                     <button onClick={() => handleDownloadPdf(invoice.id)}
                                             className="btn btn-sm btn-primary">
                                         Download PDF
+                                    </button>
+                                    <button onClick={() => handleViewStatusHistory(invoice)}
+                                            className="btn btn-sm btn-outline-secondary"
+                                            disabled={loadingStatusHistory && statusHistoryInvoice?.id === invoice.id}>
+                                        {loadingStatusHistory && statusHistoryInvoice?.id === invoice.id ? 'Loading...' : 'Status History'}
                                     </button>
                                     <label className="invoice-status-control">
                                         <span>Status</span>
@@ -1387,6 +1439,9 @@ export default function Invoices() {
                             <p><strong>Status:</strong> <span className="status-badge"
                                                               style={{backgroundColor: getStatusColor(selectedInvoice.invoice.status)}}>{selectedInvoice.invoice.status}</span>
                             </p>
+                            <p>
+                                <strong>{getStatusChangedAtLabel(selectedInvoice.invoice)}:</strong> {formatDateTime(selectedInvoice.invoice.statusChangedAt)}
+                            </p>
                             <p><strong>Origin:</strong> <span className="status-badge"
                                                        style={{backgroundColor: getOriginColor(selectedInvoice.invoice.origin)}}>{formatOrigin(selectedInvoice.invoice.origin)}</span>
                             </p>
@@ -1501,9 +1556,67 @@ export default function Invoices() {
                                     className="btn btn-primary">
                                 Download PDF
                             </button>
+                            <button onClick={() => handleViewStatusHistory(selectedInvoice.invoice)}
+                                    className="btn btn-outline-secondary"
+                                    disabled={loadingStatusHistory && statusHistoryInvoice?.id === selectedInvoice.invoice.id}>
+                                {loadingStatusHistory && statusHistoryInvoice?.id === selectedInvoice.invoice.id ? 'Loading...' : 'Status History'}
+                            </button>
                             <button onClick={() => {
                                 setSelectedInvoice(null);
                                 setSubscriberBalance(null);
+                            }} className="btn btn-secondary">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {statusHistoryInvoice && createPortal(
+                <div className="form-overlay">
+                    <div className="form-container status-history-modal">
+                        <h3>Status History</h3>
+                        <div className="status-history-summary">
+                            <p><strong>Subscriber:</strong> {statusHistoryInvoice.subscriberName}</p>
+                            <p><strong>Invoice ID:</strong> {statusHistoryInvoice.id}</p>
+                            <p><strong>Current status:</strong> <span className="status-badge"
+                                                                      style={{backgroundColor: getStatusColor(statusHistoryInvoice.status)}}>{statusHistoryInvoice.status}</span>
+                            </p>
+                        </div>
+
+                        {loadingStatusHistory ? (
+                            <div className="empty-ledger-state">Loading status history...</div>
+                        ) : statusHistory.length > 0 ? (
+                            <div className="status-history-list">
+                                {statusHistory.map((item) => (
+                                    <div key={item.actionId} className="status-history-item">
+                                        <div className="status-history-transition">
+                                            {item.statusBefore ? (
+                                                <span className="status-badge"
+                                                      style={{backgroundColor: getStatusColor(item.statusBefore)}}>{item.statusBefore}</span>
+                                            ) : (
+                                                <span>Created</span>
+                                            )}
+                                            <span>&rArr;</span>
+                                            <span className="status-badge"
+                                                  style={{backgroundColor: getStatusColor(item.statusAfter)}}>{item.statusAfter}</span>
+                                        </div>
+                                        <p><strong>Changed:</strong> {formatDateTime(item.changedAt)}</p>
+                                        <p><strong>Changed by:</strong> {item.changedByAccountId}</p>
+                                        <p><strong>Action:</strong> {item.actionType}</p>
+                                        <p>{item.summary}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="empty-ledger-state">No status changes found.</div>
+                        )}
+
+                        <div className="form-actions">
+                            <button onClick={() => {
+                                setStatusHistoryInvoice(null);
+                                setStatusHistory([]);
                             }} className="btn btn-secondary">
                                 Close
                             </button>

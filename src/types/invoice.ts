@@ -52,6 +52,7 @@ export interface InvoiceResponse {
     totalAmount: number;
     status: InvoiceStatus;
     createdAt: string;
+    statusChangedAt: string;
     createdByAccountId: string;
     sentAt?: string;
     emailSent: boolean;
@@ -74,6 +75,16 @@ export interface InvoiceLedgerEntryResponse {
 export interface InvoiceDetailResponse {
     invoice: InvoiceResponse;
     entries: InvoiceLedgerEntryResponse[];
+}
+
+export interface InvoiceStatusHistoryResponse {
+    actionId: string;
+    changedAt: string;
+    changedByAccountId: string;
+    statusBefore?: string | null;
+    statusAfter: string;
+    actionType: string;
+    summary: string;
 }
 
 export interface InvoiceGenerationResult {
