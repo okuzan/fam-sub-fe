@@ -1,0 +1,160 @@
+.admin-actions {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 2rem;
+    color: white;
+}
+
+.admin-actions-header {
+    margin-bottom: 1.5rem;
+}
+
+.admin-actions-header h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.8rem;
+}
+
+.admin-actions-header p {
+    margin: 0;
+    opacity: 0.85;
+}
+
+.admin-actions-tabs {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+
+.admin-actions-tab {
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
+    border-radius: 999px;
+    padding: 0.7rem 1rem;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.admin-actions-tab:hover {
+    background: rgba(255, 255, 255, 0.16);
+    transform: translateY(-1px);
+}
+
+.admin-actions-tab-active {
+    background: rgba(255, 255, 255, 0.24);
+}
+
+.admin-actions-empty {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    padding: 2rem;
+    text-align: center;
+    opacity: 0.9;
+}
+
+.admin-actions-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.admin-actions-card {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+
+.admin-actions-card-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 0.9rem;
+    flex-wrap: wrap;
+}
+
+.admin-actions-badge {
+    border-radius: 999px;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.admin-actions-badge-cost {
+    background: rgba(23, 162, 184, 0.24);
+    border: 1px solid rgba(23, 162, 184, 0.45);
+}
+
+.admin-actions-badge-invoice {
+    background: rgba(40, 167, 69, 0.24);
+    border: 1px solid rgba(40, 167, 69, 0.45);
+}
+
+.admin-actions-created-at {
+    opacity: 0.85;
+    font-size: 0.9rem;
+}
+
+.admin-actions-summary {
+    margin: 0 0 1rem;
+    font-size: 1.05rem;
+    line-height: 1.45;
+}
+
+.admin-actions-meta {
+    display: grid;
+    gap: 0.35rem;
+    margin-bottom: 1rem;
+    opacity: 0.92;
+}
+
+.admin-actions-meta p {
+    margin: 0;
+    word-break: break-word;
+}
+
+.admin-actions-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem;
+}
+
+.admin-actions-metric {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+}
+
+.admin-actions-metric-label {
+    display: block;
+    font-size: 0.8rem;
+    opacity: 0.75;
+    margin-bottom: 0.35rem;
+}
+
+.admin-actions-metric-value {
+    display: block;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .admin-actions {
+        padding: 1rem;
+    }
+
+    .admin-actions-card {
+        padding: 1rem;
+    }
+
+    .admin-actions-metrics {
+        grid-template-columns: 1fr;
+    }
+}

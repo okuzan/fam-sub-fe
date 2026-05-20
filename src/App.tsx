@@ -171,6 +171,11 @@ function App() {
                                 <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
+                        <Route path="actions" element={
+                            user && user.role === 'admin' ?
+                                <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
+                                <Navigate to={getRedirectPath()} replace/>
+                        }/>
                         <Route path="telegram-posts" element={
                             user && user.role === 'admin' ?
                                 <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :

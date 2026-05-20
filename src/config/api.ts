@@ -15,6 +15,7 @@ export const API_CONFIG = {
     MEMBERSHIPS_URL: `${API_BASE_URL}/admin/memberships`,
     COST_CALCULATIONS_URL: `${API_BASE_URL}/admin/cost-calculations`,
     INVOICES_URL: `${API_BASE_URL}/admin/invoices`,
+    ADMIN_ACTIONS_URL: `${API_BASE_URL}/admin/actions`,
     LOGIN_SUCCESS_URL: '/dashboard',
     LOGIN_FAILURE_URL: '/login?error=true',
 } as const;

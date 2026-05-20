@@ -6,6 +6,7 @@ import Charges from './Charges';
 import Memberships from './Memberships';
 import CostCalculations from './CostCalculations';
 import Invoices from './Invoices';
+import AdminActions from './AdminActions';
 import TelegramPosts from './TelegramPosts';
 import './SubscriptionServices.css';
 import './Subscribers.css';
@@ -13,6 +14,7 @@ import './Charges.css';
 import './Memberships.css';
 import './CostCalculations.css';
 import './Invoices.css';
+import './AdminActions.css';
 import './TelegramPosts.css';
 
 interface AdminDashboardProps {
@@ -27,6 +29,7 @@ type AdminSectionKey =
     | 'charges'
     | 'cost-calculations'
     | 'invoices'
+    | 'admin-actions'
     | 'telegram-posts'
     | 'profile';
 
@@ -65,6 +68,12 @@ const SECTION_CONFIGS: SectionConfig[] = [
     },
     {key: 'invoices', title: 'Invoices', description: 'Generate, filter, and manage invoices', path: '/admin/invoices'},
     {
+        key: 'admin-actions',
+        title: 'Admin Actions',
+        description: 'Review cost and invoice generation history',
+        path: '/admin/actions'
+    },
+    {
         key: 'telegram-posts',
         title: 'Telegram Posts',
         description: 'Generate templated update posts for Telegram channel',
@@ -96,6 +105,7 @@ export default function AdminDashboard({onLogout, userEmail}: AdminDashboardProp
         if (path === '/admin/charges') return <Charges/>;
         if (path === '/admin/cost-calculations') return <CostCalculations/>;
         if (path === '/admin/invoices') return <Invoices/>;
+        if (path === '/admin/actions') return <AdminActions/>;
         if (path === '/admin/telegram-posts') return <TelegramPosts/>;
         if (path === '/admin/profile') {
             return (
