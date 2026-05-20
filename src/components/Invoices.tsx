@@ -76,10 +76,13 @@ export default function Invoices() {
     const [emailingInvoices, setEmailingInvoices] = useState<Set<string>>(new Set());
     const [emailingDetailInvoice, setEmailingDetailInvoice] = useState(false);
     const [emailingDraftInvoices, setEmailingDraftInvoices] = useState(false);
+    const [loadingDraftInvoicePreview, setLoadingDraftInvoicePreview] = useState(false);
     const [updatingInvoiceStatuses, setUpdatingInvoiceStatuses] = useState<Set<string>>(new Set());
     const [showGenerateForm, setShowGenerateForm] = useState(false);
     const [showManualInvoiceForm, setShowManualInvoiceForm] = useState(false);
     const [showFilterForm, setShowFilterForm] = useState(false);
+    const [showDraftEmailPreview, setShowDraftEmailPreview] = useState(false);
+    const [draftEmailPreviewInvoices, setDraftEmailPreviewInvoices] = useState<InvoiceResponse[]>([]);
     const [filters, setFilters] = useState<InvoiceFilterRequest>({});
     const [editingNotes, setEditingNotes] = useState(false);
     const [notesInput, setNotesInput] = useState('');
@@ -466,7 +469,38 @@ export default function Invoices() {
         }
     };
 
+    const handlePreviewDraftInvoices = async () => {
+        setLoadingDraftInvoicePreview(true);
+
+        try {
+            const request: InvoiceFilterRequest = {status: 'DRAFT'};
+            const response = await fetch(`${API_CONFIG.INVOICES_URL}/filter`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                credentials: 'include',
+                body: JSON.stringify(request)
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setDraftEmailPreviewInvoices(Array.isArray(data) ? data : []);
+                setShowDraftEmailPreview(true);
+            } else {
+                showError(await getResponseErrorMessage(response, 'Failed to fetch draft invoices'));
+            }
+        } catch (err) {
+            console.error('Error fetching draft invoice preview:', err);
+            showError('Error fetching draft invoices');
+        } finally {
+            setLoadingDraftInvoicePreview(false);
+        }
+    };
+
     const handleEmailDraftInvoices = async () => {
+        if (draftEmailPreviewInvoices.length === 0) {
+            return;
+        }
+
         setEmailingDraftInvoices(true);
 
         try {
@@ -491,6 +525,8 @@ export default function Invoices() {
                 }
 
                 fetchInvoices(hasActiveFilters);
+                setShowDraftEmailPreview(false);
+                setDraftEmailPreviewInvoices([]);
             } else {
                 showError(await getResponseErrorMessage(response, 'Failed to email draft invoices'));
             }
@@ -749,6 +785,7 @@ export default function Invoices() {
         (subscriber) => subscriber.id === manualInvoiceData.subscriberId
     )?.name;
     const resolvedSuggestedPeriod = resolveSuggestedInvoicePeriod(suggestion);
+    const draftEmailPreviewTotal = draftEmailPreviewInvoices.reduce((sum, invoice) => sum + invoice.totalAmount, 0);
 
     return (
         <div className="invoices">
@@ -761,9 +798,9 @@ export default function Invoices() {
                     <button onClick={() => setShowManualInvoiceForm(true)} className="btn btn-info">
                         Create Manual Invoice
                     </button>
-                    <button onClick={handleEmailDraftInvoices} className="btn btn-success"
-                            disabled={emailingDraftInvoices}>
-                        {emailingDraftInvoices ? 'Sending Draft Emails...' : 'Email Draft Invoices'}
+                    <button onClick={handlePreviewDraftInvoices} className="btn btn-success"
+                            disabled={loadingDraftInvoicePreview || emailingDraftInvoices}>
+                        {loadingDraftInvoicePreview ? 'Loading Drafts...' : emailingDraftInvoices ? 'Sending Draft Emails...' : 'Email Draft Invoices'}
                     </button>
                     <button onClick={() => setShowGenerateForm(true)} className="btn btn-primary">
                         Generate Invoices
@@ -1121,6 +1158,64 @@ export default function Invoices() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {showDraftEmailPreview && createPortal(
+                <div className="form-overlay">
+                    <div className="form-container draft-email-preview">
+                        <h3>Email Draft Invoices</h3>
+                        <div className="draft-email-summary">
+                            <p>
+                                <strong>{draftEmailPreviewInvoices.length}</strong> draft invoices found.
+                            </p>
+                            <p>
+                                <strong>Total:</strong> ₴{draftEmailPreviewTotal.toFixed(2)}
+                            </p>
+                        </div>
+
+                        {draftEmailPreviewInvoices.length > 0 ? (
+                            <div className="draft-email-list">
+                                {draftEmailPreviewInvoices.map((invoice) => (
+                                    <div key={invoice.id} className="draft-email-row">
+                                        <div>
+                                            <strong>{invoice.subscriberName}</strong>
+                                            <span>{formatInvoicePeriod(invoice)}</span>
+                                        </div>
+                                        <div>
+                                            <strong>₴{invoice.totalAmount.toFixed(2)}</strong>
+                                            {invoice.emailSent && <span>Email already sent</span>}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="empty-ledger-state">
+                                No draft invoices are available to email.
+                            </div>
+                        )}
+
+                        <div className="form-actions">
+                            <button
+                                onClick={handleEmailDraftInvoices}
+                                className="btn btn-success"
+                                disabled={emailingDraftInvoices || draftEmailPreviewInvoices.length === 0}
+                            >
+                                {emailingDraftInvoices ? 'Sending...' : 'Send to All Drafts'}
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setShowDraftEmailPreview(false);
+                                    setDraftEmailPreviewInvoices([]);
+                                }}
+                                className="btn btn-secondary"
+                                disabled={emailingDraftInvoices}
+                            >
+                                Cancel
+                            </button>
+                        </div>
                     </div>
                 </div>,
                 document.body
