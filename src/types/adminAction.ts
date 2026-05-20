@@ -54,3 +54,16 @@ export interface AdminActionResponse {
     summary: string;
     metrics: Record<string, unknown>;
 }
+
+export interface AdminActionFilterRequest {
+    actionType?: AdminActionType;
+    targetType?: AdminActionTargetType;
+    targetId?: string;
+    subscriberId?: string;
+    createdByAccountId?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    fromMonth?: string;
+    toMonth?: string;
+    limit?: number;
+}

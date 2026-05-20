@@ -72,7 +72,23 @@
     font-size: 0.95rem;
 }
 
+.admin-actions-filter input {
+    width: 100%;
+    padding: 0.75rem 0.9rem;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.12);
+    color: white;
+    font-size: 0.95rem;
+    box-sizing: border-box;
+}
+
 .admin-actions-filter select:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.45);
+}
+
+.admin-actions-filter input:focus {
     outline: none;
     border-color: rgba(255, 255, 255, 0.45);
 }
@@ -80,6 +96,47 @@
 .admin-actions-filter select option {
     background: #4a4f77;
     color: white;
+}
+
+.admin-actions-filter input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.admin-actions-filter-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: end;
+    flex-wrap: wrap;
+}
+
+.admin-actions-submit,
+.admin-actions-reset {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    padding: 0.78rem 1rem;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: white;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.admin-actions-submit {
+    background: rgba(40, 167, 69, 0.28);
+}
+
+.admin-actions-reset {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.admin-actions-submit:hover:not(:disabled),
+.admin-actions-reset:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.admin-actions-submit:disabled,
+.admin-actions-reset:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
 }
 
 .admin-actions-empty {
