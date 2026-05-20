@@ -961,8 +961,26 @@ export default function Invoices() {
                                         <strong>Period:</strong> {formatInvoicePeriod(invoice)}
                                     </p>
                                     <p><strong>Amount:</strong> ₴{invoice.totalAmount.toFixed(2)}</p>
-                                    <p><strong>Status:</strong> <span className="status-badge"
-                                                                      style={{backgroundColor: getStatusColor(invoice.status)}}>{invoice.status}</span>
+                                    <p className="invoice-status-line">
+                                        <strong>Status:</strong>{' '}
+                                        <span className="status-badge"
+                                              style={{backgroundColor: getStatusColor(invoice.status)}}>{invoice.status}</span>
+                                        <details className="status-editor">
+                                            <summary aria-label="Change invoice status" title="Change status">
+                                                <span className={`status-editor-chevron ${updatingInvoiceStatuses.has(invoice.id) ? 'is-updating' : ''}`} aria-hidden="true"></span>
+                                            </summary>
+                                            <div className="status-editor-menu">
+                                                <select
+                                                    value={invoice.status}
+                                                    onChange={(event) => handleUpdateInvoiceStatus(invoice.id, event.target.value as InvoiceStatus)}
+                                                    disabled={updatingInvoiceStatuses.has(invoice.id)}
+                                                >
+                                                    {INVOICE_STATUS_OPTIONS.map(status => (
+                                                        <option key={status} value={status}>{status}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </details>
                                     </p>
                                     <p>
                                         <strong>{getStatusChangedAtLabel(invoice)}:</strong> {formatDateTime(invoice.statusChangedAt)}
@@ -994,18 +1012,6 @@ export default function Invoices() {
                                             disabled={loadingStatusHistory && statusHistoryInvoice?.id === invoice.id}>
                                         {loadingStatusHistory && statusHistoryInvoice?.id === invoice.id ? 'Loading...' : 'Status History'}
                                     </button>
-                                    <label className="invoice-status-control">
-                                        <span>Status</span>
-                                        <select
-                                            value={invoice.status}
-                                            onChange={(event) => handleUpdateInvoiceStatus(invoice.id, event.target.value as InvoiceStatus)}
-                                            disabled={updatingInvoiceStatuses.has(invoice.id)}
-                                        >
-                                            {INVOICE_STATUS_OPTIONS.map(status => (
-                                                <option key={status} value={status}>{status}</option>
-                                            ))}
-                                        </select>
-                                    </label>
                                     {canVoidInvoice(invoice) && (
                                         <button onClick={() => openVoidModal(invoice)}
                                                 className="btn btn-sm btn-warning">
@@ -1436,8 +1442,26 @@ export default function Invoices() {
                                 <strong>Period:</strong> {formatInvoicePeriod(selectedInvoice.invoice)}
                             </p>
                             <p><strong>Total Amount:</strong> ₴{selectedInvoice.invoice.totalAmount.toFixed(2)}</p>
-                            <p><strong>Status:</strong> <span className="status-badge"
-                                                              style={{backgroundColor: getStatusColor(selectedInvoice.invoice.status)}}>{selectedInvoice.invoice.status}</span>
+                            <p className="invoice-status-line">
+                                <strong>Status:</strong>{' '}
+                                <span className="status-badge"
+                                      style={{backgroundColor: getStatusColor(selectedInvoice.invoice.status)}}>{selectedInvoice.invoice.status}</span>
+                                <details className="status-editor status-editor-detail">
+                                    <summary aria-label="Change invoice status" title="Change status">
+                                        <span className={`status-editor-chevron ${updatingInvoiceStatuses.has(selectedInvoice.invoice.id) ? 'is-updating' : ''}`} aria-hidden="true"></span>
+                                    </summary>
+                                    <div className="status-editor-menu">
+                                        <select
+                                            value={selectedInvoice.invoice.status}
+                                            onChange={(event) => handleUpdateInvoiceStatus(selectedInvoice.invoice.id, event.target.value as InvoiceStatus)}
+                                            disabled={updatingInvoiceStatuses.has(selectedInvoice.invoice.id)}
+                                        >
+                                            {INVOICE_STATUS_OPTIONS.map(status => (
+                                                <option key={status} value={status}>{status}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </details>
                             </p>
                             <p>
                                 <strong>{getStatusChangedAtLabel(selectedInvoice.invoice)}:</strong> {formatDateTime(selectedInvoice.invoice.statusChangedAt)}
@@ -1531,18 +1555,6 @@ export default function Invoices() {
                                     Delete Invoice
                                 </button>
                             )}
-                            <label className="invoice-status-control invoice-status-control-detail">
-                                <span>Status</span>
-                                <select
-                                    value={selectedInvoice.invoice.status}
-                                    onChange={(event) => handleUpdateInvoiceStatus(selectedInvoice.invoice.id, event.target.value as InvoiceStatus)}
-                                    disabled={updatingInvoiceStatuses.has(selectedInvoice.invoice.id)}
-                                >
-                                    {INVOICE_STATUS_OPTIONS.map(status => (
-                                        <option key={status} value={status}>{status}</option>
-                                    ))}
-                                </select>
-                            </label>
                             {!isInvoiceClosed(selectedInvoice.invoice) &&
                                 subscriberBalance !== null &&
                                 subscriberBalance > selectedInvoice.invoice.totalAmount && (
