@@ -2,6 +2,7 @@ import {useEffect, useState} from 'react';
 import {API_CONFIG} from '../config/api';
 import {useToast} from './Toast';
 import type {AdminActionResponse, AdminActionTargetType, AdminActionType} from '../types/adminAction';
+import {AdminActionTargetType as AdminActionTargetTypes, AdminActionType as AdminActionTypes} from '../types/adminAction';
 
 type AdminActionTab = 'all' | 'cost-runs' | 'invoice-runs';
 
@@ -13,6 +14,16 @@ const TAB_CONFIG: Record<AdminActionTab, {label: string; path: string}> = {
     'invoice-runs': {label: 'Invoice Runs', path: '/invoice-runs'}
 };
 
+const ACTION_TYPE_OPTIONS = Object.values(AdminActionTypes);
+const TARGET_TYPE_OPTIONS = Object.values(AdminActionTargetTypes);
+
+const formatEnumLabel = (value: string) =>
+    value
+        .toLowerCase()
+        .split('_')
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+
 const getActionTypeLabel = (type: AdminActionType) => {
     switch (type) {
         case 'COST_CALCULATION_RUN':
@@ -20,7 +31,7 @@ const getActionTypeLabel = (type: AdminActionType) => {
         case 'INVOICE_GENERATION_RUN':
             return 'Invoice Generation Run';
         default:
-            return type;
+            return formatEnumLabel(type);
     }
 };
 
@@ -31,11 +42,7 @@ const getTargetTypeLabel = (targetType: AdminActionTargetType) => {
         case 'INVOICE_GENERATION_RUN':
             return 'Invoice Generation Run';
         default:
-            return targetType
-                .toLowerCase()
-                .split('_')
-                .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-                .join(' ');
+            return formatEnumLabel(targetType);
     }
 };
 
@@ -114,6 +121,8 @@ export default function AdminActions() {
     const [selectedTab, setSelectedTab] = useState<AdminActionTab>('all');
     const [actions, setActions] = useState<AdminActionResponse[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedActionType, setSelectedActionType] = useState<AdminActionType | ''>('');
+    const [selectedTargetType, setSelectedTargetType] = useState<AdminActionTargetType | ''>('');
 
     useEffect(() => {
         fetchActions(selectedTab);
@@ -142,6 +151,18 @@ export default function AdminActions() {
         }
     };
 
+    const filteredActions = actions.filter((action) => {
+        if (selectedActionType && action.type !== selectedActionType) {
+            return false;
+        }
+
+        if (selectedTargetType && action.targetType !== selectedTargetType) {
+            return false;
+        }
+
+        return true;
+    });
+
     return (
         <div className="admin-actions">
             <div className="admin-actions-header">
@@ -162,13 +183,47 @@ export default function AdminActions() {
                 ))}
             </div>
 
+            <div className="admin-actions-filters">
+                <div className="admin-actions-filter">
+                    <label htmlFor="adminActionType">Action Type</label>
+                    <select
+                        id="adminActionType"
+                        value={selectedActionType}
+                        onChange={(e) => setSelectedActionType((e.target.value as AdminActionType) || '')}
+                    >
+                        <option value="">All Action Types</option>
+                        {ACTION_TYPE_OPTIONS.map((type) => (
+                            <option key={type} value={type}>
+                                {getActionTypeLabel(type)}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className="admin-actions-filter">
+                    <label htmlFor="adminTargetType">Target Type</label>
+                    <select
+                        id="adminTargetType"
+                        value={selectedTargetType}
+                        onChange={(e) => setSelectedTargetType((e.target.value as AdminActionTargetType) || '')}
+                    >
+                        <option value="">All Target Types</option>
+                        {TARGET_TYPE_OPTIONS.map((targetType) => (
+                            <option key={targetType} value={targetType}>
+                                {getTargetTypeLabel(targetType)}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+
             {loading ? (
                 <div className="admin-actions-empty">Loading admin actions...</div>
-            ) : actions.length === 0 ? (
+            ) : filteredActions.length === 0 ? (
                 <div className="admin-actions-empty">No admin actions found.</div>
             ) : (
                 <div className="admin-actions-list">
-                    {actions.map((action) => (
+                    {filteredActions.map((action) => (
                         <div key={action.id} className="admin-actions-card">
                             <div className="admin-actions-card-header">
                                 <span className={getActionTypeBadgeClass(action.type)}>
