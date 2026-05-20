@@ -118,6 +118,30 @@ export interface DraftInvoiceBulkEmailResult {
     failedInvoiceIds?: string[];
 }
 
+export interface InvoiceBulkBalancePaymentItemResult {
+    invoiceId: string;
+    subscriberId: string;
+    subscriberName: string;
+    statusBefore: string;
+    statusAfter: string;
+    invoiceAmount: number;
+    balanceBefore: number;
+    balanceAfter: number;
+    paid: boolean;
+    skipped: boolean;
+    updated: boolean;
+    message: string;
+}
+
+export interface InvoiceBulkBalancePaymentResult {
+    attemptedCount: number;
+    paidCount: number;
+    skippedCount: number;
+    failedCount: number;
+    totalPaidAmount: number;
+    items: InvoiceBulkBalancePaymentItemResult[];
+}
+
 export interface InvoiceSuggestion {
     lastInvoicedToMonth?: string;
     suggestedFromMonth?: string;

@@ -5,6 +5,8 @@ import {getResponseErrorMessage} from '../utils/errors';
 import {useToast} from './Toast';
 import type {
     DraftInvoiceBulkEmailResult,
+    InvoiceBulkBalancePaymentItemResult,
+    InvoiceBulkBalancePaymentResult,
     InvoiceDetailResponse,
     InvoiceOrigin,
     InvoiceGenerationRequest,
@@ -76,13 +78,16 @@ export default function Invoices() {
     const [emailingInvoices, setEmailingInvoices] = useState<Set<string>>(new Set());
     const [emailingDetailInvoice, setEmailingDetailInvoice] = useState(false);
     const [emailingDraftInvoices, setEmailingDraftInvoices] = useState(false);
+    const [payingDraftInvoicesFromBalance, setPayingDraftInvoicesFromBalance] = useState(false);
     const [loadingDraftInvoicePreview, setLoadingDraftInvoicePreview] = useState(false);
     const [updatingInvoiceStatuses, setUpdatingInvoiceStatuses] = useState<Set<string>>(new Set());
     const [showGenerateForm, setShowGenerateForm] = useState(false);
     const [showManualInvoiceForm, setShowManualInvoiceForm] = useState(false);
     const [showFilterForm, setShowFilterForm] = useState(false);
     const [showDraftEmailPreview, setShowDraftEmailPreview] = useState(false);
+    const [showDraftBalancePaymentModal, setShowDraftBalancePaymentModal] = useState(false);
     const [draftEmailPreviewInvoices, setDraftEmailPreviewInvoices] = useState<InvoiceResponse[]>([]);
+    const [draftBalancePaymentResult, setDraftBalancePaymentResult] = useState<InvoiceBulkBalancePaymentResult | null>(null);
     const [filters, setFilters] = useState<InvoiceFilterRequest>({});
     const [editingNotes, setEditingNotes] = useState(false);
     const [notesInput, setNotesInput] = useState('');
@@ -538,6 +543,75 @@ export default function Invoices() {
         }
     };
 
+    const getDraftBalancePaymentSummary = (result: InvoiceBulkBalancePaymentResult) => {
+        const total = `Total paid: ₴${result.totalPaidAmount.toFixed(2)}.`;
+
+        if (result.failedCount > 0) {
+            return `Paid ${result.paidCount} of ${result.attemptedCount} draft invoices. Skipped ${result.skippedCount}, failed ${result.failedCount}. ${total}`;
+        }
+
+        return `Paid ${result.paidCount} of ${result.attemptedCount} draft invoices from balance. Skipped ${result.skippedCount} due to insufficient balance. ${total}`;
+    };
+
+    const getDraftBalancePaymentItemResult = (item: InvoiceBulkBalancePaymentItemResult) => {
+        if (item.paid) {
+            return 'Paid';
+        }
+
+        if (item.skipped) {
+            return 'Skipped';
+        }
+
+        return 'Failed';
+    };
+
+    const openDraftBalancePaymentModal = () => {
+        setDraftBalancePaymentResult(null);
+        setShowDraftBalancePaymentModal(true);
+    };
+
+    const closeDraftBalancePaymentModal = () => {
+        if (payingDraftInvoicesFromBalance) {
+            return;
+        }
+
+        setShowDraftBalancePaymentModal(false);
+        setDraftBalancePaymentResult(null);
+    };
+
+    const handlePayDraftInvoicesFromBalance = async () => {
+        setPayingDraftInvoicesFromBalance(true);
+
+        try {
+            const response = await fetch(`${API_CONFIG.INVOICES_URL}/drafts/pay-from-balance`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const result: InvoiceBulkBalancePaymentResult = await response.json();
+                setDraftBalancePaymentResult(result);
+                showSuccess(getDraftBalancePaymentSummary(result));
+
+                await fetchInvoices(hasActiveFilters);
+                await fetchSubscribers();
+
+                if (selectedInvoice) {
+                    await handleViewInvoice(selectedInvoice.invoice.id);
+                }
+
+                window.dispatchEvent(new CustomEvent('subscriber-refresh-needed'));
+            } else {
+                showError(await getResponseErrorMessage(response, 'Could not pay draft invoices from balance.'));
+            }
+        } catch (err) {
+            console.error('Error paying draft invoices from balance:', err);
+            showError('Could not pay draft invoices from balance.');
+        } finally {
+            setPayingDraftInvoicesFromBalance(false);
+        }
+    };
+
     const handleEmailInvoiceFromDetail = async (invoiceId: string, subscriberName: string) => {
         setEmailingDetailInvoice(true);
 
@@ -786,6 +860,7 @@ export default function Invoices() {
     )?.name;
     const resolvedSuggestedPeriod = resolveSuggestedInvoicePeriod(suggestion);
     const draftEmailPreviewTotal = draftEmailPreviewInvoices.reduce((sum, invoice) => sum + invoice.totalAmount, 0);
+    const draftBalancePaymentItems = draftBalancePaymentResult?.items ?? [];
 
     return (
         <div className="invoices">
@@ -801,6 +876,10 @@ export default function Invoices() {
                     <button onClick={handlePreviewDraftInvoices} className="btn btn-success"
                             disabled={loadingDraftInvoicePreview || emailingDraftInvoices}>
                         {loadingDraftInvoicePreview ? 'Loading Drafts...' : emailingDraftInvoices ? 'Sending Draft Emails...' : 'Email Draft Invoices'}
+                    </button>
+                    <button onClick={openDraftBalancePaymentModal} className="btn btn-warning"
+                            disabled={payingDraftInvoicesFromBalance}>
+                        {payingDraftInvoicesFromBalance ? 'Paying Drafts...' : 'Pay drafts from balance'}
                     </button>
                     <button onClick={() => setShowGenerateForm(true)} className="btn btn-primary">
                         Generate Invoices
@@ -1216,6 +1295,79 @@ export default function Invoices() {
                                 Cancel
                             </button>
                         </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {showDraftBalancePaymentModal && createPortal(
+                <div className="form-overlay">
+                    <div className="form-container draft-balance-payment-modal">
+                        <h3>Pay draft invoices from balance?</h3>
+
+                        {!draftBalancePaymentResult ? (
+                            <>
+                                <p className="draft-balance-payment-copy">
+                                    This will check all DRAFT invoices and pay the ones fully covered by subscriber
+                                    balance. Subscriber balances will be reduced by the invoice amount. Invoices
+                                    without enough balance will be skipped. No emails will be sent.
+                                </p>
+
+                                <div className="form-actions">
+                                    <button
+                                        onClick={handlePayDraftInvoicesFromBalance}
+                                        className="btn btn-warning"
+                                        disabled={payingDraftInvoicesFromBalance}
+                                    >
+                                        {payingDraftInvoicesFromBalance ? 'Paying...' : 'Pay covered drafts'}
+                                    </button>
+                                    <button
+                                        onClick={closeDraftBalancePaymentModal}
+                                        className="btn btn-secondary"
+                                        disabled={payingDraftInvoicesFromBalance}
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="draft-balance-payment-summary">
+                                    <p>{getDraftBalancePaymentSummary(draftBalancePaymentResult)}</p>
+                                </div>
+
+                                {draftBalancePaymentItems.length > 0 && (
+                                    <div className="draft-balance-payment-results">
+                                        <div className="draft-balance-payment-header">
+                                            <span>Subscriber</span>
+                                            <span>Invoice amount</span>
+                                            <span>Balance before</span>
+                                            <span>Balance after</span>
+                                            <span>Result</span>
+                                            <span>Message</span>
+                                        </div>
+                                        {draftBalancePaymentItems.map((item) => (
+                                            <div key={item.invoiceId} className="draft-balance-payment-row">
+                                                <span>{item.subscriberName}</span>
+                                                <span>₴{item.invoiceAmount.toFixed(2)}</span>
+                                                <span>₴{item.balanceBefore.toFixed(2)}</span>
+                                                <span>₴{item.balanceAfter.toFixed(2)}</span>
+                                                <span className={`draft-balance-payment-result draft-balance-payment-result-${getDraftBalancePaymentItemResult(item).toLowerCase()}`}>
+                                                    {getDraftBalancePaymentItemResult(item)}
+                                                </span>
+                                                <span>{item.message}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                <div className="form-actions">
+                                    <button onClick={closeDraftBalancePaymentModal} className="btn btn-secondary">
+                                        Close
+                                    </button>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>,
                 document.body

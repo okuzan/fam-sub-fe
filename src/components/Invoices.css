@@ -347,6 +347,87 @@
     font-size: 0.9em;
 }
 
+.draft-balance-payment-modal {
+    max-width: 980px;
+}
+
+.draft-balance-payment-copy {
+    color: #333;
+    line-height: 1.5;
+    margin: 0 0 16px;
+}
+
+.draft-balance-payment-summary {
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    background: #fff8f0;
+    border: 1px solid #ffe0bd;
+    border-radius: 6px;
+}
+
+.draft-balance-payment-summary p {
+    margin: 0;
+    color: #333;
+}
+
+.draft-balance-payment-results {
+    display: grid;
+    max-height: 420px;
+    overflow: auto;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+}
+
+.draft-balance-payment-header,
+.draft-balance-payment-row {
+    display: grid;
+    grid-template-columns: minmax(140px, 1.2fr) minmax(110px, 0.8fr) minmax(110px, 0.8fr) minmax(110px, 0.8fr) minmax(80px, 0.6fr) minmax(180px, 1.4fr);
+    gap: 12px;
+    align-items: center;
+    padding: 10px 12px;
+}
+
+.draft-balance-payment-header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+    color: #333;
+    font-weight: 600;
+}
+
+.draft-balance-payment-row {
+    background: white;
+    border-bottom: 1px solid #f0f0f0;
+    color: #555;
+}
+
+.draft-balance-payment-row:last-child {
+    border-bottom: none;
+}
+
+.draft-balance-payment-result {
+    width: fit-content;
+    padding: 2px 8px;
+    border-radius: 12px;
+    color: white;
+    font-size: 0.85em;
+    font-weight: 600;
+}
+
+.draft-balance-payment-result-paid {
+    background: #007bff;
+}
+
+.draft-balance-payment-result-skipped {
+    background: #6c757d;
+}
+
+.draft-balance-payment-result-failed {
+    background: #dc3545;
+}
+
 .notes-section {
     margin-top: 15px;
     padding-top: 15px;
@@ -545,5 +626,14 @@
 
     .draft-email-row div:last-child {
         text-align: left;
+    }
+
+    .draft-balance-payment-header {
+        display: none;
+    }
+
+    .draft-balance-payment-row {
+        grid-template-columns: 1fr;
+        gap: 6px;
     }
 }
