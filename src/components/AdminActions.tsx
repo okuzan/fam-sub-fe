@@ -1,5 +1,6 @@
 import {useEffect, useState} from 'react';
 import {API_CONFIG} from '../config/api';
+import {getResponseErrorMessage} from '../utils/errors';
 import {useToast} from './Toast';
 import type {
     AdminActionFilterRequest,
@@ -335,7 +336,7 @@ export default function AdminActions() {
                 const data = await response.json();
                 setActions(Array.isArray(data) ? data : []);
             } else {
-                showError('Failed to fetch admin actions');
+                showError(await getResponseErrorMessage(response, 'Failed to fetch admin actions'));
             }
         } catch (err) {
             console.error('Failed to fetch admin actions:', err);
@@ -388,7 +389,7 @@ export default function AdminActions() {
                     [runId]: data
                 }));
             } else {
-                showError('Failed to load recovery preview');
+                showError(await getResponseErrorMessage(response, 'Failed to load recovery preview'));
             }
         } catch (err) {
             console.error('Failed to fetch recovery preview:', err);
@@ -438,8 +439,7 @@ export default function AdminActions() {
                 }));
                 await fetchActions(selectedTab, filters);
             } else {
-                const errorData = await response.json().catch(() => null);
-                showError(errorData?.message || 'Failed to undo run');
+                showError(await getResponseErrorMessage(response, 'Failed to undo run'));
             }
         } catch (err) {
             console.error('Failed to undo run:', err);

@@ -1,5 +1,6 @@
 import {useState} from 'react';
 import {API_CONFIG} from '../config/api';
+import {getResponseErrorMessage} from '../utils/errors';
 import {useToast} from './Toast';
 
 export default function TelegramPosts() {
@@ -23,7 +24,7 @@ export default function TelegramPosts() {
                 setGeneratedContent(result.content);
                 showSuccess('Telegram post generated successfully!');
             } else {
-                showError('Failed to generate Telegram post');
+                showError(await getResponseErrorMessage(response, 'Failed to generate Telegram post'));
             }
         } catch (err) {
             console.error('Error generating Telegram post:', err);

@@ -1,6 +1,7 @@
 import {useEffect, useState} from 'react';
 import {createPortal} from 'react-dom';
 import {API_CONFIG} from '../config/api';
+import {getResponseErrorMessage} from '../utils/errors';
 import {useToast} from './Toast';
 import type {
     SubscriberCreateRequest,
@@ -66,7 +67,7 @@ export default function Subscribers() {
                 const data = await response.json();
                 setSubscribers(data);
             } else {
-                showError('Failed to fetch subscribers');
+                showError(await getResponseErrorMessage(response, 'Failed to fetch subscribers'));
             }
         } catch (err) {
             console.error(err);
@@ -86,7 +87,7 @@ export default function Subscribers() {
                 const data = await response.json();
                 setSelectedSubscriber(data);
             } else {
-                showError('Failed to fetch subscriber details');
+                showError(await getResponseErrorMessage(response, 'Failed to fetch subscriber details'));
             }
         } catch (err) {
             console.error(err);
@@ -117,7 +118,7 @@ export default function Subscribers() {
                 setFormData({name: '', email: '', balance: ''});
                 showSuccess('Subscriber created successfully');
             } else {
-                showError('Failed to create subscriber');
+                showError(await getResponseErrorMessage(response, 'Failed to create subscriber'));
             }
         } catch (err) {
             console.error(err);
@@ -149,7 +150,7 @@ export default function Subscribers() {
                 setFormData({name: '', email: '', balance: ''});
                 showSuccess('Subscriber updated successfully');
             } else {
-                showError('Failed to update subscriber');
+                showError(await getResponseErrorMessage(response, 'Failed to update subscriber'));
             }
         } catch (err) {
             console.error(err);
@@ -170,7 +171,7 @@ export default function Subscribers() {
                 await fetchSubscribers();
                 showSuccess('Subscriber deleted successfully');
             } else {
-                showError('Failed to delete subscriber');
+                showError(await getResponseErrorMessage(response, 'Failed to delete subscriber'));
             }
         } catch (err) {
             console.error(err);
@@ -212,7 +213,7 @@ export default function Subscribers() {
                 fetchSubscribers();
                 window.dispatchEvent(new CustomEvent('invoice-refresh-needed'));
             } else {
-                showError('Failed to generate outstanding balance invoice');
+                showError(await getResponseErrorMessage(response, 'Failed to generate outstanding balance invoice'));
             }
         } catch (err) {
             console.error(err);
@@ -235,7 +236,7 @@ export default function Subscribers() {
                 const result = await response.json();
                 showSuccess(`Email sent to ${subscriberName}: ${result.message || 'Situation email sent successfully'}`);
             } else {
-                showError('Failed to send situation email');
+                showError(await getResponseErrorMessage(response, 'Failed to send situation email'));
             }
         } catch (err) {
             console.error(err);

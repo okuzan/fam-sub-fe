@@ -1,5 +1,6 @@
 import {useEffect, useState} from 'react';
 import {API_CONFIG} from '../config/api';
+import {getResponseErrorMessage} from '../utils/errors';
 import type {
     CostCalculationRequest,
     CostCalculationSuggestion
@@ -28,6 +29,8 @@ export default function CostCalculations() {
                 setSuggestion(data);
                 setFromMonth(data.suggestedFromMonth);
                 setToMonth(data.suggestedToMonth);
+            } else {
+                setError(await getResponseErrorMessage(response, 'Failed to fetch suggested period'));
             }
         } catch (err) {
             console.error('Failed to fetch suggested period:', err);
@@ -58,7 +61,7 @@ export default function CostCalculations() {
                 setSuccess(`Cost calculation completed for period ${formatDate(result.fromMonth)} - ${formatDate(result.toMonth)}`);
                 fetchSuggestedPeriod();
             } else {
-                setError('Failed to calculate costs');
+                setError(await getResponseErrorMessage(response, 'Failed to calculate costs'));
             }
         } catch (err) {
             console.error(err);

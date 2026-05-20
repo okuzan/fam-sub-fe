@@ -1,5 +1,6 @@
 import {useEffect, useState} from 'react';
 import {API_CONFIG} from '../config/api';
+import {getResponseErrorMessage} from '../utils/errors';
 import {useToast} from './Toast';
 import type {
     MembershipCreateRequest,
@@ -70,7 +71,7 @@ export default function Memberships() {
                 const data = await response.json();
                 setMemberships(Array.isArray(data) ? data : []);
             } else {
-                showError('Failed to fetch memberships');
+                showError(await getResponseErrorMessage(response, 'Failed to fetch memberships'));
                 setMemberships([]);
             }
         } catch (err) {
@@ -91,6 +92,8 @@ export default function Memberships() {
             if (response.ok) {
                 const data = await response.json();
                 setSubscribers(data);
+            } else {
+                showError(await getResponseErrorMessage(response, 'Failed to fetch subscribers'));
             }
         } catch (err) {
             console.error(err);
@@ -106,6 +109,8 @@ export default function Memberships() {
             if (response.ok) {
                 const data = await response.json();
                 setServices(data);
+            } else {
+                showError(await getResponseErrorMessage(response, 'Failed to fetch services'));
             }
         } catch (err) {
             console.error(err);
@@ -138,7 +143,7 @@ export default function Memberships() {
                 setFormData({subscriberId: '', serviceId: '', startDate: '', endMonth: ''});
                 showSuccess('Membership created successfully');
             } else {
-                showError('Failed to create membership');
+                showError(await getResponseErrorMessage(response, 'Failed to create membership'));
             }
         } catch (err) {
             console.error(err);
@@ -171,7 +176,7 @@ export default function Memberships() {
                 setFormData({subscriberId: '', serviceId: '', startDate: '', endMonth: ''});
                 showSuccess('Membership updated successfully');
             } else {
-                showError('Failed to update membership');
+                showError(await getResponseErrorMessage(response, 'Failed to update membership'));
             }
         } catch (err) {
             console.error(err);
@@ -192,7 +197,7 @@ export default function Memberships() {
                 await fetchMemberships();
                 showSuccess('Membership deleted successfully');
             } else {
-                showError('Failed to delete membership');
+                showError(await getResponseErrorMessage(response, 'Failed to delete membership'));
             }
         } catch (err) {
             console.error(err);
@@ -218,7 +223,7 @@ export default function Memberships() {
                 await fetchMemberships();
                 showSuccess('Membership ended successfully');
             } else {
-                showError('Failed to end membership');
+                showError(await getResponseErrorMessage(response, 'Failed to end membership'));
             }
         } catch (err) {
             console.error(err);

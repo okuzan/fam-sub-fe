@@ -1,6 +1,7 @@
 import {useEffect, useState} from 'react';
 import {createPortal} from 'react-dom';
 import {API_CONFIG} from '../config/api';
+import {getResponseErrorMessage} from '../utils/errors';
 import {useToast} from './Toast';
 import type {
     SubscriptionServiceCreateRequest,
@@ -30,7 +31,7 @@ export default function SubscriptionServices() {
                 const data = await response.json();
                 setServices(data);
             } else {
-                showError('Failed to fetch services');
+                showError(await getResponseErrorMessage(response, 'Failed to fetch services'));
             }
         } catch (err) {
             console.error(err)
@@ -62,7 +63,7 @@ export default function SubscriptionServices() {
                 setFormData({name: '', price: ''});
                 showSuccess('Service created successfully');
             } else {
-                showError('Failed to create service');
+                showError(await getResponseErrorMessage(response, 'Failed to create service'));
             }
         } catch (err) {
             console.error(err)
@@ -93,7 +94,7 @@ export default function SubscriptionServices() {
                 setFormData({name: '', price: ''});
                 showSuccess('Service updated successfully');
             } else {
-                showError('Failed to update service');
+                showError(await getResponseErrorMessage(response, 'Failed to update service'));
             }
         } catch (err) {
             console.error(err)
@@ -114,7 +115,7 @@ export default function SubscriptionServices() {
                 await fetchServices();
                 showSuccess('Service deleted successfully');
             } else {
-                showError('Failed to delete service');
+                showError(await getResponseErrorMessage(response, 'Failed to delete service'));
             }
         } catch (err) {
             console.error(err)

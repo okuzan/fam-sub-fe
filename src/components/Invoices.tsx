@@ -1,6 +1,7 @@
 import {useEffect, useState} from 'react';
 import {createPortal} from 'react-dom';
 import {API_CONFIG, getInvoicePdfUrl} from '../config/api';
+import {getResponseErrorMessage} from '../utils/errors';
 import {useToast} from './Toast';
 import type {
     InvoiceDetailResponse,
@@ -128,6 +129,8 @@ export default function Invoices() {
             if (response.ok) {
                 const data = await response.json();
                 setInvoices(Array.isArray(data) ? data : []);
+            } else {
+                showError(await getResponseErrorMessage(response, 'Failed to fetch invoices'));
             }
         } catch (err) {
             console.error('Failed to fetch invoices:', err);
@@ -143,6 +146,8 @@ export default function Invoices() {
             if (response.ok) {
                 const data = await response.json();
                 setSubscribers(data);
+            } else {
+                showError(await getResponseErrorMessage(response, 'Failed to fetch subscribers'));
             }
         } catch (err) {
             console.error('Failed to fetch subscribers:', err);
@@ -163,6 +168,8 @@ export default function Invoices() {
                     setFromMonth(resolvedPeriod.fromMonth);
                     setToMonth(resolvedPeriod.toMonth);
                 }
+            } else {
+                showError(await getResponseErrorMessage(response, 'Failed to fetch suggested invoice period'));
             }
         } catch (err) {
             console.error('Failed to fetch suggested period:', err);
@@ -194,7 +201,7 @@ export default function Invoices() {
                 setSelectedSubscribers([]);
                 fetchInvoices(hasActiveFilters);
             } else {
-                showError('Failed to generate invoices');
+                showError(await getResponseErrorMessage(response, 'Failed to generate invoices'));
             }
         } catch (err) {
             console.error(err);
@@ -225,7 +232,7 @@ export default function Invoices() {
                     });
                 }
             } else {
-                showError('Failed to mark invoice as paid');
+                showError(await getResponseErrorMessage(response, 'Failed to mark invoice as paid'));
             }
         } catch (err) {
             console.error('Error marking invoice as paid:', err);
@@ -283,8 +290,7 @@ export default function Invoices() {
                 closeManualInvoiceForm();
                 fetchInvoices(hasActiveFilters);
             } else {
-                const errorData = await response.json().catch(() => ({}));
-                showError(errorData.message || 'Failed to create manual invoice');
+                showError(await getResponseErrorMessage(response, 'Failed to create manual invoice'));
             }
         } catch (err) {
             console.error('Error creating manual invoice:', err);
@@ -318,13 +324,13 @@ export default function Invoices() {
                 if (selectedInvoice?.invoice.id === deleteInvoiceData.invoiceId) {
                     setSelectedInvoice(null);
                 }
-            } else if (response.status === 400) {
-                const errorData = await response.json();
-                showError(errorData.message || 'Only draft manual or outstanding balance invoices can be deleted');
-            } else if (response.status === 404) {
-                showError('Invoice not found');
             } else {
-                showError('Failed to delete invoice');
+                const fallback = response.status === 400
+                    ? 'Only draft manual or outstanding balance invoices can be deleted'
+                    : response.status === 404
+                        ? 'Invoice not found'
+                        : 'Failed to delete invoice';
+                showError(await getResponseErrorMessage(response, fallback));
             }
         } catch (err) {
             console.error('Error deleting invoice:', err);
@@ -362,8 +368,7 @@ export default function Invoices() {
                 }
                 window.dispatchEvent(new CustomEvent('subscriber-refresh-needed'));
             } else {
-                const errorData = await response.json().catch(() => ({}));
-                showError(errorData.message || 'Failed to void invoice');
+                showError(await getResponseErrorMessage(response, 'Failed to void invoice'));
             }
         } catch (err) {
             console.error('Error voiding invoice:', err);
@@ -390,7 +395,7 @@ export default function Invoices() {
                 window.URL.revokeObjectURL(url);
                 document.body.removeChild(a);
             } else {
-                showError('Failed to download PDF');
+                showError(await getResponseErrorMessage(response, 'Failed to download PDF'));
             }
         } catch (err) {
             console.error('Error downloading PDF:', err);
@@ -419,8 +424,7 @@ export default function Invoices() {
                 // Refresh invoices list to show updated email status
                 fetchInvoices(hasActiveFilters);
             } else {
-                const errorData = await response.json().catch(() => ({}));
-                showError(errorData.error || 'Failed to send invoice email');
+                showError(await getResponseErrorMessage(response, 'Failed to send invoice email'));
             }
         } catch (err) {
             console.error('Error sending invoice email:', err);
@@ -452,8 +456,7 @@ export default function Invoices() {
                 // Refresh invoices list to show updated email status
                 fetchInvoices(hasActiveFilters);
             } else {
-                const errorData = await response.json().catch(() => ({}));
-                showError(errorData.error || 'Failed to send invoice email');
+                showError(await getResponseErrorMessage(response, 'Failed to send invoice email'));
             }
         } catch (err) {
             console.error('Error sending invoice email:', err);
@@ -471,6 +474,8 @@ export default function Invoices() {
             if (response.ok) {
                 const subscriber = await response.json();
                 setSubscriberBalance(subscriber.balance);
+            } else {
+                showError(await getResponseErrorMessage(response, 'Failed to fetch subscriber balance'));
             }
         } catch (err) {
             console.error('Failed to fetch subscriber balance:', err);
@@ -489,7 +494,7 @@ export default function Invoices() {
                 // Fetch subscriber balance for this invoice
                 await fetchSubscriberBalance(data.invoice.subscriberId);
             } else {
-                showError('Failed to fetch invoice details');
+                showError(await getResponseErrorMessage(response, 'Failed to fetch invoice details'));
             }
         } catch (err) {
             console.error(err);
@@ -521,7 +526,7 @@ export default function Invoices() {
                 // Trigger subscriber list refresh in Subscribers component
                 window.dispatchEvent(new CustomEvent('subscriber-refresh-needed'));
             } else {
-                showError('Failed to pay invoice from balance');
+                showError(await getResponseErrorMessage(response, 'Failed to pay invoice from balance'));
             }
         } catch (err) {
             console.error(err);
@@ -556,7 +561,7 @@ export default function Invoices() {
                 // Refresh invoices list to show updated notes
                 fetchInvoices(hasActiveFilters);
             } else {
-                showError('Failed to update invoice notes');
+                showError(await getResponseErrorMessage(response, 'Failed to update invoice notes'));
             }
         } catch (err) {
             console.error(err);

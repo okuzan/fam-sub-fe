@@ -1,6 +1,7 @@
 import {useEffect, useState} from 'react';
 import {createPortal} from 'react-dom';
 import {API_CONFIG} from '../config/api';
+import {getResponseErrorMessage} from '../utils/errors';
 import {useToast} from './Toast';
 import type {
     ChargeCreateRequest,
@@ -46,7 +47,7 @@ export default function Charges() {
                 const data = await response.json();
                 setServices(data);
             } else {
-                showError('Failed to fetch services');
+                showError(await getResponseErrorMessage(response, 'Failed to fetch services'));
             }
         } catch (err) {
             console.error(err);
@@ -65,7 +66,7 @@ export default function Charges() {
                 const data = await response.json();
                 setCharges(data);
             } else {
-                showError('Failed to fetch charges');
+                showError(await getResponseErrorMessage(response, 'Failed to fetch charges'));
             }
         } catch (err) {
             console.error(err);
@@ -99,7 +100,7 @@ export default function Charges() {
                 setFormData({subscriptionServiceId: '', amount: '', chargeMonth: '', description: ''});
                 showSuccess('Charge created successfully');
             } else {
-                showError('Failed to create charge');
+                showError(await getResponseErrorMessage(response, 'Failed to create charge'));
             }
         } catch (err) {
             console.error(err);
@@ -130,7 +131,7 @@ export default function Charges() {
                 setFormData({subscriptionServiceId: '', amount: '', chargeMonth: '', description: ''});
                 showSuccess('Charge updated successfully');
             } else {
-                showError('Failed to update charge');
+                showError(await getResponseErrorMessage(response, 'Failed to update charge'));
             }
         } catch (err) {
             console.error(err);
@@ -151,7 +152,7 @@ export default function Charges() {
                 await fetchChargesByService(selectedService);
                 showSuccess('Charge deleted successfully');
             } else {
-                showError('Failed to delete charge');
+                showError(await getResponseErrorMessage(response, 'Failed to delete charge'));
             }
         } catch (err) {
             console.error(err);
