@@ -3,6 +3,7 @@ export interface SubscriberResponse {
     name: string;
     email: string;
     balance: number;
+    autoPayInvoices: boolean;
     createdAt: string;
     updatedAt: string;
 }
@@ -11,12 +12,14 @@ export interface SubscriberCreateRequest {
     name: string;
     email: string;
     balance?: number;
+    autoPayInvoices: boolean;
 }
 
 export interface SubscriberUpdateRequest {
     name: string;
     email: string;
     balance: number;
+    autoPayInvoices: boolean;
 }
 
 export interface ActiveSubscriptionDto {
@@ -42,6 +45,7 @@ export interface SubscriberDetailResponse {
     name: string;
     email: string;
     balance: number;
+    autoPayInvoices: boolean;
     totalAmountOwed: number;
     activeSubscriptions: ActiveSubscriptionDto[];
     unpaidInvoices: UnpaidInvoiceDto[];

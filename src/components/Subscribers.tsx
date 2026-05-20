@@ -18,7 +18,7 @@ export default function Subscribers() {
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [editingSubscriber, setEditingSubscriber] = useState<SubscriberResponse | null>(null);
     const [selectedSubscriber, setSelectedSubscriber] = useState<SubscriberDetailResponse | null>(null);
-    const [formData, setFormData] = useState({name: '', email: '', balance: ''});
+    const [formData, setFormData] = useState({name: '', email: '', balance: '', autoPayInvoices: false});
     const [searchName, setSearchName] = useState('');
     const [showOnlyDebtors, setShowOnlyDebtors] = useState(false);
     const [showOutstandingBalanceModal, setShowOutstandingBalanceModal] = useState(false);
@@ -102,7 +102,8 @@ export default function Subscribers() {
             const request: SubscriberCreateRequest = {
                 name: formData.name,
                 email: formData.email,
-                balance: formData.balance ? parseFloat(formData.balance) : 0
+                balance: formData.balance ? parseFloat(formData.balance) : 0,
+                autoPayInvoices: formData.autoPayInvoices
             };
 
             const response = await fetch(API_CONFIG.SUBSCRIBERS_URL, {
@@ -115,7 +116,7 @@ export default function Subscribers() {
             if (response.ok) {
                 await fetchSubscribers();
                 setShowCreateForm(false);
-                setFormData({name: '', email: '', balance: ''});
+                setFormData({name: '', email: '', balance: '', autoPayInvoices: false});
                 showSuccess('Subscriber created successfully');
             } else {
                 showError(await getResponseErrorMessage(response, 'Failed to create subscriber'));
@@ -134,7 +135,8 @@ export default function Subscribers() {
             const request: SubscriberUpdateRequest = {
                 name: formData.name,
                 email: formData.email,
-                balance: parseFloat(formData.balance)
+                balance: parseFloat(formData.balance),
+                autoPayInvoices: formData.autoPayInvoices
             };
 
             const response = await fetch(`${API_CONFIG.SUBSCRIBERS_URL}/${editingSubscriber.id}`, {
@@ -147,7 +149,7 @@ export default function Subscribers() {
             if (response.ok) {
                 await fetchSubscribers();
                 setEditingSubscriber(null);
-                setFormData({name: '', email: '', balance: ''});
+                setFormData({name: '', email: '', balance: '', autoPayInvoices: false});
                 showSuccess('Subscriber updated successfully');
             } else {
                 showError(await getResponseErrorMessage(response, 'Failed to update subscriber'));
@@ -272,20 +274,25 @@ export default function Subscribers() {
 
     const openEditForm = (subscriber: SubscriberResponse) => {
         setEditingSubscriber(subscriber);
-        setFormData({name: subscriber.name, email: subscriber.email, balance: subscriber.balance.toString()});
+        setFormData({
+            name: subscriber.name,
+            email: subscriber.email,
+            balance: subscriber.balance.toString(),
+            autoPayInvoices: subscriber.autoPayInvoices
+        });
         setShowCreateForm(false);
     };
 
     const openCreateForm = () => {
         setEditingSubscriber(null);
-        setFormData({name: '', email: '', balance: ''});
+        setFormData({name: '', email: '', balance: '', autoPayInvoices: false});
         setShowCreateForm(true);
     };
 
     const closeForm = () => {
         setShowCreateForm(false);
         setEditingSubscriber(null);
-        setFormData({name: '', email: '', balance: ''});
+        setFormData({name: '', email: '', balance: '', autoPayInvoices: false});
     };
 
     if (loading) return <div className="loading">Loading subscribers...</div>;
@@ -339,12 +346,15 @@ export default function Subscribers() {
                                         <h3>{subscriber.name}</h3>
                                         <p className="email">{subscriber.email}</p>
                                         <p className="balance">Balance: ₴{subscriber.balance.toFixed(2)}</p>
+                                        <p className={`auto-pay ${subscriber.autoPayInvoices ? 'enabled' : ''}`}>
+                                            Auto-pay invoices: {subscriber.autoPayInvoices ? 'On' : 'Off'}
+                                        </p>
                                         <p className="date">Created: {new Date(subscriber.createdAt).toLocaleDateString()}</p>
                                     </div>
                                     <div className="subscriber-actions">
                                         <button onClick={() => fetchSubscriberDetails(subscriber.id)}
                                                 className="btn btn-sm btn-info">
-                                            ℹ️ Info
+                                            Info
                                         </button>
                                         <button onClick={() => openEditForm(subscriber)}
                                                 className="btn btn-sm btn-secondary">
@@ -406,6 +416,20 @@ export default function Subscribers() {
                                     placeholder="0"
                                 />
                             </div>
+                            <div className="form-group checkbox-group">
+                                <label className="checkbox-label" htmlFor="autoPayInvoices">
+                                    <input
+                                        type="checkbox"
+                                        id="autoPayInvoices"
+                                        checked={formData.autoPayInvoices}
+                                        onChange={(e) => setFormData({
+                                            ...formData,
+                                            autoPayInvoices: e.target.checked
+                                        })}
+                                    />
+                                    <span>Auto-pay invoices</span>
+                                </label>
+                            </div>
                             <div className="form-actions">
                                 <button type="submit" className="btn btn-success">
                                     {editingSubscriber ? 'Update' : 'Create'}
@@ -427,6 +451,7 @@ export default function Subscribers() {
                             <h4>{selectedSubscriber.name}</h4>
                             <p><strong>Email:</strong> {selectedSubscriber.email}</p>
                             <p><strong>Balance:</strong> ₴{selectedSubscriber.balance.toFixed(2)}</p>
+                            <p><strong>Auto-pay invoices:</strong> {selectedSubscriber.autoPayInvoices ? 'On' : 'Off'}</p>
                             <p><strong>Total Amount Owed:</strong> ₴{selectedSubscriber.totalAmountOwed.toFixed(2)}</p>
                         </div>
 
