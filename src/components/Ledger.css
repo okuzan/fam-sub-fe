@@ -45,6 +45,14 @@
     align-items: start;
 }
 
+.ledger-generate-panel {
+    border: 1px solid #dbeafe;
+    border-radius: 8px;
+    background: #f8fbff;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
 .ledger-runs-pane,
 .ledger-entries-pane,
 .ledger-detail {

@@ -1,10 +1,9 @@
 import {useMemo, useState} from 'react';
-import {Link, useLocation} from 'react-router-dom';
+import {Link, Navigate, useLocation} from 'react-router-dom';
 import SubscriptionServices from './SubscriptionServices';
 import Subscribers from './Subscribers';
 import Charges from './Charges';
 import Memberships from './Memberships';
-import CostCalculations from './CostCalculations';
 import Ledger from './Ledger';
 import Invoices from './Invoices';
 import AdminActions from './AdminActions';
@@ -29,7 +28,6 @@ type AdminSectionKey =
     | 'subscribers'
     | 'memberships'
     | 'charges'
-    | 'cost-calculations'
     | 'ledger'
     | 'invoices'
     | 'admin-actions'
@@ -64,15 +62,9 @@ const SECTION_CONFIGS: SectionConfig[] = [
     },
     {key: 'charges', title: 'Charges', description: 'Manage generated and manual charges', path: '/admin/charges'},
     {
-        key: 'cost-calculations',
-        title: 'Cost Calculations',
-        description: 'Review and calculate service costs',
-        path: '/admin/cost-calculations'
-    },
-    {
         key: 'ledger',
         title: 'Ledger',
-        description: 'Browse calculation runs and generated ledger entries',
+        description: 'Generate and browse ledger entries',
         path: '/admin/ledger'
     },
     {key: 'invoices', title: 'Invoices', description: 'Generate, filter, and manage invoices', path: '/admin/invoices'},
@@ -112,7 +104,7 @@ export default function AdminDashboard({onLogout, userEmail}: AdminDashboardProp
         if (path === '/admin/subscribers') return <Subscribers/>;
         if (path === '/admin/memberships') return <Memberships/>;
         if (path === '/admin/charges') return <Charges/>;
-        if (path === '/admin/cost-calculations') return <CostCalculations/>;
+        if (path === '/admin/cost-calculations') return <Navigate to="/admin/ledger" replace/>;
         if (path === '/admin/ledger') return <Ledger/>;
         if (path === '/admin/invoices') return <Invoices/>;
         if (path === '/admin/actions') return <AdminActions/>;

@@ -39,6 +39,31 @@
     margin-bottom: 30px;
 }
 
+.ledger-generate-panel .cost-calculations {
+    padding: 0;
+}
+
+.ledger-generate-panel .cost-calculations-header {
+    margin-bottom: 1rem;
+}
+
+.ledger-generate-panel .cost-calculations-header h3 {
+    color: #111827;
+    margin-bottom: 0.75rem;
+}
+
+.ledger-generate-panel .suggestion-banner {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    margin-bottom: 1rem;
+}
+
+.ledger-generate-panel .cost-calculation-form {
+    background: transparent;
+    padding: 0;
+    margin-bottom: 0;
+}
+
 .form-row {
     display: flex;
     gap: 20px;

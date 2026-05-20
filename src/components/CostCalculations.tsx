@@ -6,7 +6,11 @@ import type {
     CostCalculationSuggestion
 } from '../types/costCalculation';
 
-export default function CostCalculations() {
+interface CostCalculationsProps {
+    onCalculationComplete?: () => void;
+}
+
+export default function CostCalculations({onCalculationComplete}: CostCalculationsProps) {
     const [suggestion, setSuggestion] = useState<CostCalculationSuggestion | null>(null);
     const [fromMonth, setFromMonth] = useState('');
     const [toMonth, setToMonth] = useState('');
@@ -58,8 +62,9 @@ export default function CostCalculations() {
 
             if (response.ok) {
                 const result = await response.json();
-                setSuccess(`Cost calculation completed for period ${formatDate(result.fromMonth)} - ${formatDate(result.toMonth)}`);
-                fetchSuggestedPeriod();
+                setSuccess(`Ledger entries generated for ${formatDate(result.fromMonth)} - ${formatDate(result.toMonth)}`);
+                void fetchSuggestedPeriod();
+                onCalculationComplete?.();
             } else {
                 setError(await getResponseErrorMessage(response, 'Failed to calculate costs'));
             }
@@ -86,7 +91,7 @@ export default function CostCalculations() {
     return (
         <div className="cost-calculations">
             <div className="cost-calculations-header">
-                <h3>Cost Calculations</h3>
+                <h3>Generate Ledger Entries</h3>
                 {suggestion && (
                     <div className="suggestion-banner">
                         <p><strong>Suggested
@@ -130,7 +135,7 @@ export default function CostCalculations() {
 
                 <div className="form-actions">
                     <button type="submit" disabled={loading} className="btn btn-primary">
-                        {loading ? 'Calculating...' : 'Calculate Costs'}
+                        {loading ? 'Generating...' : 'Generate Entries'}
                     </button>
                 </div>
             </form>

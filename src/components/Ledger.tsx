@@ -4,6 +4,7 @@ import type {LedgerEntry, LedgerEntryFilter, CalculationBatch} from '../types/le
 import type {SubscriberResponse} from '../types/subscriber';
 import type {SubscriptionServiceResponse} from '../types/subscription';
 import {getResponseErrorMessage} from '../utils/errors';
+import CostCalculations from './CostCalculations';
 import {useToast} from './Toast';
 
 type InvoiceAssignmentFilter = 'all' | 'assigned' | 'unassigned';
@@ -292,6 +293,10 @@ export default function Ledger() {
                 <button type="button" className="btn btn-secondary" onClick={() => void fetchBatches()}>
                     Refresh Runs
                 </button>
+            </div>
+
+            <div className="ledger-generate-panel">
+                <CostCalculations onCalculationComplete={() => void fetchBatches()}/>
             </div>
 
             <div className="ledger-layout">
