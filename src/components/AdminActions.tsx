@@ -1,7 +1,7 @@
 import {useEffect, useState} from 'react';
 import {API_CONFIG} from '../config/api';
 import {useToast} from './Toast';
-import type {AdminActionResponse, AdminActionType} from '../types/adminAction';
+import type {AdminActionResponse, AdminActionTargetType, AdminActionType} from '../types/adminAction';
 
 type AdminActionTab = 'all' | 'cost-runs' | 'invoice-runs';
 
@@ -24,6 +24,21 @@ const getActionTypeLabel = (type: AdminActionType) => {
     }
 };
 
+const getTargetTypeLabel = (targetType: AdminActionTargetType) => {
+    switch (targetType) {
+        case 'COST_CALCULATION_RUN':
+            return 'Cost Calculation Run';
+        case 'INVOICE_GENERATION_RUN':
+            return 'Invoice Generation Run';
+        default:
+            return targetType
+                .toLowerCase()
+                .split('_')
+                .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                .join(' ');
+    }
+};
+
 const getActionTypeBadgeClass = (type: AdminActionType) => {
     switch (type) {
         case 'COST_CALCULATION_RUN':
@@ -38,6 +53,14 @@ const getActionTypeBadgeClass = (type: AdminActionType) => {
 const formatMonth = (month: string) => {
     const date = new Date(month);
     return date.toLocaleDateString('en-US', {year: 'numeric', month: 'long'});
+};
+
+const formatPeriod = (fromMonth: string | null, toMonth: string | null) => {
+    if (!fromMonth || !toMonth) {
+        return 'Not period-based';
+    }
+
+    return `${formatMonth(fromMonth)} - ${formatMonth(toMonth)}`;
 };
 
 const formatTimestamp = (dateTime: string) =>
@@ -123,7 +146,7 @@ export default function AdminActions() {
         <div className="admin-actions">
             <div className="admin-actions-header">
                 <h2>Admin Actions</h2>
-                <p>Recent cost calculation and invoice generation runs.</p>
+                <p>Recent admin-side actions, including cost runs and invoice runs.</p>
             </div>
 
             <div className="admin-actions-tabs">
@@ -157,8 +180,10 @@ export default function AdminActions() {
                             <p className="admin-actions-summary">{action.summary}</p>
 
                             <div className="admin-actions-meta">
-                                <p><strong>Period:</strong> {formatMonth(action.fromMonth)} - {formatMonth(action.toMonth)}</p>
+                                <p><strong>Target Type:</strong> {getTargetTypeLabel(action.targetType)}</p>
+                                <p><strong>Period:</strong> {formatPeriod(action.fromMonth, action.toMonth)}</p>
                                 <p><strong>Created By:</strong> {action.createdByAccountId}</p>
+                                {action.targetId && <p><strong>Target ID:</strong> {action.targetId}</p>}
                                 {action.subscriberId && <p><strong>Subscriber ID:</strong> {action.subscriberId}</p>}
                                 <p><strong>Action ID:</strong> {action.id}</p>
                             </div>
