@@ -1,4 +1,5 @@
 import {useEffect, useState} from 'react';
+import {createPortal} from 'react-dom';
 import {API_CONFIG, getInvoicePdfUrl} from '../config/api';
 import {useToast} from './Toast';
 import type {
@@ -15,6 +16,36 @@ import type {
 import type {SubscriberResponse} from '../types/subscriber';
 
 const getCurrentMonth = () => new Date().toISOString().slice(0, 7);
+
+const addOneMonth = (month: string) => {
+    const [year, monthIndex] = month.split('-').map(Number);
+    const date = new Date(Date.UTC(year, monthIndex - 1, 1));
+    date.setUTCMonth(date.getUTCMonth() + 1);
+    return date.toISOString().slice(0, 7);
+};
+
+const resolveSuggestedInvoicePeriod = (suggestion: InvoiceSuggestion | null) => {
+    if (!suggestion) {
+        return null;
+    }
+
+    if (suggestion.suggestedFromMonth && suggestion.suggestedToMonth) {
+        return {
+            fromMonth: suggestion.suggestedFromMonth,
+            toMonth: suggestion.suggestedToMonth
+        };
+    }
+
+    if (suggestion.lastInvoicedToMonth) {
+        const nextMonth = addOneMonth(suggestion.lastInvoicedToMonth);
+        return {
+            fromMonth: nextMonth,
+            toMonth: nextMonth
+        };
+    }
+
+    return null;
+};
 
 const createManualInvoiceInitialState = () => ({
     subscriberId: '',
@@ -120,9 +151,10 @@ export default function Invoices() {
             if (response.ok) {
                 const data = await response.json();
                 setSuggestion(data);
-                if (data.suggestedFromMonth && data.suggestedToMonth) {
-                    setFromMonth(data.suggestedFromMonth);
-                    setToMonth(data.suggestedToMonth);
+                const resolvedPeriod = resolveSuggestedInvoicePeriod(data);
+                if (resolvedPeriod) {
+                    setFromMonth(resolvedPeriod.fromMonth);
+                    setToMonth(resolvedPeriod.toMonth);
                 }
             }
         } catch (err) {
@@ -480,9 +512,11 @@ export default function Invoices() {
     };
 
     const useSuggestedPeriod = () => {
-        if (suggestion?.suggestedFromMonth && suggestion?.suggestedToMonth) {
-            setFromMonth(suggestion.suggestedFromMonth);
-            setToMonth(suggestion.suggestedToMonth);
+        const resolvedPeriod = resolveSuggestedInvoicePeriod(suggestion);
+        if (resolvedPeriod) {
+            setFromMonth(resolvedPeriod.fromMonth);
+            setToMonth(resolvedPeriod.toMonth);
+            setShowGenerateForm(true);
         }
     };
 
@@ -579,6 +613,7 @@ export default function Invoices() {
     const selectedSubscriberName = subscribers.find(
         (subscriber) => subscriber.id === manualInvoiceData.subscriberId
     )?.name;
+    const resolvedSuggestedPeriod = resolveSuggestedInvoicePeriod(suggestion);
 
     return (
         <div className="invoices">
@@ -600,12 +635,13 @@ export default function Invoices() {
             {suggestion && (
                 <div className="suggestion-banner">
                     <p><strong>Suggested
-                        Period:</strong> {suggestion.suggestedFromMonth && formatDate(suggestion.suggestedFromMonth)} - {suggestion.suggestedToMonth && formatDate(suggestion.suggestedToMonth)}
+                        Period:</strong> {resolvedSuggestedPeriod ? `${formatDate(resolvedSuggestedPeriod.fromMonth)} - ${formatDate(resolvedSuggestedPeriod.toMonth)}` : '-'}
                     </p>
                     {suggestion.lastInvoicedToMonth && (
                         <p><em>Last invoiced to: {formatDate(suggestion.lastInvoicedToMonth)}</em></p>
                     )}
-                    <button type="button" onClick={useSuggestedPeriod} className="btn btn-sm btn-secondary">
+                    <button type="button" onClick={useSuggestedPeriod} className="btn btn-sm btn-secondary"
+                            disabled={!resolvedSuggestedPeriod}>
                         Use Suggested Period
                     </button>
                 </div>
@@ -670,7 +706,7 @@ export default function Invoices() {
                 )}
             </div>
 
-            {(showGenerateForm) && (
+            {(showGenerateForm) && createPortal(
                 <div className="form-overlay">
                     <div className="form-container">
                         <h3>Generate Invoices</h3>
@@ -726,10 +762,11 @@ export default function Invoices() {
                             </div>
                         </form>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
-            {showManualInvoiceForm && (
+            {showManualInvoiceForm && createPortal(
                 <div className="form-overlay">
                     <div className="form-container">
                         <h3>Create Manual Invoice</h3>
@@ -836,10 +873,11 @@ export default function Invoices() {
                             </div>
                         </form>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
-            {(showFilterForm) && (
+            {(showFilterForm) && createPortal(
                 <div className="form-overlay">
                     <div className="form-container">
                         <h3>Filter Invoices</h3>
@@ -932,10 +970,11 @@ export default function Invoices() {
                             </div>
                         </form>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
-            {selectedInvoice && (
+            {selectedInvoice && createPortal(
                 <div className="form-overlay">
                     <div className="form-container invoice-detail">
                         <h3>Invoice Details</h3>
@@ -1053,11 +1092,12 @@ export default function Invoices() {
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* Delete Invoice Modal */}
-            {showDeleteModal && deleteInvoiceData && (
+            {showDeleteModal && deleteInvoiceData && createPortal(
                 <div className="form-overlay">
                     <div className="form-container">
                         <h3>Delete Draft Invoice</h3>
@@ -1110,7 +1150,8 @@ export default function Invoices() {
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );
