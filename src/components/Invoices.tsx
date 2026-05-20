@@ -7,6 +7,7 @@ import type {
     InvoiceOrigin,
     InvoiceGenerationRequest,
     InvoiceGenerationResult,
+    InvoiceVoidRequest,
     ManualInvoiceCreateRequest,
     InvoiceNotesUpdateRequest,
     InvoiceResponse,
@@ -76,6 +77,12 @@ export default function Invoices() {
     const [notesInput, setNotesInput] = useState('');
     const [manualInvoiceData, setManualInvoiceData] = useState(createManualInvoiceInitialState);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showVoidModal, setShowVoidModal] = useState(false);
+    const [voidReason, setVoidReason] = useState('');
+    const [voidInvoiceData, setVoidInvoiceData] = useState<{
+        invoiceId: string;
+        subscriberName: string;
+    } | null>(null);
     const [deleteInvoiceData, setDeleteInvoiceData] = useState<{
         invoiceId: string;
         subscriberName: string;
@@ -213,7 +220,7 @@ export default function Invoices() {
                         ...selectedInvoice,
                         invoice: {
                             ...selectedInvoice.invoice,
-                            status: 'paid'
+                            status: 'PAID'
                         }
                     });
                 }
@@ -234,6 +241,15 @@ export default function Invoices() {
             addToBalance: invoice.origin === 'OUTSTANDING_BALANCE'
         });
         setShowDeleteModal(true);
+    };
+
+    const openVoidModal = (invoice: InvoiceResponse) => {
+        setVoidInvoiceData({
+            invoiceId: invoice.id,
+            subscriberName: invoice.subscriberName
+        });
+        setVoidReason('');
+        setShowVoidModal(true);
     };
 
     const closeManualInvoiceForm = () => {
@@ -313,6 +329,45 @@ export default function Invoices() {
         } catch (err) {
             console.error('Error deleting invoice:', err);
             showError('Error deleting invoice');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleVoidInvoice = async () => {
+        if (!voidInvoiceData) return;
+
+        setLoading(true);
+
+        try {
+            const request: InvoiceVoidRequest = {
+                reason: voidReason.trim() || undefined
+            };
+
+            const response = await fetch(`${API_CONFIG.INVOICES_URL}/${voidInvoiceData.invoiceId}/void`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                credentials: 'include',
+                body: JSON.stringify(request)
+            });
+
+            if (response.ok) {
+                showSuccess('Invoice voided successfully');
+                setShowVoidModal(false);
+                setVoidInvoiceData(null);
+                setVoidReason('');
+                fetchInvoices(hasActiveFilters);
+                if (selectedInvoice?.invoice.id === voidInvoiceData.invoiceId) {
+                    await handleViewInvoice(voidInvoiceData.invoiceId);
+                }
+                window.dispatchEvent(new CustomEvent('subscriber-refresh-needed'));
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                showError(errorData.message || 'Failed to void invoice');
+            }
+        } catch (err) {
+            console.error('Error voiding invoice:', err);
+            showError('Error voiding invoice');
         } finally {
             setLoading(false);
         }
@@ -568,6 +623,8 @@ export default function Invoices() {
                 return '#ffc107';
             case 'paid':
                 return '#007bff';
+            case 'void':
+                return '#dc3545';
             default:
                 return '#6c757d';
         }
@@ -609,6 +666,16 @@ export default function Invoices() {
 
     const canDeleteInvoice = (invoice: InvoiceResponse) =>
         invoice.status === 'DRAFT' && (invoice.origin === 'OUTSTANDING_BALANCE' || invoice.origin === 'MANUAL');
+
+    const isInvoiceVoid = (invoice: Pick<InvoiceResponse, 'status'>) => invoice.status === 'VOID';
+
+    const isInvoicePaid = (invoice: Pick<InvoiceResponse, 'status'>) => invoice.status === 'PAID';
+
+    const isInvoiceClosed = (invoice: Pick<InvoiceResponse, 'status'>) =>
+        isInvoicePaid(invoice) || isInvoiceVoid(invoice);
+
+    const canVoidInvoice = (invoice: Pick<InvoiceResponse, 'status'>) =>
+        invoice.status === 'DRAFT' || invoice.status === 'SENT';
 
     const selectedSubscriberName = subscribers.find(
         (subscriber) => subscriber.id === manualInvoiceData.subscriberId
@@ -680,14 +747,20 @@ export default function Invoices() {
                                     </button>
                                     <button onClick={() => handleEmailInvoice(invoice.id, invoice.subscriberName)}
                                             className="btn btn-sm btn-info"
-                                            disabled={emailingInvoices.has(invoice.id)}>
+                                            disabled={emailingInvoices.has(invoice.id) || isInvoiceVoid(invoice)}>
                                         {emailingInvoices.has(invoice.id) ? 'Sending...' : '📧 Email'}
                                     </button>
                                     <button onClick={() => handleDownloadPdf(invoice.id)}
                                             className="btn btn-sm btn-primary">
                                         Download PDF
                                     </button>
-                                    {invoice.status.toLowerCase() !== 'paid' && (
+                                    {canVoidInvoice(invoice) && (
+                                        <button onClick={() => openVoidModal(invoice)}
+                                                className="btn btn-sm btn-warning">
+                                            Void
+                                        </button>
+                                    )}
+                                    {!isInvoiceClosed(invoice) && (
                                         <button onClick={() => handleMarkAsPaid(invoice.id)}
                                                 className="btn btn-sm btn-success">
                                             Mark as Paid
@@ -914,6 +987,7 @@ export default function Invoices() {
                                     <option value="DRAFT">Draft</option>
                                     <option value="SENT">Sent</option>
                                     <option value="PAID">Paid</option>
+                                    <option value="VOID">Void</option>
                                 </select>
                             </div>
 
@@ -1062,16 +1136,22 @@ export default function Invoices() {
                         <div className="form-actions">
                             <button onClick={() => handleEmailInvoiceFromDetail(selectedInvoice.invoice.id, selectedInvoice.invoice.subscriberName)}
                                     className="btn btn-info"
-                                    disabled={emailingDetailInvoice}>
+                                    disabled={emailingDetailInvoice || isInvoiceVoid(selectedInvoice.invoice)}>
                                 {emailingDetailInvoice ? 'Sending...' : '📧 Email Invoice'}
                             </button>
-                            {selectedInvoice.invoice.status.toLowerCase() !== 'paid' && (
+                            {canVoidInvoice(selectedInvoice.invoice) && (
+                                <button onClick={() => openVoidModal(selectedInvoice.invoice)}
+                                        className="btn btn-warning">
+                                    Void Invoice
+                                </button>
+                            )}
+                            {!isInvoiceClosed(selectedInvoice.invoice) && (
                                 <button onClick={() => handleMarkAsPaid(selectedInvoice.invoice.id)}
                                         className="btn btn-success">
                                     Mark as Paid
                                 </button>
                             )}
-                            {selectedInvoice.invoice.status.toLowerCase() !== 'paid' &&
+                            {!isInvoiceClosed(selectedInvoice.invoice) &&
                                 subscriberBalance !== null &&
                                 subscriberBalance > selectedInvoice.invoice.totalAmount && (
                                     <button onClick={handlePayFromBalance}
@@ -1089,6 +1169,52 @@ export default function Invoices() {
                                 setSubscriberBalance(null);
                             }} className="btn btn-secondary">
                                 Close
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {showVoidModal && voidInvoiceData && createPortal(
+                <div className="form-overlay">
+                    <div className="form-container">
+                        <h3>Void Invoice</h3>
+                        <p>Subscriber: <strong>{voidInvoiceData.subscriberName}</strong></p>
+                        <p className="warning-text">
+                            This invoice will be marked as VOID and will no longer be payable or included in unpaid balances.
+                        </p>
+
+                        <div className="form-group">
+                            <label htmlFor="voidReason">Reason (optional)</label>
+                            <textarea
+                                id="voidReason"
+                                value={voidReason}
+                                onChange={(e) => setVoidReason(e.target.value)}
+                                rows={3}
+                                className="notes-textarea"
+                                placeholder="Why is this invoice being voided?"
+                            />
+                        </div>
+
+                        <div className="form-actions">
+                            <button
+                                onClick={handleVoidInvoice}
+                                className="btn btn-warning"
+                                disabled={loading}
+                            >
+                                {loading ? 'Voiding...' : 'Void Invoice'}
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setShowVoidModal(false);
+                                    setVoidInvoiceData(null);
+                                    setVoidReason('');
+                                }}
+                                className="btn btn-secondary"
+                                disabled={loading}
+                            >
+                                Cancel
                             </button>
                         </div>
                     </div>

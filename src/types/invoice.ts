@@ -6,6 +6,15 @@ export const InvoiceOrigin = {
 
 export type InvoiceOrigin = typeof InvoiceOrigin[keyof typeof InvoiceOrigin];
 
+export const InvoiceStatus = {
+    DRAFT: 'DRAFT',
+    SENT: 'SENT',
+    PAID: 'PAID',
+    VOID: 'VOID'
+} as const;
+
+export type InvoiceStatus = typeof InvoiceStatus[keyof typeof InvoiceStatus];
+
 export interface InvoiceGenerationRequest {
     fromMonth: string; // YYYY-MM format
     toMonth: string;   // YYYY-MM format
@@ -26,6 +35,10 @@ export interface ManualInvoiceCreateRequest {
     sendEmail?: boolean;
 }
 
+export interface InvoiceVoidRequest {
+    reason?: string;
+}
+
 export interface InvoiceResponse {
     id: string;
     subscriberId: string;
@@ -33,7 +46,7 @@ export interface InvoiceResponse {
     fromMonth: string;
     toMonth: string;
     totalAmount: number;
-    status: string;
+    status: InvoiceStatus;
     createdAt: string;
     createdByAccountId: string;
     sentAt?: string;

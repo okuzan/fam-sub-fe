@@ -370,6 +370,15 @@
     background: #1e7e34;
 }
 
+.btn-warning {
+    background: #fd7e14;
+    color: white;
+}
+
+.btn-warning:hover {
+    background: #e46f0b;
+}
+
 .btn-secondary {
     background: #6c757d;
     color: white;

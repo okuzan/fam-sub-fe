@@ -64,6 +64,8 @@ const getActionTypeLabel = (type: AdminActionType) => {
             return 'Cost Calculation Run';
         case 'INVOICE_GENERATION_RUN':
             return 'Invoice Generation Run';
+        case 'INVOICE_VOIDED':
+            return 'Invoice Voided';
         default:
             return formatEnumLabel(type);
     }
