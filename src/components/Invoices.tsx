@@ -675,7 +675,7 @@ export default function Invoices() {
         isInvoicePaid(invoice) || isInvoiceVoid(invoice);
 
     const canVoidInvoice = (invoice: Pick<InvoiceResponse, 'status'>) =>
-        invoice.status === 'DRAFT' || invoice.status === 'SENT';
+        invoice.status === 'SENT';
 
     const selectedSubscriberName = subscribers.find(
         (subscriber) => subscriber.id === manualInvoiceData.subscriberId
@@ -1143,6 +1143,12 @@ export default function Invoices() {
                                 <button onClick={() => openVoidModal(selectedInvoice.invoice)}
                                         className="btn btn-warning">
                                     Void Invoice
+                                </button>
+                            )}
+                            {canDeleteInvoice(selectedInvoice.invoice) && (
+                                <button onClick={() => openDeleteModal(selectedInvoice.invoice)}
+                                        className="btn btn-danger">
+                                    Delete Invoice
                                 </button>
                             )}
                             {!isInvoiceClosed(selectedInvoice.invoice) && (
