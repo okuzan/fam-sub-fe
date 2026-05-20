@@ -166,6 +166,11 @@ function App() {
                                 <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
+                        <Route path="ledger" element={
+                            user && user.role === 'admin' ?
+                                <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
+                                <Navigate to={getRedirectPath()} replace/>
+                        }/>
                         <Route path="invoices" element={
                             user && user.role === 'admin' ?
                                 <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :

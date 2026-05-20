@@ -14,6 +14,7 @@ export const API_CONFIG = {
     CHARGES_URL: `${API_BASE_URL}/admin/charges`,
     MEMBERSHIPS_URL: `${API_BASE_URL}/admin/memberships`,
     COST_CALCULATIONS_URL: `${API_BASE_URL}/admin/cost-calculations`,
+    LEDGER_URL: `${API_BASE_URL}/admin/ledger`,
     INVOICES_URL: `${API_BASE_URL}/admin/invoices`,
     ADMIN_ACTIONS_URL: `${API_BASE_URL}/admin/actions`,
     ADMIN_RECOVERY_URL: `${API_BASE_URL}/admin/recovery`,

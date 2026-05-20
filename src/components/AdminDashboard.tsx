@@ -5,6 +5,7 @@ import Subscribers from './Subscribers';
 import Charges from './Charges';
 import Memberships from './Memberships';
 import CostCalculations from './CostCalculations';
+import Ledger from './Ledger';
 import Invoices from './Invoices';
 import AdminActions from './AdminActions';
 import TelegramPosts from './TelegramPosts';
@@ -13,6 +14,7 @@ import './Subscribers.css';
 import './Charges.css';
 import './Memberships.css';
 import './CostCalculations.css';
+import './Ledger.css';
 import './Invoices.css';
 import './AdminActions.css';
 import './TelegramPosts.css';
@@ -28,6 +30,7 @@ type AdminSectionKey =
     | 'memberships'
     | 'charges'
     | 'cost-calculations'
+    | 'ledger'
     | 'invoices'
     | 'admin-actions'
     | 'telegram-posts'
@@ -65,6 +68,12 @@ const SECTION_CONFIGS: SectionConfig[] = [
         title: 'Cost Calculations',
         description: 'Review and calculate service costs',
         path: '/admin/cost-calculations'
+    },
+    {
+        key: 'ledger',
+        title: 'Ledger',
+        description: 'Browse calculation runs and generated ledger entries',
+        path: '/admin/ledger'
     },
     {key: 'invoices', title: 'Invoices', description: 'Generate, filter, and manage invoices', path: '/admin/invoices'},
     {
@@ -104,6 +113,7 @@ export default function AdminDashboard({onLogout, userEmail}: AdminDashboardProp
         if (path === '/admin/memberships') return <Memberships/>;
         if (path === '/admin/charges') return <Charges/>;
         if (path === '/admin/cost-calculations') return <CostCalculations/>;
+        if (path === '/admin/ledger') return <Ledger/>;
         if (path === '/admin/invoices') return <Invoices/>;
         if (path === '/admin/actions') return <AdminActions/>;
         if (path === '/admin/telegram-posts') return <TelegramPosts/>;

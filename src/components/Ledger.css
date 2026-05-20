@@ -1,0 +1,251 @@
+.ledger {
+    background: white;
+    color: #1f2937;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.ledger,
+.ledger * {
+    box-sizing: border-box;
+}
+
+.ledger-header,
+.ledger-pane-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.ledger-header {
+    margin-bottom: 1rem;
+}
+
+.ledger-header h2,
+.ledger-pane-header h3 {
+    margin: 0;
+}
+
+.ledger-pane-header p {
+    margin: 0.25rem 0 0;
+    color: #6b7280;
+}
+
+.ledger-pane-header span {
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.ledger-layout {
+    display: grid;
+    grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+    gap: 1rem;
+    align-items: start;
+}
+
+.ledger-runs-pane,
+.ledger-entries-pane,
+.ledger-detail {
+    min-width: 0;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1rem;
+    background: #f9fafb;
+}
+
+.ledger-runs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.ledger-run {
+    display: grid;
+    gap: 0.35rem;
+    text-align: left;
+    border: 1px solid #e5e7eb;
+    background: white;
+    color: #374151;
+    border-radius: 8px;
+    padding: 0.85rem;
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ledger-run:hover,
+.ledger-run-selected {
+    border-color: #667eea;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.18);
+}
+
+.ledger-run-id {
+    font-family: monospace;
+    color: #111827;
+    overflow-wrap: anywhere;
+}
+
+.ledger-run-undone {
+    color: #b45309;
+    font-weight: 600;
+}
+
+.ledger-filters {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin: 1rem 0;
+}
+
+.ledger-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+.ledger-filter-wide {
+    grid-column: span 2;
+}
+
+.ledger-filter label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.ledger-filter input,
+.ledger-filter select {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 38px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 0.5rem;
+    background: white;
+    color: #111827;
+}
+
+.ledger-filter-actions {
+    display: flex;
+    align-items: end;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.ledger-filter-actions .btn {
+    flex: 1 1 74px;
+    min-width: 0;
+    white-space: nowrap;
+}
+
+.ledger-table-wrap {
+    overflow-x: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: white;
+}
+
+.ledger-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 920px;
+}
+
+.ledger-table th,
+.ledger-table td {
+    text-align: left;
+    padding: 0.75rem;
+    border-bottom: 1px solid #e5e7eb;
+    vertical-align: top;
+}
+
+.ledger-table th {
+    background: #f3f4f6;
+    color: #374151;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+}
+
+.ledger-table tbody tr {
+    cursor: pointer;
+}
+
+.ledger-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+.ledger-table td span {
+    display: block;
+    margin-top: 0.25rem;
+    color: #6b7280;
+    font-size: 0.85rem;
+    overflow-wrap: anywhere;
+}
+
+.ledger-invoice-assigned {
+    color: #047857 !important;
+    font-weight: 600;
+}
+
+.ledger-invoice-unassigned {
+    color: #b45309 !important;
+    font-weight: 600;
+}
+
+.ledger-empty-state {
+    margin-top: 1rem;
+    padding: 1rem;
+    border: 1px dashed #d1d5db;
+    border-radius: 8px;
+    color: #6b7280;
+    background: white;
+}
+
+.ledger-detail {
+    margin-top: 1rem;
+}
+
+.ledger-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.ledger-detail-grid div {
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    background: white;
+    padding: 0.75rem;
+}
+
+.ledger-detail-grid span {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: #6b7280;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.ledger-detail-grid strong {
+    display: block;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 980px) {
+    .ledger-layout,
+    .ledger-filters,
+    .ledger-detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .ledger-filter-wide {
+        grid-column: auto;
+    }
+}
