@@ -5,7 +5,10 @@ import type {
     AdminActionFilterRequest,
     AdminActionResponse,
     AdminActionTargetType,
-    AdminActionType
+    AdminActionType,
+    RunRecoveryPreviewResponse,
+    RunUndoRequest,
+    RunUndoResponse
 } from '../types/adminAction';
 import {
     AdminActionTargetType as AdminActionTargetTypes,
@@ -29,7 +32,7 @@ type AdminActionFilterForm = {
 
 const ACTION_LIMIT = 50;
 
-const TAB_CONFIG: Record<AdminActionTab, {label: string; path: string}> = {
+const TAB_CONFIG: Record<AdminActionTab, { label: string; path: string }> = {
     all: {label: 'All Actions', path: ''},
     'cost-runs': {label: 'Cost Runs', path: '/cost-runs'},
     'invoice-runs': {label: 'Invoice Runs', path: '/invoice-runs'}
@@ -62,8 +65,12 @@ const getActionTypeLabel = (type: AdminActionType) => {
     switch (type) {
         case 'COST_CALCULATION_RUN':
             return 'Cost Calculation Run';
+        case 'COST_CALCULATION_RUN_UNDONE':
+            return 'Cost Calculation Run Undone';
         case 'INVOICE_GENERATION_RUN':
             return 'Invoice Generation Run';
+        case 'INVOICE_GENERATION_RUN_UNDONE':
+            return 'Invoice Generation Run Undone';
         case 'INVOICE_VOIDED':
             return 'Invoice Voided';
         default:
@@ -86,8 +93,12 @@ const getActionTypeBadgeClass = (type: AdminActionType) => {
     switch (type) {
         case 'COST_CALCULATION_RUN':
             return 'admin-actions-badge admin-actions-badge-cost';
+        case 'COST_CALCULATION_RUN_UNDONE':
+            return 'admin-actions-badge admin-actions-badge-undone';
         case 'INVOICE_GENERATION_RUN':
             return 'admin-actions-badge admin-actions-badge-invoice';
+        case 'INVOICE_GENERATION_RUN_UNDONE':
+            return 'admin-actions-badge admin-actions-badge-undone';
         default:
             return 'admin-actions-badge';
     }
@@ -176,6 +187,18 @@ const getMetricsRows = (action: AdminActionResponse) => {
             {
                 label: 'Ledger Entries Created',
                 value: Number(action.metrics.ledgerEntriesCreated ?? 0).toLocaleString('en-US')
+            },
+            {
+                label: 'Undone At',
+                value: action.metrics.undoneAt ? formatTimestamp(String(action.metrics.undoneAt)) : 'Not undone'
+            },
+            {
+                label: 'Undone By',
+                value: action.metrics.undoneByAccountId ? String(action.metrics.undoneByAccountId) : '—'
+            },
+            {
+                label: 'Undo Reason',
+                value: action.metrics.undoReason ? String(action.metrics.undoReason) : '—'
             }
         ];
     }
@@ -197,22 +220,70 @@ const getMetricsRows = (action: AdminActionResponse) => {
             {
                 label: 'Send Email',
                 value: action.metrics.sendEmail ? 'Yes' : 'No'
+            },
+            {
+                label: 'Undone At',
+                value: action.metrics.undoneAt ? formatTimestamp(String(action.metrics.undoneAt)) : 'Not undone'
+            },
+            {
+                label: 'Undone By',
+                value: action.metrics.undoneByAccountId ? String(action.metrics.undoneByAccountId) : '—'
+            },
+            {
+                label: 'Undo Reason',
+                value: action.metrics.undoReason ? String(action.metrics.undoReason) : '—'
             }
         ];
     }
 
     return Object.entries(action.metrics).map(([label, value]) => ({
         label: formatEnumLabel(label),
-        value: typeof value === 'object' ? JSON.stringify(value) : String(value)
+        value: value == null ? '—' : typeof value === 'object' ? JSON.stringify(value) : String(value)
     }));
 };
 
+const getRecoveryRunType = (action: AdminActionResponse): 'cost-runs' | 'invoice-runs' | null => {
+    if (action.type === 'COST_CALCULATION_RUN' || action.type === 'COST_CALCULATION_RUN_UNDONE') {
+        return 'cost-runs';
+    }
+
+    if (action.type === 'INVOICE_GENERATION_RUN' || action.type === 'INVOICE_GENERATION_RUN_UNDONE') {
+        return 'invoice-runs';
+    }
+
+    return null;
+};
+
+const formatRecoveryValue = (value: unknown) => {
+    if (value == null) {
+        return '—';
+    }
+
+    if (typeof value === 'number') {
+        return Number.isInteger(value) ? value.toLocaleString('en-US') : value.toFixed(2);
+    }
+
+    if (typeof value === 'boolean') {
+        return value ? 'Yes' : 'No';
+    }
+
+    if (typeof value === 'object') {
+        return JSON.stringify(value);
+    }
+
+    return String(value);
+};
+
 export default function AdminActions() {
-    const {showError} = useToast();
+    const {showError, showSuccess} = useToast();
     const [selectedTab, setSelectedTab] = useState<AdminActionTab>('all');
     const [actions, setActions] = useState<AdminActionResponse[]>([]);
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState<AdminActionFilterForm>(createInitialFilters);
+    const [previewLoadingRunId, setPreviewLoadingRunId] = useState<string | null>(null);
+    const [undoLoadingRunId, setUndoLoadingRunId] = useState<string | null>(null);
+    const [recoveryPreview, setRecoveryPreview] = useState<Record<string, RunRecoveryPreviewResponse>>({});
+    const [undoReasons, setUndoReasons] = useState<Record<string, string>>({});
 
     useEffect(() => {
         void fetchActions(selectedTab, filters);
@@ -295,6 +366,89 @@ export default function AdminActions() {
         await fetchActions(selectedTab, clearedFilters);
     };
 
+    const handlePreviewRecovery = async (action: AdminActionResponse) => {
+        const runId = action.targetId;
+        const runType = getRecoveryRunType(action);
+
+        if (!runId || !runType) {
+            return;
+        }
+
+        setPreviewLoadingRunId(runId);
+
+        try {
+            const response = await fetch(`${API_CONFIG.ADMIN_RECOVERY_URL}/${runType}/${runId}/preview`, {
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const data: RunRecoveryPreviewResponse = await response.json();
+                setRecoveryPreview((prev) => ({
+                    ...prev,
+                    [runId]: data
+                }));
+            } else {
+                showError('Failed to load recovery preview');
+            }
+        } catch (err) {
+            console.error('Failed to fetch recovery preview:', err);
+            showError('Error loading recovery preview');
+        } finally {
+            setPreviewLoadingRunId(null);
+        }
+    };
+
+    const handleUndoRun = async (action: AdminActionResponse) => {
+        const runId = action.targetId;
+        const runType = getRecoveryRunType(action);
+
+        if (!runId || !runType) {
+            return;
+        }
+
+        setUndoLoadingRunId(runId);
+
+        try {
+            const reason = undoReasons[runId]?.trim();
+            const requestBody: RunUndoRequest = reason ? {reason} : {};
+            const response = await fetch(`${API_CONFIG.ADMIN_RECOVERY_URL}/${runType}/${runId}/undo`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                credentials: 'include',
+                body: JSON.stringify(requestBody)
+            });
+
+            if (response.ok) {
+                const data: RunUndoResponse = await response.json();
+                showSuccess(data.summary || 'Run undone successfully');
+                setRecoveryPreview((prev) => ({
+                    ...prev,
+                    [runId]: {
+                        ...(prev[runId] ?? {
+                            runId: data.runId,
+                            type: data.type,
+                            blockers: [],
+                            effects: {}
+                        }),
+                        allowed: false,
+                        alreadyUndone: true,
+                        summary: data.summary,
+                        effects: data.effects
+                    }
+                }));
+                await fetchActions(selectedTab, filters);
+            } else {
+                const errorData = await response.json().catch(() => null);
+                showError(errorData?.message || 'Failed to undo run');
+            }
+        } catch (err) {
+            console.error('Failed to undo run:', err);
+            showError('Error undoing run');
+        } finally {
+            setUndoLoadingRunId(null);
+        }
+    };
+
     const lockedActionType = getPresetActionType(selectedTab);
 
     return (
@@ -305,7 +459,10 @@ export default function AdminActions() {
             </div>
 
             <div className="admin-actions-tabs">
-                {(Object.entries(TAB_CONFIG) as [AdminActionTab, {label: string; path: string}][]).map(([tab, config]) => (
+                {(Object.entries(TAB_CONFIG) as [AdminActionTab, {
+                    label: string;
+                    path: string
+                }][]).map(([tab, config]) => (
                     <button
                         key={tab}
                         type="button"
@@ -480,6 +637,83 @@ export default function AdminActions() {
                                     </div>
                                 ))}
                             </div>
+
+                            {action.targetId && getRecoveryRunType(action) && (
+                                <div className="admin-actions-recovery">
+                                    <div className="admin-actions-recovery-actions">
+                                        <button
+                                            type="button"
+                                            className="admin-actions-reset"
+                                            onClick={() => handlePreviewRecovery(action)}
+                                            disabled={previewLoadingRunId === action.targetId}
+                                        >
+                                            {previewLoadingRunId === action.targetId ? 'Loading...' : 'Preview Undo'}
+                                        </button>
+                                    </div>
+
+                                    {recoveryPreview[action.targetId] && (
+                                        <div className="admin-actions-recovery-panel">
+                                            <p><strong>Recovery Type:</strong> {recoveryPreview[action.targetId].type}
+                                            </p>
+                                            <p>
+                                                <strong>Allowed:</strong> {recoveryPreview[action.targetId].allowed ? 'Yes' : 'No'}
+                                            </p>
+                                            <p><strong>Already
+                                                Undone:</strong> {recoveryPreview[action.targetId].alreadyUndone ? 'Yes' : 'No'}
+                                            </p>
+                                            <p><strong>Summary:</strong> {recoveryPreview[action.targetId].summary}</p>
+
+                                            {recoveryPreview[action.targetId].blockers.length > 0 && (
+                                                <div className="admin-actions-recovery-blockers">
+                                                    <strong>Blockers</strong>
+                                                    <ul>
+                                                        {recoveryPreview[action.targetId].blockers.map((blocker) => (
+                                                            <li key={blocker}>{blocker}</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
+
+                                            <div className="admin-actions-recovery-effects">
+                                                {Object.entries(recoveryPreview[action.targetId].effects).map(([label, value]) => (
+                                                    <div key={label} className="admin-actions-metric">
+                                                        <span
+                                                            className="admin-actions-metric-label">{formatEnumLabel(label)}</span>
+                                                        <span
+                                                            className="admin-actions-metric-value">{formatRecoveryValue(value)}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            <label className="admin-actions-recovery-reason">
+                                                <span>Undo Reason</span>
+                                                <textarea
+                                                    value={undoReasons[action.targetId] ?? ''}
+                                                    onChange={(e) => setUndoReasons((prev) => ({
+                                                        ...prev,
+                                                        [action.targetId as string]: e.target.value
+                                                    }))}
+                                                    placeholder="Optional reason for undo"
+                                                    rows={3}
+                                                />
+                                            </label>
+
+                                            <button
+                                                type="button"
+                                                className="admin-actions-submit"
+                                                onClick={() => handleUndoRun(action)}
+                                                disabled={
+                                                    undoLoadingRunId === action.targetId ||
+                                                    !recoveryPreview[action.targetId].allowed ||
+                                                    recoveryPreview[action.targetId].alreadyUndone
+                                                }
+                                            >
+                                                {undoLoadingRunId === action.targetId ? 'Undoing...' : 'Undo Run'}
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>

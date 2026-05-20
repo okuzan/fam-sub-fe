@@ -1,6 +1,8 @@
 export const AdminActionType = {
     COST_CALCULATION_RUN: 'COST_CALCULATION_RUN',
+    COST_CALCULATION_RUN_UNDONE: 'COST_CALCULATION_RUN_UNDONE',
     INVOICE_GENERATION_RUN: 'INVOICE_GENERATION_RUN',
+    INVOICE_GENERATION_RUN_UNDONE: 'INVOICE_GENERATION_RUN_UNDONE',
     MANUAL_INVOICE_CREATED: 'MANUAL_INVOICE_CREATED',
     OUTSTANDING_BALANCE_INVOICE_CREATED: 'OUTSTANDING_BALANCE_INVOICE_CREATED',
     INVOICE_MARKED_PAID: 'INVOICE_MARKED_PAID',
@@ -53,7 +55,29 @@ export interface AdminActionResponse {
     toMonth: string | null;
     subscriberId: string | null;
     summary: string;
-    metrics: Record<string, unknown>;
+    metrics: Record<string, unknown | null>;
+}
+
+export interface RunRecoveryPreviewResponse {
+    runId: string;
+    type: string;
+    allowed: boolean;
+    alreadyUndone: boolean;
+    blockers: string[];
+    effects: Record<string, unknown>;
+    summary: string;
+}
+
+export interface RunUndoRequest {
+    reason?: string;
+}
+
+export interface RunUndoResponse {
+    runId: string;
+    type: string;
+    undoneAt: string;
+    summary: string;
+    effects: Record<string, unknown>;
 }
 
 export interface AdminActionFilterRequest {

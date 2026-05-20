@@ -1,7 +1,6 @@
 import {useEffect, useState} from 'react';
 import {API_CONFIG} from '../config/api';
 import type {
-    CostCalculationBatchResponse,
     CostCalculationRequest,
     CostCalculationSuggestion
 } from '../types/costCalculation';
@@ -13,11 +12,9 @@ export default function CostCalculations() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
-    const [recentCalculations, setRecentCalculations] = useState<CostCalculationBatchResponse[]>([]);
 
     useEffect(() => {
         fetchSuggestedPeriod();
-        fetchRecentCalculations();
     }, []);
 
     const fetchSuggestedPeriod = async () => {
@@ -34,22 +31,6 @@ export default function CostCalculations() {
             }
         } catch (err) {
             console.error('Failed to fetch suggested period:', err);
-        }
-    };
-
-    const fetchRecentCalculations = async () => {
-        try {
-            // This endpoint might not exist yet, but we'll try to get recent calculations
-            const response = await fetch(API_CONFIG.COST_CALCULATIONS_URL, {
-                credentials: 'include'
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                setRecentCalculations(Array.isArray(data) ? data.slice(0, 5) : []);
-            }
-        } catch (err) {
-            console.error('Failed to fetch recent calculations:', err);
         }
     };
 
@@ -75,7 +56,7 @@ export default function CostCalculations() {
             if (response.ok) {
                 const result = await response.json();
                 setSuccess(`Cost calculation completed for period ${formatDate(result.fromMonth)} - ${formatDate(result.toMonth)}`);
-                fetchRecentCalculations();
+                fetchSuggestedPeriod();
             } else {
                 setError('Failed to calculate costs');
             }
@@ -151,24 +132,6 @@ export default function CostCalculations() {
                 </div>
             </form>
 
-            {recentCalculations.length > 0 && (
-                <div className="recent-calculations">
-                    <h4>Recent Calculations</h4>
-                    <div className="calculations-list">
-                        {recentCalculations.map((calc) => (
-                            <div key={calc.id} className="calculation-item">
-                                <div className="calculation-info">
-                                    <p>
-                                        <strong>Period:</strong> {formatDate(calc.fromMonth)} - {formatDate(calc.toMonth)}
-                                    </p>
-                                    <p><strong>Calculated:</strong> {new Date(calc.createdAt).toLocaleDateString()}</p>
-                                    <p><strong>Batch ID:</strong> {calc.id.slice(0, 8)}...</p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
