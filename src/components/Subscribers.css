@@ -415,6 +415,81 @@
     color: #333;
 }
 
+.debt-payment-result {
+    margin: 0 0 2rem;
+}
+
+.debt-payment-summary {
+    display: grid;
+    gap: 4px;
+    padding: 12px 14px;
+    background: #f0fff4;
+    border: 1px solid #b7ebc6;
+    border-radius: 6px;
+    color: #333;
+}
+
+.debt-payment-items {
+    display: grid;
+    margin-top: 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    overflow: auto;
+}
+
+.debt-payment-header,
+.debt-payment-row {
+    display: grid;
+    grid-template-columns: minmax(160px, 1.4fr) minmax(130px, 1fr) minmax(90px, 0.7fr) minmax(120px, 0.9fr);
+    gap: 12px;
+    align-items: center;
+    padding: 10px 12px;
+}
+
+.debt-payment-header {
+    background: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+    color: #333;
+    font-weight: 600;
+}
+
+.debt-payment-row {
+    background: white;
+    border-bottom: 1px solid #f0f0f0;
+    color: #555;
+}
+
+.debt-payment-row:last-child {
+    border-bottom: none;
+}
+
+.debt-payment-row span:first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.debt-payment-badge {
+    width: fit-content;
+    max-width: 100%;
+    padding: 2px 8px;
+    border-radius: 12px;
+    color: white;
+    font-size: 0.85em;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.debt-payment-badge.paid {
+    background: #007bff;
+}
+
+.debt-payment-badge.skipped {
+    background: #6c757d;
+}
+
 .error-message {
     background: rgba(239, 68, 68, 0.2);
     border: 1px solid rgba(239, 68, 68, 0.3);

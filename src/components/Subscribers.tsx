@@ -7,7 +7,8 @@ import type {
     SubscriberCreateRequest,
     SubscriberResponse,
     SubscriberUpdateRequest,
-    SubscriberDetailResponse
+    SubscriberDetailResponse,
+    SubscriberDebtPaymentResult
 } from '../types/subscriber';
 
 export default function Subscribers() {
@@ -17,6 +18,8 @@ export default function Subscribers() {
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [editingSubscriber, setEditingSubscriber] = useState<SubscriberResponse | null>(null);
     const [selectedSubscriber, setSelectedSubscriber] = useState<SubscriberDetailResponse | null>(null);
+    const [debtPaymentResult, setDebtPaymentResult] = useState<SubscriberDebtPaymentResult | null>(null);
+    const [payingOffDebt, setPayingOffDebt] = useState(false);
     const [formData, setFormData] = useState({name: '', email: '', balance: '', autoPayInvoices: false});
     const [searchName, setSearchName] = useState('');
     const [showOnlyDebtors, setShowOnlyDebtors] = useState(false);
@@ -94,6 +97,11 @@ export default function Subscribers() {
             console.error(err);
             showError('Error fetching subscriber details');
         }
+    };
+
+    const openSubscriberDetails = async (subscriberId: string) => {
+        setDebtPaymentResult(null);
+        await fetchSubscriberDetails(subscriberId);
     };
 
     const handleCreate = async (e: React.FormEvent) => {
@@ -217,6 +225,50 @@ export default function Subscribers() {
         }
     };
 
+    const handlePayOffDebt = async () => {
+        if (!selectedSubscriber) return;
+
+        const payableInvoices = selectedSubscriber.unpaidInvoices.filter((invoice) =>
+            ['DRAFT', 'SENT'].includes(invoice.status)
+        );
+
+        if (payableInvoices.length === 0) {
+            showError('No draft or sent invoices are available to pay off.');
+            return;
+        }
+
+        if (!confirm(`Mark ${payableInvoices.length} pending invoice(s) for ${selectedSubscriber.name} as paid?`)) {
+            return;
+        }
+
+        setPayingOffDebt(true);
+        setDebtPaymentResult(null);
+
+        try {
+            const response = await fetch(`${API_CONFIG.SUBSCRIBERS_URL}/${selectedSubscriber.id}/pay-off-debt`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const result: SubscriberDebtPaymentResult = await response.json();
+                setDebtPaymentResult(result);
+                showSuccess(`Paid ${result.paidCount} invoice(s) for ${result.subscriberName}, totaling ₴${result.totalPaidAmount.toFixed(2)}`);
+
+                await fetchSubscribers(searchName.trim() || undefined, showOnlyDebtors);
+                await fetchSubscriberDetails(selectedSubscriber.id);
+                window.dispatchEvent(new CustomEvent('invoice-refresh-needed'));
+            } else {
+                showError(await getResponseErrorMessage(response, 'Failed to pay off subscriber debt'));
+            }
+        } catch (err) {
+            console.error('Error paying off subscriber debt:', err);
+            showError('Error paying off subscriber debt');
+        } finally {
+            setPayingOffDebt(false);
+        }
+    };
+
     const handleSearchChange = (value: string) => {
         setSearchName(value);
         if (showOnlyDebtors) {
@@ -323,7 +375,7 @@ export default function Subscribers() {
                                         <p className="date">Created: {new Date(subscriber.createdAt).toLocaleDateString()}</p>
                                     </div>
                                     <div className="subscriber-actions">
-                                        <button onClick={() => fetchSubscriberDetails(subscriber.id)}
+                                        <button onClick={() => openSubscriberDetails(subscriber.id)}
                                                 className="btn btn-sm btn-info">
                                             Info
                                         </button>
@@ -456,15 +508,54 @@ export default function Subscribers() {
                             )}
                         </div>
 
+                        {debtPaymentResult && (
+                            <div className="debt-payment-result">
+                                <div className="debt-payment-summary">
+                                    <strong>Debt payment result</strong>
+                                    <span>
+                                        Paid {debtPaymentResult.paidCount} of {debtPaymentResult.attemptedCount} invoice(s),
+                                        total ₴{debtPaymentResult.totalPaidAmount.toFixed(2)}. Balance: ₴{debtPaymentResult.balance.toFixed(2)}.
+                                    </span>
+                                </div>
+                                {debtPaymentResult.items.length > 0 && (
+                                    <div className="debt-payment-items">
+                                        <div className="debt-payment-header">
+                                            <span>Invoice</span>
+                                            <span>Status</span>
+                                            <span>Amount</span>
+                                            <span>Result</span>
+                                        </div>
+                                        {debtPaymentResult.items.map((item) => (
+                                            <div key={item.invoiceId} className="debt-payment-row">
+                                                <span title={item.invoiceId}>{item.invoiceId}</span>
+                                                <span>{item.statusBefore} &rarr; {item.statusAfter}</span>
+                                                <span>₴{item.invoiceAmount.toFixed(2)}</span>
+                                                <span className={`debt-payment-badge ${item.paid ? 'paid' : 'skipped'}`}>
+                                                    {item.paid ? 'Paid' : item.message}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         <div className="form-actions">
+                            <button
+                                onClick={handlePayOffDebt}
+                                className="btn btn-success"
+                                disabled={payingOffDebt || selectedSubscriber.unpaidInvoices.every((invoice) => !['DRAFT', 'SENT'].includes(invoice.status))}
+                            >
+                                {payingOffDebt ? 'Paying...' : 'Pay Off Debt'}
+                            </button>
                             <button
                                 onClick={() => handleEmailSubscriberSituation(selectedSubscriber.id, selectedSubscriber.name)}
                                 className="btn btn-primary"
-                                disabled={loading}
+                                disabled={loading || payingOffDebt}
                             >
                                 {loading ? 'Sending...' : '📧 Email Situation'}
                             </button>
-                            <button onClick={() => setSelectedSubscriber(null)} className="btn btn-secondary">
+                            <button onClick={() => setSelectedSubscriber(null)} className="btn btn-secondary" disabled={payingOffDebt}>
                                 Close
                             </button>
                         </div>

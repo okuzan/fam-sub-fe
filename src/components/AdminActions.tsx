@@ -149,6 +149,8 @@ const getActionTypeBadgeClass = (type: AdminActionType) => {
         case 'SUBSCRIBER_CREATED':
         case 'SUBSCRIBER_UPDATED':
             return 'admin-actions-badge admin-actions-badge-subscriber';
+        case 'SUBSCRIBER_DEBT_PAID':
+            return 'admin-actions-badge admin-actions-badge-success';
         case 'SUBSCRIBER_DELETED':
             return 'admin-actions-badge admin-actions-badge-danger';
         case 'SUBSCRIBER_SITUATION_EMAIL_SENT':

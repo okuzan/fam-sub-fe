@@ -50,3 +50,22 @@ export interface SubscriberDetailResponse {
     activeSubscriptions: ActiveSubscriptionDto[];
     unpaidInvoices: UnpaidInvoiceDto[];
 }
+
+export interface SubscriberDebtPaymentItemResult {
+    invoiceId: string;
+    statusBefore: string;
+    statusAfter: string;
+    invoiceAmount: number;
+    paid: boolean;
+    message: string;
+}
+
+export interface SubscriberDebtPaymentResult {
+    subscriberId: string;
+    subscriberName: string;
+    attemptedCount: number;
+    paidCount: number;
+    totalPaidAmount: number;
+    balance: number;
+    items: SubscriberDebtPaymentItemResult[];
+}
