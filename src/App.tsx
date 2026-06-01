@@ -4,12 +4,14 @@ import Login from './components/Login';
 import AdminDashboard from './components/AdminDashboard';
 import SubscriberCabinet from './components/SubscriberCabinet';
 import RoleChooser from './components/RoleChooser';
+import AdminInviteAccept from './components/AdminInviteAccept';
 import {API_CONFIG} from './config/api';
 import {ToastProvider} from './components/Toast';
 import './App.css'
 import './components/Login.css'
 import './components/AdminDashboard.css'
 import './components/RoleChooser.css'
+import './components/AdminInviteAccept.css'
 
 interface AuthMeResponse {
     authenticated: boolean;
@@ -35,6 +37,34 @@ const hasRole = (user: User | null, roleName: 'admin' | 'subscriber') =>
     Boolean(user?.roles.some((role) => normalizeRole(role) === roleName));
 
 const hasBothPrimaryRoles = (user: User | null) => hasRole(user, 'admin') && hasRole(user, 'subscriber');
+
+const hasPendingAdminInviteToken = () =>
+    typeof window !== 'undefined' && Boolean(window.sessionStorage.getItem('pendingAdminInviteToken'));
+
+interface NoAccessProps {
+    userEmail?: string | null;
+    onRetry: () => void;
+    onLogout: () => void;
+}
+
+function NoAccess({userEmail, onRetry, onLogout}: NoAccessProps) {
+    return (
+        <main className="no-access">
+            <section className="no-access-panel">
+                <p className="no-access-kicker">{userEmail ?? 'Signed in'}</p>
+                <h1>No workspace access</h1>
+                <p>
+                    This Google account is authenticated, but it does not currently have an admin or subscriber role.
+                    If you just accepted an invitation, retry the session check.
+                </p>
+                <div className="no-access-actions">
+                    <button type="button" onClick={onRetry}>Retry</button>
+                    <button type="button" className="no-access-logout" onClick={onLogout}>Logout</button>
+                </div>
+            </section>
+        </main>
+    );
+}
 
 function App() {
     const [user, setUser] = useState<User | null>(null);
@@ -104,10 +134,11 @@ function App() {
 
     const getRedirectPath = () => {
         if (!user) return '/login';
+        if (hasPendingAdminInviteToken()) return '/admin-invites/accept';
         if (hasBothPrimaryRoles(user)) return '/choose-role';
         if (hasRole(user, 'admin')) return '/admin';
         if (hasRole(user, 'subscriber')) return '/subscriber/cabinet';
-        return '/login';
+        return '/no-access';
     };
 
     if (isLoading) {
@@ -140,6 +171,23 @@ function App() {
                             hasBothPrimaryRoles(user) ?
                                 <RoleChooser userEmail={user?.email} onLogout={handleLogout}/> :
                                 <Navigate to={getRedirectPath()} replace/>
+                        }
+                    />
+                    <Route
+                        path="/no-access"
+                        element={
+                            user ?
+                                <NoAccess userEmail={user.email} onRetry={checkAuthStatus} onLogout={handleLogout}/> :
+                                <Navigate to="/login" replace/>
+                        }
+                    />
+                    <Route
+                        path="/admin-invites/accept"
+                        element={
+                            <AdminInviteAccept
+                                isAuthenticated={Boolean(user?.authenticated)}
+                                onAuthRefresh={checkAuthStatus}
+                            />
                         }
                     />
                     <Route
@@ -193,6 +241,11 @@ function App() {
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                         <Route path="invoices" element={
+                            hasRole(user, 'admin') ?
+                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email} userRoles={user?.roles}/> :
+                                <Navigate to={getRedirectPath()} replace/>
+                        }/>
+                        <Route path="invites" element={
                             hasRole(user, 'admin') ?
                                 <AdminDashboard onLogout={handleLogout} userEmail={user?.email} userRoles={user?.roles}/> :
                                 <Navigate to={getRedirectPath()} replace/>

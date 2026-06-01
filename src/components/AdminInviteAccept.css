@@ -1,0 +1,55 @@
+.admin-invite-accept {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: linear-gradient(135deg, #0f766e 0%, #1d4ed8 100%);
+    color: #111827;
+}
+
+.admin-invite-accept-panel {
+    width: min(100%, 460px);
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.24);
+}
+
+.admin-invite-accept-kicker {
+    margin: 0 0 0.5rem;
+    color: #2563eb;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.admin-invite-accept-panel h1 {
+    margin: 0 0 0.75rem;
+}
+
+.admin-invite-accept-panel p {
+    color: #4b5563;
+}
+
+.admin-invite-accept-panel button,
+.admin-invite-accept-panel a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 8px;
+    background: #2563eb;
+    color: white;
+    padding: 0.75rem 1rem;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.admin-invite-accept-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}

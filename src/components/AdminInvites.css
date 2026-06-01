@@ -1,0 +1,146 @@
+.admin-invites {
+    background: rgba(255, 255, 255, 0.96);
+    color: #1f2937;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 28px rgba(15, 23, 42, 0.14);
+}
+
+.admin-invites-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+    margin-bottom: 1.25rem;
+}
+
+.admin-invites-header h2 {
+    margin: 0 0 0.35rem;
+    color: #111827;
+}
+
+.admin-invites-header p {
+    margin: 0;
+    color: #4b5563;
+}
+
+.admin-access-section {
+    margin-top: 1.25rem;
+}
+
+.admin-access-section:first-of-type {
+    margin-top: 0;
+}
+
+.admin-access-section h3 {
+    margin: 0 0 0.75rem;
+    color: #111827;
+    font-size: 1.05rem;
+}
+
+.admin-invite-form {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) auto;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.admin-invite-form input {
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 0.75rem 0.9rem;
+    font-size: 1rem;
+}
+
+.admin-invite-form button,
+.admin-invite-revoke-btn,
+.admin-account-delete-btn {
+    border: 0;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.admin-invite-form button {
+    background: #2563eb;
+    color: white;
+}
+
+.admin-invite-form button:disabled,
+.admin-invite-revoke-btn:disabled,
+.admin-account-delete-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.admin-invites-table-wrap {
+    overflow-x: auto;
+}
+
+.admin-invites-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.admin-invites-table th,
+.admin-invites-table td {
+    border-bottom: 1px solid #e5e7eb;
+    padding: 0.75rem;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.admin-invites-table th {
+    color: #374151;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.admin-invite-status {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.25rem 0.6rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.admin-invite-status-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.admin-invite-status-accepted {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.admin-invite-status-revoked {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.admin-invite-revoke-btn {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.admin-account-delete-btn {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.admin-invites-loading,
+.admin-invites-empty,
+.admin-invite-no-action {
+    color: #6b7280;
+}
+
+@media (max-width: 720px) {
+    .admin-invite-form {
+        grid-template-columns: 1fr;
+    }
+}

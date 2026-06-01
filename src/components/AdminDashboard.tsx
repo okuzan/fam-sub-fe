@@ -7,6 +7,7 @@ import Memberships from './Memberships';
 import Ledger from './Ledger';
 import Invoices from './Invoices';
 import AdminActions from './AdminActions';
+import AdminInvites from './AdminInvites';
 import TelegramPosts from './TelegramPosts';
 import './SubscriptionServices.css';
 import './Subscribers.css';
@@ -16,6 +17,7 @@ import './CostCalculations.css';
 import './Ledger.css';
 import './Invoices.css';
 import './AdminActions.css';
+import './AdminInvites.css';
 import './TelegramPosts.css';
 
 interface AdminDashboardProps {
@@ -31,6 +33,7 @@ type AdminSectionKey =
     | 'charges'
     | 'ledger'
     | 'invoices'
+    | 'admin-invites'
     | 'admin-actions'
     | 'telegram-posts'
     | 'profile';
@@ -69,6 +72,12 @@ const SECTION_CONFIGS: SectionConfig[] = [
         path: '/admin/ledger'
     },
     {key: 'invoices', title: 'Invoices', description: 'Generate, filter, and manage invoices', path: '/admin/invoices'},
+    {
+        key: 'admin-invites',
+        title: 'Admin Access',
+        description: 'Manage accounts and administrator invitations',
+        path: '/admin/invites'
+    },
     {
         key: 'admin-actions',
         title: 'Admin Actions',
@@ -114,6 +123,7 @@ export default function AdminDashboard({onLogout, userEmail, userRoles = []}: Ad
         if (path === '/admin/cost-calculations') return <Navigate to="/admin/ledger" replace/>;
         if (path === '/admin/ledger') return <Ledger/>;
         if (path === '/admin/invoices') return <Invoices/>;
+        if (path === '/admin/invites') return <AdminInvites/>;
         if (path === '/admin/actions') return <AdminActions/>;
         if (path === '/admin/telegram-posts') return <TelegramPosts/>;
         if (path === '/admin/profile') {
