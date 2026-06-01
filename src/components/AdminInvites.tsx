@@ -21,7 +21,12 @@ const formatTimestamp = (dateTime: string | null) => {
 const getStatusClassName = (status: AdminInviteResponse['status']) =>
     `admin-invite-status admin-invite-status-${status.toLowerCase()}`;
 
-export default function AdminInvites() {
+interface AdminInvitesProps {
+    currentAccountId?: string | null;
+    onCurrentAccountDeleted?: () => void;
+}
+
+export default function AdminInvites({currentAccountId, onCurrentAccountDeleted}: AdminInvitesProps) {
     const {showError, showSuccess} = useToast();
     const [accounts, setAccounts] = useState<AccountResponse[]>([]);
     const [invites, setInvites] = useState<AdminInviteResponse[]>([]);
@@ -101,7 +106,11 @@ export default function AdminInvites() {
 
     const handleDeleteAccount = async (account: AccountResponse) => {
         if (!account.canDelete) return;
-        if (!confirm(`Delete account ${account.email}? This removes its login access.`)) return;
+        const isCurrentAccount = account.id === currentAccountId;
+        const confirmation = isCurrentAccount
+            ? `Delete your own account ${account.email}? You will be logged out immediately.`
+            : `Delete account ${account.email}? This removes its login access.`;
+        if (!confirm(confirmation)) return;
 
         setDeletingAccountId(account.id);
         try {
@@ -111,6 +120,10 @@ export default function AdminInvites() {
             });
 
             if (response.ok) {
+                if (isCurrentAccount) {
+                    onCurrentAccountDeleted?.();
+                    return;
+                }
                 showSuccess(`Deleted account ${account.email}`);
                 await fetchAccounts();
             } else {

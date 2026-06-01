@@ -9,7 +9,7 @@
 }
 
 .admin-invite-accept-panel {
-    width: min(100%, 460px);
+    width: min(100%, 560px);
     background: white;
     border-radius: 12px;
     padding: 2rem;
@@ -27,10 +27,19 @@
 
 .admin-invite-accept-panel h1 {
     margin: 0 0 0.75rem;
+    color: #111827;
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: 0;
 }
 
-.admin-invite-accept-panel p {
-    color: #4b5563;
+.admin-invite-accept-panel p:not(.admin-invite-accept-kicker) {
+    color: #1f2937;
+    line-height: 1.5;
+    margin: 0 0 1.25rem;
+    max-width: 44rem;
+    text-wrap: pretty;
 }
 
 .admin-invite-accept-panel button,

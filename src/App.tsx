@@ -110,6 +110,19 @@ function App() {
         }
     };
 
+    const clearClientState = () => {
+        try {
+            window.sessionStorage.clear();
+            window.localStorage.clear();
+        } catch (error) {
+            console.error('Error clearing client state:', error);
+        }
+    };
+
+    const redirectToLogin = () => {
+        window.location.replace('/login');
+    };
+
     const handleLogout = async () => {
         try {
             const response = await fetch(API_CONFIG.LOGOUT_URL, {
@@ -117,18 +130,30 @@ function App() {
                 credentials: 'include'
             });
 
-            if (response.ok) {
-                setUser(null);
-                window.location.href = '/login';
-            } else {
+            if (!response.ok) {
                 console.error('Logout failed');
-                setUser(null);
-                window.location.href = '/login';
             }
         } catch (error) {
             console.error('Error during logout:', error);
+        } finally {
             setUser(null);
-            window.location.href = '/login';
+            clearClientState();
+            redirectToLogin();
+        }
+    };
+
+    const handleCurrentAccountDeleted = async () => {
+        try {
+            await fetch(API_CONFIG.LOGOUT_URL, {
+                method: 'POST',
+                credentials: 'include'
+            });
+        } catch (error) {
+            console.error('Error clearing deleted account session:', error);
+        } finally {
+            setUser(null);
+            clearClientState();
+            redirectToLogin();
         }
     };
 
@@ -206,63 +231,69 @@ function App() {
                         path="/admin"
                         element={
                             hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email} userRoles={user?.roles}/> :
+                                <AdminDashboard
+                                    onLogout={handleLogout}
+                                    onCurrentAccountDeleted={handleCurrentAccountDeleted}
+                                    userEmail={user?.email}
+                                    userRoles={user?.roles}
+                                    currentAccountId={user?.accountId}
+                                /> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }
                     >
                         <Route path="services" element={
                             hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email} userRoles={user?.roles}/> :
+                                <AdminDashboard onLogout={handleLogout} onCurrentAccountDeleted={handleCurrentAccountDeleted} userEmail={user?.email} userRoles={user?.roles} currentAccountId={user?.accountId}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                         <Route path="subscribers" element={
                             hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email} userRoles={user?.roles}/> :
+                                <AdminDashboard onLogout={handleLogout} onCurrentAccountDeleted={handleCurrentAccountDeleted} userEmail={user?.email} userRoles={user?.roles} currentAccountId={user?.accountId}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                         <Route path="memberships" element={
                             hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email} userRoles={user?.roles}/> :
+                                <AdminDashboard onLogout={handleLogout} onCurrentAccountDeleted={handleCurrentAccountDeleted} userEmail={user?.email} userRoles={user?.roles} currentAccountId={user?.accountId}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                         <Route path="charges" element={
                             hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email} userRoles={user?.roles}/> :
+                                <AdminDashboard onLogout={handleLogout} onCurrentAccountDeleted={handleCurrentAccountDeleted} userEmail={user?.email} userRoles={user?.roles} currentAccountId={user?.accountId}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                         <Route path="cost-calculations" element={
                             hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email} userRoles={user?.roles}/> :
+                                <AdminDashboard onLogout={handleLogout} onCurrentAccountDeleted={handleCurrentAccountDeleted} userEmail={user?.email} userRoles={user?.roles} currentAccountId={user?.accountId}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                         <Route path="ledger" element={
                             hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email} userRoles={user?.roles}/> :
+                                <AdminDashboard onLogout={handleLogout} onCurrentAccountDeleted={handleCurrentAccountDeleted} userEmail={user?.email} userRoles={user?.roles} currentAccountId={user?.accountId}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                         <Route path="invoices" element={
                             hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email} userRoles={user?.roles}/> :
+                                <AdminDashboard onLogout={handleLogout} onCurrentAccountDeleted={handleCurrentAccountDeleted} userEmail={user?.email} userRoles={user?.roles} currentAccountId={user?.accountId}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                         <Route path="invites" element={
                             hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email} userRoles={user?.roles}/> :
+                                <AdminDashboard onLogout={handleLogout} onCurrentAccountDeleted={handleCurrentAccountDeleted} userEmail={user?.email} userRoles={user?.roles} currentAccountId={user?.accountId}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                         <Route path="actions" element={
                             hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email} userRoles={user?.roles}/> :
+                                <AdminDashboard onLogout={handleLogout} onCurrentAccountDeleted={handleCurrentAccountDeleted} userEmail={user?.email} userRoles={user?.roles} currentAccountId={user?.accountId}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                         <Route path="telegram-posts" element={
                             hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email} userRoles={user?.roles}/> :
+                                <AdminDashboard onLogout={handleLogout} onCurrentAccountDeleted={handleCurrentAccountDeleted} userEmail={user?.email} userRoles={user?.roles} currentAccountId={user?.accountId}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                         <Route path="profile" element={
                             hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email} userRoles={user?.roles}/> :
+                                <AdminDashboard onLogout={handleLogout} onCurrentAccountDeleted={handleCurrentAccountDeleted} userEmail={user?.email} userRoles={user?.roles} currentAccountId={user?.accountId}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                     </Route>

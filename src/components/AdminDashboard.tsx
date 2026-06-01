@@ -22,8 +22,10 @@ import './TelegramPosts.css';
 
 interface AdminDashboardProps {
     onLogout?: () => void;
+    onCurrentAccountDeleted?: () => void;
     userEmail?: string | null;
     userRoles?: string[];
+    currentAccountId?: string | null;
 }
 
 type AdminSectionKey =
@@ -98,7 +100,13 @@ const formatRole = (role: string) => {
     return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 };
 
-export default function AdminDashboard({onLogout, userEmail, userRoles = []}: AdminDashboardProps) {
+export default function AdminDashboard({
+    onLogout,
+    onCurrentAccountDeleted,
+    userEmail,
+    userRoles = [],
+    currentAccountId
+}: AdminDashboardProps) {
     const [isLoading, setIsLoading] = useState(false);
     const location = useLocation();
     const canAccessSubscriberCabinet = userRoles.some((role) => role.replace(/^ROLE_/i, '').toLowerCase() === 'subscriber');
@@ -123,7 +131,14 @@ export default function AdminDashboard({onLogout, userEmail, userRoles = []}: Ad
         if (path === '/admin/cost-calculations') return <Navigate to="/admin/ledger" replace/>;
         if (path === '/admin/ledger') return <Ledger/>;
         if (path === '/admin/invoices') return <Invoices/>;
-        if (path === '/admin/invites') return <AdminInvites/>;
+        if (path === '/admin/invites') {
+            return (
+                <AdminInvites
+                    currentAccountId={currentAccountId}
+                    onCurrentAccountDeleted={onCurrentAccountDeleted}
+                />
+            );
+        }
         if (path === '/admin/actions') return <AdminActions/>;
         if (path === '/admin/telegram-posts') return <TelegramPosts/>;
         if (path === '/admin/profile') {
