@@ -21,6 +21,7 @@ import './TelegramPosts.css';
 interface AdminDashboardProps {
     onLogout?: () => void;
     userEmail?: string | null;
+    userRoles?: string[];
 }
 
 type AdminSectionKey =
@@ -83,9 +84,15 @@ const SECTION_CONFIGS: SectionConfig[] = [
     {key: 'profile', title: 'Profile & Settings', description: 'Account details and logout', path: '/admin/profile'},
 ];
 
-export default function AdminDashboard({onLogout, userEmail}: AdminDashboardProps) {
+const formatRole = (role: string) => {
+    const normalized = role.replace(/^ROLE_/i, '').toLowerCase();
+    return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+};
+
+export default function AdminDashboard({onLogout, userEmail, userRoles = []}: AdminDashboardProps) {
     const [isLoading, setIsLoading] = useState(false);
     const location = useLocation();
+    const canAccessSubscriberCabinet = userRoles.some((role) => role.replace(/^ROLE_/i, '').toLowerCase() === 'subscriber');
 
     const handleLogout = async () => {
         setIsLoading(true);
@@ -113,9 +120,14 @@ export default function AdminDashboard({onLogout, userEmail}: AdminDashboardProp
             return (
                 <div className="admin-profile-card">
                     <h3>Profile</h3>
-                    <p><strong>Role:</strong> Administrator</p>
+                    <p><strong>Roles:</strong> {userRoles.length > 0 ? userRoles.map(formatRole).join(', ') : 'Administrator'}</p>
                     <p><strong>Email:</strong> {userEmail ?? 'Unknown'}</p>
                     <div className="admin-profile-actions">
+                        {canAccessSubscriberCabinet && (
+                            <Link to="/subscriber/cabinet" className="admin-profile-link">
+                                Subscriber cabinet
+                            </Link>
+                        )}
                         <button
                             onClick={handleLogout}
                             disabled={isLoading}
@@ -157,6 +169,15 @@ export default function AdminDashboard({onLogout, userEmail}: AdminDashboardProp
                     </div>
                 ) : (
                     <div className="admin-home-grid">
+                        {canAccessSubscriberCabinet && (
+                            <Link
+                                to="/subscriber/cabinet"
+                                className="admin-home-card admin-home-card-secondary"
+                            >
+                                <h3>Subscriber Cabinet</h3>
+                                <p>Open your personal subscriptions, balances, and invoices.</p>
+                            </Link>
+                        )}
                         {SECTION_CONFIGS.map((section) => (
                             <Link
                                 key={section.key}

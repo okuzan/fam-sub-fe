@@ -158,58 +158,58 @@ function App() {
                         path="/admin"
                         element={
                             hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email}/> :
+                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email} userRoles={user?.roles}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }
                     >
                         <Route path="services" element={
                             hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email}/> :
+                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email} userRoles={user?.roles}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                         <Route path="subscribers" element={
                             hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email}/> :
+                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email} userRoles={user?.roles}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                         <Route path="memberships" element={
                             hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email}/> :
+                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email} userRoles={user?.roles}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                         <Route path="charges" element={
                             hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email}/> :
+                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email} userRoles={user?.roles}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                         <Route path="cost-calculations" element={
                             hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email}/> :
+                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email} userRoles={user?.roles}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                         <Route path="ledger" element={
                             hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email}/> :
+                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email} userRoles={user?.roles}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                         <Route path="invoices" element={
                             hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email}/> :
+                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email} userRoles={user?.roles}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                         <Route path="actions" element={
                             hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email}/> :
+                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email} userRoles={user?.roles}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                         <Route path="telegram-posts" element={
                             hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email}/> :
+                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email} userRoles={user?.roles}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                         <Route path="profile" element={
                             hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email}/> :
+                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email} userRoles={user?.roles}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                     </Route>

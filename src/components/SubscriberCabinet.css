@@ -176,12 +176,14 @@
 
 .subscriber-list-row,
 .subscriber-invoice-row {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 16px;
+  align-items: start;
   border: 1px solid #edf0f3;
   border-radius: 8px;
   padding: 14px;
+  text-align: left;
 }
 
 .subscriber-list-row strong,
@@ -201,9 +203,10 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  justify-content: flex-end;
+  justify-content: flex-start;
   align-items: center;
   min-width: 210px;
+  text-align: left;
 }
 
 .subscriber-status {
@@ -271,7 +274,7 @@
   .subscriber-list-row,
   .subscriber-invoice-row {
     align-items: stretch;
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
 
   .subscriber-summary-grid,

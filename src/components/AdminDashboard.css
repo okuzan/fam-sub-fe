@@ -63,6 +63,11 @@
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
 }
 
+.admin-home-card-secondary {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.35);
+}
+
 .admin-home-card h3 {
     margin: 0 0 8px;
     font-size: 1.15rem;
@@ -108,7 +113,25 @@
 }
 
 .admin-profile-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
     margin-top: 1.25rem;
+}
+
+.admin-profile-link {
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.admin-profile-link:hover {
+    background: rgba(255, 255, 255, 0.22);
 }
 
 .admin-btn {
