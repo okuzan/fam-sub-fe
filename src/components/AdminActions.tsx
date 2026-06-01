@@ -1,7 +1,7 @@
 import {useEffect, useState} from 'react';
 import {API_CONFIG} from '../config/api';
 import {getResponseErrorMessage} from '../utils/errors';
-import {useToast} from './Toast';
+import {useToast} from './ToastContext';
 import type {
     AdminActionFilterRequest,
     AdminActionResponse,

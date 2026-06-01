@@ -1,4 +1,5 @@
 import {useState} from 'react';
+import {useSearchParams} from 'react-router-dom';
 import {API_CONFIG} from '../config/api';
 
 interface LoginProps {
@@ -6,8 +7,13 @@ interface LoginProps {
 }
 
 export default function Login({onLoginSuccess}: LoginProps) {
+    const [searchParams] = useSearchParams();
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(
+        searchParams.has('error')
+            ? 'Sign-in failed. Use the Google account that is linked to your subscriber or admin profile.'
+            : null
+    );
 
     const handleGoogleLogin = () => {
         setIsLoading(true);

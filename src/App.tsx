@@ -2,11 +2,14 @@ import {BrowserRouter as Router, Navigate, Route, Routes} from 'react-router-dom
 import {useEffect, useState} from 'react';
 import Login from './components/Login';
 import AdminDashboard from './components/AdminDashboard';
+import SubscriberCabinet from './components/SubscriberCabinet';
+import RoleChooser from './components/RoleChooser';
 import {API_CONFIG} from './config/api';
 import {ToastProvider} from './components/Toast';
 import './App.css'
 import './components/Login.css'
 import './components/AdminDashboard.css'
+import './components/RoleChooser.css'
 
 interface AuthMeResponse {
     authenticated: boolean;
@@ -21,8 +24,17 @@ interface User {
     authenticated: boolean;
     accountId?: string | null;
     email?: string | null;
-    role?: 'user' | 'admin';
+    roles: string[];
+    scopes: string[];
+    principalType?: string | null;
 }
+
+const normalizeRole = (role: string) => role.toLowerCase().replace(/^role_/, '');
+
+const hasRole = (user: User | null, roleName: 'admin' | 'subscriber') =>
+    Boolean(user?.roles.some((role) => normalizeRole(role) === roleName));
+
+const hasBothPrimaryRoles = (user: User | null) => hasRole(user, 'admin') && hasRole(user, 'subscriber');
 
 function App() {
     const [user, setUser] = useState<User | null>(null);
@@ -42,19 +54,15 @@ function App() {
                 const authData: AuthMeResponse = await response.json();
 
                 if (authData.authenticated) {
-                    // Check for ADMIN role in the array (case-insensitive)
-                    const userRole = authData.roles.some(role =>
-                        role.toLowerCase() === 'admin'
-                    ) ? 'admin' : 'user';
-
                     console.log('User authenticated:', authData);
-                    console.log('User role:', userRole);
 
                     setUser({
                         authenticated: true,
                         accountId: authData.accountId,
                         email: authData.email,
-                        role: userRole
+                        roles: authData.roles ?? [],
+                        scopes: authData.scopes ?? [],
+                        principalType: authData.principalType
                     });
                 } else {
                     console.log('User not authenticated');
@@ -96,7 +104,10 @@ function App() {
 
     const getRedirectPath = () => {
         if (!user) return '/login';
-        return user.role === 'admin' ? '/admin' : '/dashboard';
+        if (hasBothPrimaryRoles(user)) return '/choose-role';
+        if (hasRole(user, 'admin')) return '/admin';
+        if (hasRole(user, 'subscriber')) return '/subscriber/cabinet';
+        return '/login';
     };
 
     if (isLoading) {
@@ -121,74 +132,84 @@ function App() {
                     />
                     <Route
                         path="/dashboard"
+                        element={<Navigate to={getRedirectPath()} replace/>}
+                    />
+                    <Route
+                        path="/choose-role"
                         element={
-                            user && user.role !== 'admin' ?
-                                <div className="dashboard">
-                                    <h1>Welcome to FamSub Dashboard</h1>
-                                    <p>You are successfully logged in!</p>
-                                    <button onClick={handleLogout}>
-                                        Logout
-                                    </button>
-                                </div> :
+                            hasBothPrimaryRoles(user) ?
+                                <RoleChooser userEmail={user?.email} onLogout={handleLogout}/> :
+                                <Navigate to={getRedirectPath()} replace/>
+                        }
+                    />
+                    <Route
+                        path="/subscriber/cabinet"
+                        element={
+                            hasRole(user, 'subscriber') ?
+                                <SubscriberCabinet
+                                    userEmail={user?.email}
+                                    canAccessAdmin={hasRole(user, 'admin')}
+                                    onLogout={handleLogout}
+                                /> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }
                     />
                     <Route
                         path="/admin"
                         element={
-                            user && user.role === 'admin' ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
+                            hasRole(user, 'admin') ?
+                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }
                     >
                         <Route path="services" element={
-                            user && user.role === 'admin' ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
+                            hasRole(user, 'admin') ?
+                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                         <Route path="subscribers" element={
-                            user && user.role === 'admin' ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
+                            hasRole(user, 'admin') ?
+                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                         <Route path="memberships" element={
-                            user && user.role === 'admin' ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
+                            hasRole(user, 'admin') ?
+                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                         <Route path="charges" element={
-                            user && user.role === 'admin' ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
+                            hasRole(user, 'admin') ?
+                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                         <Route path="cost-calculations" element={
-                            user && user.role === 'admin' ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
+                            hasRole(user, 'admin') ?
+                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                         <Route path="ledger" element={
-                            user && user.role === 'admin' ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
+                            hasRole(user, 'admin') ?
+                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                         <Route path="invoices" element={
-                            user && user.role === 'admin' ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
+                            hasRole(user, 'admin') ?
+                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                         <Route path="actions" element={
-                            user && user.role === 'admin' ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
+                            hasRole(user, 'admin') ?
+                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                         <Route path="telegram-posts" element={
-                            user && user.role === 'admin' ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
+                            hasRole(user, 'admin') ?
+                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                         <Route path="profile" element={
-                            user && user.role === 'admin' ?
-                                <AdminDashboard onLogout={handleLogout} userEmail={user.email}/> :
+                            hasRole(user, 'admin') ?
+                                <AdminDashboard onLogout={handleLogout} userEmail={user?.email}/> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }/>
                     </Route>

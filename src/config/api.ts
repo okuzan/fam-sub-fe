@@ -18,6 +18,8 @@ export const API_CONFIG = {
     INVOICES_URL: `${API_BASE_URL}/admin/invoices`,
     ADMIN_ACTIONS_URL: `${API_BASE_URL}/admin/actions`,
     ADMIN_RECOVERY_URL: `${API_BASE_URL}/admin/recovery`,
+    SUBSCRIBER_CABINET_URL: `${API_BASE_URL}/subscriber/cabinet`,
+    SUBSCRIBER_INVOICES_URL: `${API_BASE_URL}/subscriber/invoices`,
     LOGIN_SUCCESS_URL: '/dashboard',
     LOGIN_FAILURE_URL: '/login?error=true',
 } as const;

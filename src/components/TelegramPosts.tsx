@@ -1,7 +1,7 @@
 import {useState} from 'react';
 import {API_CONFIG} from '../config/api';
 import {getResponseErrorMessage} from '../utils/errors';
-import {useToast} from './Toast';
+import {useToast} from './ToastContext';
 
 export default function TelegramPosts() {
     const {showError, showSuccess} = useToast();

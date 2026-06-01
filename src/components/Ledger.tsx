@@ -5,7 +5,7 @@ import type {SubscriberResponse} from '../types/subscriber';
 import type {SubscriptionServiceResponse} from '../types/subscription';
 import {getResponseErrorMessage} from '../utils/errors';
 import CostCalculations from './CostCalculations';
-import {useToast} from './Toast';
+import {useToast} from './ToastContext';
 
 type InvoiceAssignmentFilter = 'all' | 'assigned' | 'unassigned';
 

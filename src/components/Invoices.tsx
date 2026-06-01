@@ -2,7 +2,7 @@ import {useEffect, useState} from 'react';
 import {createPortal} from 'react-dom';
 import {API_CONFIG, getInvoicePdfUrl} from '../config/api';
 import {getResponseErrorMessage} from '../utils/errors';
-import {useToast} from './Toast';
+import {useToast} from './ToastContext';
 import type {
     DraftInvoiceBulkEmailResult,
     InvoiceBulkBalancePaymentItemResult,
