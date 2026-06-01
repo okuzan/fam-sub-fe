@@ -66,6 +66,10 @@ export interface SubscriberDebtPaymentResult {
     attemptedCount: number;
     paidCount: number;
     totalPaidAmount: number;
+    includeCredit: boolean;
+    balanceBefore: number;
     balance: number;
+    balanceAfter: number;
+    creditWrittenOff: number;
     items: SubscriberDebtPaymentItemResult[];
 }

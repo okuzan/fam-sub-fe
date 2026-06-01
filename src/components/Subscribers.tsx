@@ -241,11 +241,18 @@ export default function Subscribers() {
             return;
         }
 
+        const includeCredit = selectedSubscriber.balance > 0
+            ? confirm(
+                `${selectedSubscriber.name} has ₴${selectedSubscriber.balance.toFixed(2)} in credit. ` +
+                'Clear this credit balance as part of the payoff? Press Cancel to keep the credit.'
+            )
+            : true;
+
         setPayingOffDebt(true);
         setDebtPaymentResult(null);
 
         try {
-            const response = await fetch(`${API_CONFIG.SUBSCRIBERS_URL}/${selectedSubscriber.id}/pay-off-debt`, {
+            const response = await fetch(`${API_CONFIG.SUBSCRIBERS_URL}/${selectedSubscriber.id}/pay-off-debt?includeCredit=${includeCredit}`, {
                 method: 'POST',
                 credentials: 'include'
             });
@@ -253,7 +260,12 @@ export default function Subscribers() {
             if (response.ok) {
                 const result: SubscriberDebtPaymentResult = await response.json();
                 setDebtPaymentResult(result);
-                showSuccess(`Paid ${result.paidCount} invoice(s) for ${result.subscriberName}, totaling ₴${result.totalPaidAmount.toFixed(2)}`);
+                const creditMessage = result.creditWrittenOff > 0
+                    ? ` Credit written off: ₴${result.creditWrittenOff.toFixed(2)}.`
+                    : '';
+                showSuccess(
+                    `Paid ${result.paidCount} invoice(s) for ${result.subscriberName}, totaling ₴${result.totalPaidAmount.toFixed(2)}.${creditMessage}`
+                );
 
                 await fetchSubscribers(searchName.trim() || undefined, showOnlyDebtors);
                 await fetchSubscriberDetails(selectedSubscriber.id);
@@ -514,7 +526,9 @@ export default function Subscribers() {
                                     <strong>Debt payment result</strong>
                                     <span>
                                         Paid {debtPaymentResult.paidCount} of {debtPaymentResult.attemptedCount} invoice(s),
-                                        total ₴{debtPaymentResult.totalPaidAmount.toFixed(2)}. Balance: ₴{debtPaymentResult.balance.toFixed(2)}.
+                                        total ₴{debtPaymentResult.totalPaidAmount.toFixed(2)}.
+                                        Credit written off: ₴{debtPaymentResult.creditWrittenOff.toFixed(2)}.
+                                        Balance: ₴{debtPaymentResult.balanceAfter.toFixed(2)}.
                                     </span>
                                 </div>
                                 {debtPaymentResult.items.length > 0 && (
