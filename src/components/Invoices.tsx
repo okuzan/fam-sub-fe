@@ -2,6 +2,7 @@ import {useEffect, useState} from 'react';
 import {createPortal} from 'react-dom';
 import {API_CONFIG, getInvoicePdfUrl} from '../config/api';
 import {getResponseErrorMessage} from '../utils/errors';
+import {useEscapeClose} from '../utils/useEscapeClose';
 import {useToast} from './ToastContext';
 import type {
     DraftInvoiceBulkEmailResult,
@@ -303,6 +304,25 @@ export default function Invoices() {
         setManualInvoiceData(createManualInvoiceInitialState());
     };
 
+    const closeDeleteModal = () => {
+        if (loading) {
+            return;
+        }
+
+        setShowDeleteModal(false);
+        setDeleteInvoiceData(null);
+    };
+
+    const closeVoidModal = () => {
+        if (loading) {
+            return;
+        }
+
+        setShowVoidModal(false);
+        setVoidInvoiceData(null);
+        setVoidReason('');
+    };
+
     const handleCreateManualInvoice = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -581,6 +601,25 @@ export default function Invoices() {
 
         setShowDraftBalancePaymentModal(false);
         setDraftBalancePaymentResult(null);
+    };
+
+    const closeDraftEmailPreview = () => {
+        if (emailingDraftInvoices) {
+            return;
+        }
+
+        setShowDraftEmailPreview(false);
+        setDraftEmailPreviewInvoices([]);
+    };
+
+    const closeSelectedInvoice = () => {
+        setSelectedInvoice(null);
+        setSubscriberBalance(null);
+    };
+
+    const closeStatusHistory = () => {
+        setStatusHistoryInvoice(null);
+        setStatusHistory([]);
     };
 
     const handlePayDraftInvoicesFromBalance = async () => {
@@ -905,6 +944,16 @@ export default function Invoices() {
     const resolvedSuggestedPeriod = resolveSuggestedInvoicePeriod(suggestion);
     const draftEmailPreviewTotal = draftEmailPreviewInvoices.reduce((sum, invoice) => sum + invoice.totalAmount, 0);
     const draftBalancePaymentItems = draftBalancePaymentResult?.items ?? [];
+
+    useEscapeClose(showGenerateForm, () => setShowGenerateForm(false));
+    useEscapeClose(showManualInvoiceForm, closeManualInvoiceForm);
+    useEscapeClose(showFilterForm, () => setShowFilterForm(false));
+    useEscapeClose(showDraftEmailPreview, closeDraftEmailPreview);
+    useEscapeClose(showDraftBalancePaymentModal, closeDraftBalancePaymentModal);
+    useEscapeClose(Boolean(selectedInvoice), closeSelectedInvoice);
+    useEscapeClose(Boolean(statusHistoryInvoice), closeStatusHistory);
+    useEscapeClose(showVoidModal && Boolean(voidInvoiceData), closeVoidModal);
+    useEscapeClose(showDeleteModal && Boolean(deleteInvoiceData), closeDeleteModal);
 
     return (
         <div className="invoices">
@@ -1343,10 +1392,7 @@ export default function Invoices() {
                                 {emailingDraftInvoices ? 'Sending...' : 'Send to All Drafts'}
                             </button>
                             <button
-                                onClick={() => {
-                                    setShowDraftEmailPreview(false);
-                                    setDraftEmailPreviewInvoices([]);
-                                }}
+                                onClick={closeDraftEmailPreview}
                                 className="btn btn-secondary"
                                 disabled={emailingDraftInvoices}
                             >
@@ -1573,10 +1619,7 @@ export default function Invoices() {
                                     disabled={loadingStatusHistory && statusHistoryInvoice?.id === selectedInvoice.invoice.id}>
                                 {loadingStatusHistory && statusHistoryInvoice?.id === selectedInvoice.invoice.id ? 'Loading...' : 'Status History'}
                             </button>
-                            <button onClick={() => {
-                                setSelectedInvoice(null);
-                                setSubscriberBalance(null);
-                            }} className="btn btn-secondary">
+                            <button onClick={closeSelectedInvoice} className="btn btn-secondary">
                                 Close
                             </button>
                         </div>
@@ -1626,10 +1669,7 @@ export default function Invoices() {
                         )}
 
                         <div className="form-actions">
-                            <button onClick={() => {
-                                setStatusHistoryInvoice(null);
-                                setStatusHistory([]);
-                            }} className="btn btn-secondary">
+                            <button onClick={closeStatusHistory} className="btn btn-secondary">
                                 Close
                             </button>
                         </div>
@@ -1668,11 +1708,7 @@ export default function Invoices() {
                                 {loading ? 'Voiding...' : 'Void Invoice'}
                             </button>
                             <button
-                                onClick={() => {
-                                    setShowVoidModal(false);
-                                    setVoidInvoiceData(null);
-                                    setVoidReason('');
-                                }}
+                                onClick={closeVoidModal}
                                 className="btn btn-secondary"
                                 disabled={loading}
                             >
@@ -1727,10 +1763,7 @@ export default function Invoices() {
                                 {loading ? 'Deleting...' : 'Delete Invoice'}
                             </button>
                             <button
-                                onClick={() => {
-                                    setShowDeleteModal(false);
-                                    setDeleteInvoiceData(null);
-                                }}
+                                onClick={closeDeleteModal}
                                 className="btn btn-secondary"
                                 disabled={loading}
                             >

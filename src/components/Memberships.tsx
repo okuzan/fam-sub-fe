@@ -1,6 +1,7 @@
 import {useEffect, useState} from 'react';
 import {API_CONFIG} from '../config/api';
 import {getResponseErrorMessage} from '../utils/errors';
+import {useEscapeClose} from '../utils/useEscapeClose';
 import {useToast} from './ToastContext';
 import type {
     MembershipCreateRequest,
@@ -253,6 +254,8 @@ export default function Memberships() {
         setEditingMembership(null);
         setFormData({subscriberId: '', serviceId: '', startDate: '', endMonth: ''});
     };
+
+    useEscapeClose(showCreateForm || Boolean(editingMembership), closeForm);
 
     const getSubscriberName = (subscriberId: string) => {
         const subscriber = subscribers.find(s => s.id === subscriberId);

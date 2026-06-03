@@ -2,6 +2,7 @@ import {useEffect, useState} from 'react';
 import {createPortal} from 'react-dom';
 import {API_CONFIG} from '../config/api';
 import {getResponseErrorMessage} from '../utils/errors';
+import {useEscapeClose} from '../utils/useEscapeClose';
 import {useToast} from './ToastContext';
 import type {
     ChargeCreateRequest,
@@ -187,6 +188,8 @@ export default function Charges() {
         setEditingCharge(null);
         setFormData({subscriptionServiceId: '', amount: '', chargeMonth: '', description: ''});
     };
+
+    useEscapeClose(showCreateForm || Boolean(editingCharge), closeForm);
 
     const formatChargeMonth = (chargeMonth: string) => {
         const [year, month] = chargeMonth.split('-');

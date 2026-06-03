@@ -2,6 +2,7 @@ import {useEffect, useState} from 'react';
 import {createPortal} from 'react-dom';
 import {API_CONFIG} from '../config/api';
 import {getResponseErrorMessage} from '../utils/errors';
+import {useEscapeClose} from '../utils/useEscapeClose';
 import {useToast} from './ToastContext';
 import type {
     SubscriptionServiceCreateRequest,
@@ -140,6 +141,8 @@ export default function SubscriptionServices() {
         setEditingService(null);
         setFormData({name: '', price: ''});
     };
+
+    useEscapeClose(showCreateForm || Boolean(editingService), closeForm);
 
     if (loading) return <div className="loading">Loading services...</div>;
 

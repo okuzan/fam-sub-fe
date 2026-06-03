@@ -1,6 +1,7 @@
 import {useEffect, useMemo, useState} from 'react';
 import {API_CONFIG} from '../config/api';
 import {getResponseErrorMessage} from '../utils/errors';
+import {useEscapeClose} from '../utils/useEscapeClose';
 import type {InvoiceDetailResponse, InvoiceResponse, InvoiceStatus} from '../types/invoice';
 import type {ActiveSubscriptionDto, SubscriberDetailResponse, UnpaidInvoiceDto} from '../types/subscriber';
 import './SubscriberCabinet.css';
@@ -166,6 +167,8 @@ export default function SubscriberCabinet({userEmail, canAccessAdmin = false, on
             </div>
         </div>
     );
+
+    useEscapeClose(Boolean(selectedInvoice), () => setSelectedInvoice(null));
 
     if (loading) {
         return (

@@ -2,6 +2,7 @@ import {useEffect, useState} from 'react';
 import {createPortal} from 'react-dom';
 import {API_CONFIG} from '../config/api';
 import {getResponseErrorMessage} from '../utils/errors';
+import {useEscapeClose} from '../utils/useEscapeClose';
 import {useToast} from './ToastContext';
 import type {
     SubscriberCreateRequest,
@@ -327,6 +328,13 @@ export default function Subscribers() {
         setEditingSubscriber(null);
         setFormData({name: '', email: '', balance: '', autoPayInvoices: false});
     };
+
+    useEscapeClose(showCreateForm || Boolean(editingSubscriber), closeForm);
+    useEscapeClose(Boolean(selectedSubscriber), () => {
+        if (!payingOffDebt) {
+            setSelectedSubscriber(null);
+        }
+    });
 
     if (loading) return <div className="loading">Loading subscribers...</div>;
 
