@@ -144,6 +144,7 @@ const getActionTypeBadgeClass = (type: AdminActionType) => {
         case 'INVOICE_STATUS_UPDATED':
         case 'INVOICE_NOTES_UPDATED':
         case 'MANUAL_INVOICE_CREATED':
+        case 'INVOICE_DUPLICATED':
         case 'OUTSTANDING_BALANCE_INVOICE_CREATED':
             return 'admin-actions-badge admin-actions-badge-invoice';
         case 'SUBSCRIBER_CREATED':

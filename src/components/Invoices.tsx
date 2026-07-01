@@ -12,6 +12,7 @@ import type {
     InvoiceOrigin,
     InvoiceGenerationRequest,
     InvoiceGenerationResult,
+    InvoiceDuplicateRequest,
     InvoiceStatus,
     InvoiceStatusUpdateRequest,
     InvoiceVoidRequest,
@@ -97,6 +98,7 @@ export default function Invoices() {
     const [editingNotes, setEditingNotes] = useState(false);
     const [notesInput, setNotesInput] = useState('');
     const [manualInvoiceData, setManualInvoiceData] = useState(createManualInvoiceInitialState);
+    const [duplicateSourceInvoice, setDuplicateSourceInvoice] = useState<InvoiceResponse | null>(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [showVoidModal, setShowVoidModal] = useState(false);
     const [voidReason, setVoidReason] = useState('');
@@ -301,7 +303,21 @@ export default function Invoices() {
 
     const closeManualInvoiceForm = () => {
         setShowManualInvoiceForm(false);
+        setDuplicateSourceInvoice(null);
         setManualInvoiceData(createManualInvoiceInitialState());
+    };
+
+    const openDuplicateInvoiceForm = (invoice: InvoiceResponse) => {
+        setSelectedInvoice(null);
+        setDuplicateSourceInvoice(invoice);
+        setManualInvoiceData({
+            subscriberId: '',
+            amount: invoice.totalAmount.toString(),
+            invoiceMonth: invoice.fromMonth,
+            notes: invoice.notes ?? '',
+            sendEmail: false
+        });
+        setShowManualInvoiceForm(true);
     };
 
     const closeDeleteModal = () => {
@@ -328,15 +344,23 @@ export default function Invoices() {
         setLoading(true);
 
         try {
-            const request: ManualInvoiceCreateRequest = {
-                subscriberId: manualInvoiceData.subscriberId,
-                amount: parseFloat(manualInvoiceData.amount),
-                invoiceMonth: manualInvoiceData.invoiceMonth,
-                notes: manualInvoiceData.notes.trim(),
-                sendEmail: manualInvoiceData.sendEmail
-            };
+            const request: ManualInvoiceCreateRequest | InvoiceDuplicateRequest = duplicateSourceInvoice
+                ? {
+                    subscriberId: manualInvoiceData.subscriberId,
+                    sendEmail: manualInvoiceData.sendEmail
+                }
+                : {
+                    subscriberId: manualInvoiceData.subscriberId,
+                    amount: parseFloat(manualInvoiceData.amount),
+                    invoiceMonth: manualInvoiceData.invoiceMonth,
+                    notes: manualInvoiceData.notes.trim(),
+                    sendEmail: manualInvoiceData.sendEmail
+                };
+            const endpoint = duplicateSourceInvoice
+                ? `${API_CONFIG.INVOICES_URL}/${duplicateSourceInvoice.id}/duplicate`
+                : `${API_CONFIG.INVOICES_URL}/manual`;
 
-            const response = await fetch(`${API_CONFIG.INVOICES_URL}/manual`, {
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 credentials: 'include',
@@ -345,7 +369,7 @@ export default function Invoices() {
 
             if (response.ok) {
                 const invoice: InvoiceResponse = await response.json();
-                showSuccess(`Created manual invoice for ${invoice.subscriberName} totaling ₴${invoice.totalAmount.toFixed(2)}`);
+                showSuccess(`${duplicateSourceInvoice ? 'Duplicated' : 'Created manual'} invoice for ${invoice.subscriberName} totaling ₴${invoice.totalAmount.toFixed(2)}`);
                 closeManualInvoiceForm();
                 fetchInvoices(hasActiveFilters);
             } else {
@@ -1047,6 +1071,10 @@ export default function Invoices() {
                                             className="btn btn-sm btn-secondary">
                                         View Details
                                     </button>
+                                    <button onClick={() => openDuplicateInvoiceForm(invoice)}
+                                            className="btn btn-sm btn-success">
+                                        Duplicate
+                                    </button>
                                     <button onClick={() => handleEmailInvoice(invoice.id, invoice.subscriberName)}
                                             className="btn btn-sm btn-info"
                                             disabled={emailingInvoices.has(invoice.id) || isInvoiceVoid(invoice)}>
@@ -1143,10 +1171,12 @@ export default function Invoices() {
             {showManualInvoiceForm && createPortal(
                 <div className="form-overlay">
                     <div className="form-container">
-                        <h3>Create Manual Invoice</h3>
+                        <h3>{duplicateSourceInvoice ? 'Duplicate Invoice' : 'Create Manual Invoice'}</h3>
                         <form onSubmit={handleCreateManualInvoice}>
                             <div className="manual-invoice-help">
-                                Create a one-off invoice without subscription ledger calculations. Use this for pre-system debt instead of negative subscriber credit.
+                                {duplicateSourceInvoice
+                                    ? `Create a new manual invoice with the same amount, description, and period as ${duplicateSourceInvoice.subscriberName}'s invoice.`
+                                    : 'Create a one-off invoice without subscription ledger calculations. Use this for pre-system debt instead of negative subscriber credit.'}
                             </div>
 
                             <div className="form-group">
@@ -1183,21 +1213,31 @@ export default function Invoices() {
                                             amount: e.target.value
                                         }))}
                                         placeholder="0"
+                                        readOnly={Boolean(duplicateSourceInvoice)}
                                         required
                                     />
                                 </div>
                                 <div className="form-group">
                                     <label htmlFor="manualInvoiceMonth">Invoice Month</label>
-                                    <input
-                                        type="month"
-                                        id="manualInvoiceMonth"
-                                        value={manualInvoiceData.invoiceMonth}
-                                        onChange={(e) => setManualInvoiceData((prev) => ({
-                                            ...prev,
-                                            invoiceMonth: e.target.value
-                                        }))}
-                                        required
-                                    />
+                                    {duplicateSourceInvoice ? (
+                                        <input
+                                            type="text"
+                                            id="manualInvoiceMonth"
+                                            value={`${duplicateSourceInvoice.fromMonth} – ${duplicateSourceInvoice.toMonth}`}
+                                            readOnly
+                                        />
+                                    ) : (
+                                        <input
+                                            type="month"
+                                            id="manualInvoiceMonth"
+                                            value={manualInvoiceData.invoiceMonth}
+                                            onChange={(e) => setManualInvoiceData((prev) => ({
+                                                ...prev,
+                                                invoiceMonth: e.target.value
+                                            }))}
+                                            required
+                                        />
+                                    )}
                                 </div>
                             </div>
 
@@ -1213,7 +1253,8 @@ export default function Invoices() {
                                     placeholder="What is this invoice for?"
                                     rows={4}
                                     className="notes-textarea"
-                                    required
+                                    readOnly={Boolean(duplicateSourceInvoice)}
+                                    required={!duplicateSourceInvoice}
                                 />
                             </div>
 
@@ -1238,7 +1279,7 @@ export default function Invoices() {
 
                             <div className="form-actions">
                                 <button type="submit" disabled={loading} className="btn btn-success">
-                                    {loading ? 'Creating...' : 'Create Manual Invoice'}
+                                    {loading ? 'Creating...' : duplicateSourceInvoice ? 'Duplicate Invoice' : 'Create Manual Invoice'}
                                 </button>
                                 <button type="button" onClick={closeManualInvoiceForm}
                                         className="btn btn-secondary">
@@ -1584,6 +1625,10 @@ export default function Invoices() {
                         )}
 
                         <div className="form-actions">
+                            <button onClick={() => openDuplicateInvoiceForm(selectedInvoice.invoice)}
+                                    className="btn btn-success">
+                                Duplicate Invoice
+                            </button>
                             <button onClick={() => handleEmailInvoiceFromDetail(selectedInvoice.invoice.id, selectedInvoice.invoice.subscriberName)}
                                     className="btn btn-info"
                                     disabled={emailingDetailInvoice || isInvoiceVoid(selectedInvoice.invoice)}>

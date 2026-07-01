@@ -29,6 +29,11 @@ export interface ManualInvoiceCreateRequest {
     sendEmail?: boolean;
 }
 
+export interface InvoiceDuplicateRequest {
+    subscriberId: string;
+    sendEmail?: boolean;
+}
+
 export interface InvoiceVoidRequest {
     reason?: string;
 }
