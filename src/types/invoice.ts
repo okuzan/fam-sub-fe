@@ -31,6 +31,8 @@ export interface ManualInvoiceCreateRequest {
 
 export interface InvoiceDuplicateRequest {
     subscriberId: string;
+    amount: number;
+    notes: string;
     sendEmail?: boolean;
 }
 

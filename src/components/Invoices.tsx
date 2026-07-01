@@ -347,6 +347,8 @@ export default function Invoices() {
             const request: ManualInvoiceCreateRequest | InvoiceDuplicateRequest = duplicateSourceInvoice
                 ? {
                     subscriberId: manualInvoiceData.subscriberId,
+                    amount: parseFloat(manualInvoiceData.amount),
+                    notes: manualInvoiceData.notes.trim(),
                     sendEmail: manualInvoiceData.sendEmail
                 }
                 : {
@@ -1175,7 +1177,7 @@ export default function Invoices() {
                         <form onSubmit={handleCreateManualInvoice}>
                             <div className="manual-invoice-help">
                                 {duplicateSourceInvoice
-                                    ? `Create a new manual invoice with the same amount, description, and period as ${duplicateSourceInvoice.subscriberName}'s invoice.`
+                                    ? `Create a new manual invoice using ${duplicateSourceInvoice.subscriberName}'s invoice as a starting point.`
                                     : 'Create a one-off invoice without subscription ledger calculations. Use this for pre-system debt instead of negative subscriber credit.'}
                             </div>
 
@@ -1213,7 +1215,6 @@ export default function Invoices() {
                                             amount: e.target.value
                                         }))}
                                         placeholder="0"
-                                        readOnly={Boolean(duplicateSourceInvoice)}
                                         required
                                     />
                                 </div>
@@ -1242,7 +1243,7 @@ export default function Invoices() {
                             </div>
 
                             <div className="form-group">
-                                <label htmlFor="manualNotes">Note</label>
+                                <label htmlFor="manualNotes">Description</label>
                                 <textarea
                                     id="manualNotes"
                                     value={manualInvoiceData.notes}
@@ -1253,7 +1254,6 @@ export default function Invoices() {
                                     placeholder="What is this invoice for?"
                                     rows={4}
                                     className="notes-textarea"
-                                    readOnly={Boolean(duplicateSourceInvoice)}
                                     required={!duplicateSourceInvoice}
                                 />
                             </div>
