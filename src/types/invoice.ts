@@ -24,7 +24,7 @@ export interface InvoiceGenerationRequest {
 export interface ManualInvoiceCreateRequest {
     subscriberId: string;
     amount: number;
-    invoiceMonth: string; // YYYY-MM
+    invoiceDate: string; // YYYY-MM-DD
     notes: string;
     sendEmail?: boolean;
 }
@@ -32,6 +32,7 @@ export interface ManualInvoiceCreateRequest {
 export interface InvoiceDuplicateRequest {
     subscriberId: string;
     amount: number;
+    invoiceDate?: string; // YYYY-MM-DD
     notes: string;
     sendEmail?: boolean;
 }
@@ -50,6 +51,7 @@ export interface InvoiceResponse {
     subscriberName: string;
     fromMonth: string;
     toMonth: string;
+    invoiceDate: string;
     totalAmount: number;
     status: InvoiceStatus;
     createdAt: string;
@@ -165,6 +167,8 @@ export interface InvoiceFilterRequest {
     status?: string;
     dateFrom?: string; // ISO date string
     dateTo?: string;   // ISO date string
+    invoiceDateFrom?: string; // YYYY-MM-DD
+    invoiceDateTo?: string;   // YYYY-MM-DD
     origin?: string;
 }
 

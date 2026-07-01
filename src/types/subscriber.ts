@@ -35,9 +35,11 @@ export interface UnpaidInvoiceDto {
     totalAmount: number;
     fromMonth: string;
     toMonth: string;
+    invoiceDate: string;
     createdAt: string;
     status: string;
     notes?: string;
+    origin: string;
 }
 
 export interface SubscriberDetailResponse {

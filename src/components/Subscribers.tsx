@@ -518,7 +518,10 @@ export default function Subscribers() {
                                 selectedSubscriber.unpaidInvoices.map((invoice) => (
                                     <div key={invoice.id} className="unpaid-invoice-card">
                                         <p><strong>Amount:</strong> ₴{invoice.totalAmount.toFixed(2)}</p>
-                                        <p><strong>Period:</strong> {invoice.fromMonth} - {invoice.toMonth}</p>
+                                        {invoice.origin === 'SUBSCRIPTION_LEDGER' && (
+                                            <p><strong>Period:</strong> {invoice.fromMonth} - {invoice.toMonth}</p>
+                                        )}
+                                        <p><strong>Invoice date:</strong> {new Date(`${invoice.invoiceDate}T00:00:00`).toLocaleDateString()}</p>
                                         <p><strong>Status:</strong> {invoice.status}</p>
                                         <p><strong>Created:</strong> {new Date(invoice.createdAt).toLocaleDateString()}
                                         </p>

@@ -31,6 +31,19 @@ const formatMonth = (value?: string | null) => {
 
 const formatDate = (value?: string | null) => value ? new Date(value).toLocaleDateString('en-US') : 'Unknown';
 
+const formatInvoiceDate = (value?: string | null) => {
+    if (!value) return 'Unknown';
+    const [year, month, day] = value.split('-').map(Number);
+
+    if (!year || !month || !day) return value;
+
+    return new Date(year, month - 1, day).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
+};
+
 const formatPeriod = (item: Pick<InvoiceResponse, 'fromMonth' | 'toMonth'> | UnpaidInvoiceDto) => {
     if (item.fromMonth === item.toMonth) return formatMonth(item.fromMonth);
     return `${formatMonth(item.fromMonth)} - ${formatMonth(item.toMonth)}`;
@@ -150,7 +163,12 @@ export default function SubscriberCabinet({userEmail, canAccessAdmin = false, on
     const renderInvoiceSummary = (invoice: UnpaidInvoiceDto | InvoiceResponse) => (
         <div key={invoice.id} className="subscriber-invoice-row">
             <div>
-                <strong>{formatPeriod(invoice)}</strong>
+                <strong>
+                    {invoice.origin === 'MANUAL'
+                        ? formatInvoiceDate(invoice.invoiceDate)
+                        : formatPeriod(invoice)}
+                </strong>
+                <span>Invoice date {formatInvoiceDate(invoice.invoiceDate)}</span>
                 <span>Created {formatDate(invoice.createdAt)}</span>
                 {invoice.notes && <span>{invoice.notes}</span>}
             </div>
@@ -294,7 +312,10 @@ export default function SubscriberCabinet({userEmail, canAccessAdmin = false, on
                                 <button type="button" onClick={() => setSelectedInvoice(null)}>Close</button>
                             </div>
                             <div className="subscriber-detail-grid">
-                                <div><span>Period</span><strong>{formatPeriod(selectedInvoice.invoice)}</strong></div>
+                                {selectedInvoice.invoice.origin === 'SUBSCRIPTION_LEDGER' && (
+                                    <div><span>Period</span><strong>{formatPeriod(selectedInvoice.invoice)}</strong></div>
+                                )}
+                                <div><span>Invoice date</span><strong>{formatInvoiceDate(selectedInvoice.invoice.invoiceDate)}</strong></div>
                                 <div><span>Total</span><strong>{formatMoney(selectedInvoice.invoice.totalAmount)}</strong></div>
                                 <div><span>Status</span><strong>{selectedInvoice.invoice.status}</strong></div>
                                 <div><span>Created</span><strong>{formatDate(selectedInvoice.invoice.createdAt)}</strong></div>

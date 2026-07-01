@@ -25,7 +25,13 @@ import type {
 } from '../types/invoice';
 import type {SubscriberResponse} from '../types/subscriber';
 
-const getCurrentMonth = () => new Date().toISOString().slice(0, 7);
+const getCurrentLocalDate = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
 
 const addOneMonth = (month: string) => {
     const [year, monthIndex] = month.split('-').map(Number);
@@ -60,7 +66,7 @@ const resolveSuggestedInvoicePeriod = (suggestion: InvoiceSuggestion | null) => 
 const createManualInvoiceInitialState = () => ({
     subscriberId: '',
     amount: '',
-    invoiceMonth: getCurrentMonth(),
+    invoiceDate: getCurrentLocalDate(),
     notes: '',
     sendEmail: false
 });
@@ -313,7 +319,7 @@ export default function Invoices() {
         setManualInvoiceData({
             subscriberId: '',
             amount: invoice.totalAmount.toString(),
-            invoiceMonth: invoice.fromMonth,
+            invoiceDate: getCurrentLocalDate(),
             notes: invoice.notes ?? '',
             sendEmail: false
         });
@@ -348,13 +354,14 @@ export default function Invoices() {
                 ? {
                     subscriberId: manualInvoiceData.subscriberId,
                     amount: parseFloat(manualInvoiceData.amount),
+                    invoiceDate: manualInvoiceData.invoiceDate,
                     notes: manualInvoiceData.notes.trim(),
                     sendEmail: manualInvoiceData.sendEmail
                 }
                 : {
                     subscriberId: manualInvoiceData.subscriberId,
                     amount: parseFloat(manualInvoiceData.amount),
-                    invoiceMonth: manualInvoiceData.invoiceMonth,
+                    invoiceDate: manualInvoiceData.invoiceDate,
                     notes: manualInvoiceData.notes.trim(),
                     sendEmail: manualInvoiceData.sendEmail
                 };
@@ -888,6 +895,20 @@ export default function Invoices() {
         return date.toLocaleDateString('en-US', {year: 'numeric', month: 'long'});
     };
 
+    const formatInvoiceDate = (dateString: string) => {
+        const [year, month, day] = dateString.split('-').map(Number);
+
+        if (!year || !month || !day) {
+            return dateString;
+        }
+
+        return new Date(year, month - 1, day).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    };
+
     const formatDateTime = (dateString: string) => {
         const date = new Date(dateString);
         return date.toLocaleString('en-US', {
@@ -1033,8 +1054,13 @@ export default function Invoices() {
                                 <div className="invoice-info">
                                     <h4>{invoice.subscriberName}</h4>
                                     <p>
-                                        <strong>Period:</strong> {formatInvoicePeriod(invoice)}
+                                        <strong>Invoice date:</strong> {formatInvoiceDate(invoice.invoiceDate)}
                                     </p>
+                                    {invoice.origin === 'SUBSCRIPTION_LEDGER' && (
+                                        <p>
+                                            <strong>Period:</strong> {formatInvoicePeriod(invoice)}
+                                        </p>
+                                    )}
                                     <p><strong>Amount:</strong> ₴{invoice.totalAmount.toFixed(2)}</p>
                                     <p className="invoice-status-line">
                                         <strong>Status:</strong>{' '}
@@ -1219,26 +1245,17 @@ export default function Invoices() {
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label htmlFor="manualInvoiceMonth">Invoice Month</label>
-                                    {duplicateSourceInvoice ? (
-                                        <input
-                                            type="text"
-                                            id="manualInvoiceMonth"
-                                            value={`${duplicateSourceInvoice.fromMonth} – ${duplicateSourceInvoice.toMonth}`}
-                                            readOnly
-                                        />
-                                    ) : (
-                                        <input
-                                            type="month"
-                                            id="manualInvoiceMonth"
-                                            value={manualInvoiceData.invoiceMonth}
-                                            onChange={(e) => setManualInvoiceData((prev) => ({
-                                                ...prev,
-                                                invoiceMonth: e.target.value
-                                            }))}
-                                            required
-                                        />
-                                    )}
+                                    <label htmlFor="manualInvoiceDate">Invoice Date</label>
+                                    <input
+                                        type="date"
+                                        id="manualInvoiceDate"
+                                        value={manualInvoiceData.invoiceDate}
+                                        onChange={(e) => setManualInvoiceData((prev) => ({
+                                            ...prev,
+                                            invoiceDate: e.target.value
+                                        }))}
+                                        required
+                                    />
                                 </div>
                             </div>
 
@@ -1350,23 +1367,23 @@ export default function Invoices() {
 
                             <div className="form-row">
                                 <div className="form-group">
-                                    <label htmlFor="dateFrom">Date From</label>
+                                    <label htmlFor="invoiceDateFrom">Invoice Date From</label>
                                     <input
                                         type="date"
-                                        id="dateFrom"
-                                        value={filters.dateFrom || ''}
-                                        onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
+                                        id="invoiceDateFrom"
+                                        value={filters.invoiceDateFrom || ''}
+                                        onChange={(e) => handleFilterChange('invoiceDateFrom', e.target.value)}
                                         className="form-control"
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label htmlFor="dateTo">Date To</label>
+                                    <label htmlFor="invoiceDateTo">Invoice Date To</label>
                                     <input
                                         type="date"
-                                        id="dateTo"
-                                        value={filters.dateTo || ''}
-                                        onChange={(e) => handleFilterChange('dateTo', e.target.value)}
-                                        min={filters.dateFrom || ''}
+                                        id="invoiceDateTo"
+                                        value={filters.invoiceDateTo || ''}
+                                        onChange={(e) => handleFilterChange('invoiceDateTo', e.target.value)}
+                                        min={filters.invoiceDateFrom || ''}
                                         className="form-control"
                                     />
                                 </div>
@@ -1409,7 +1426,10 @@ export default function Invoices() {
                                     <div key={invoice.id} className="draft-email-row">
                                         <div>
                                             <strong>{invoice.subscriberName}</strong>
-                                            <span>{formatInvoicePeriod(invoice)}</span>
+                                            <span>{formatInvoiceDate(invoice.invoiceDate)}</span>
+                                            {invoice.origin === 'SUBSCRIPTION_LEDGER' && (
+                                                <span>{formatInvoicePeriod(invoice)}</span>
+                                            )}
                                         </div>
                                         <div>
                                             <strong>₴{invoice.totalAmount.toFixed(2)}</strong>
@@ -1525,9 +1545,12 @@ export default function Invoices() {
                         <div className="invoice-detail-info">
                             <h4>{selectedInvoice.invoice.subscriberName}</h4>
                             <p><strong>Invoice ID:</strong> {selectedInvoice.invoice.id}</p>
-                            <p>
-                                <strong>Period:</strong> {formatInvoicePeriod(selectedInvoice.invoice)}
-                            </p>
+                            <p><strong>Invoice Date:</strong> {formatInvoiceDate(selectedInvoice.invoice.invoiceDate)}</p>
+                            {selectedInvoice.invoice.origin === 'SUBSCRIPTION_LEDGER' && (
+                                <p>
+                                    <strong>Period:</strong> {formatInvoicePeriod(selectedInvoice.invoice)}
+                                </p>
+                            )}
                             <p><strong>Total Amount:</strong> ₴{selectedInvoice.invoice.totalAmount.toFixed(2)}</p>
                             <p className="invoice-status-line">
                                 <strong>Status:</strong>{' '}
