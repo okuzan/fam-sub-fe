@@ -9,6 +9,7 @@ import Invoices from './Invoices';
 import AdminActions from './AdminActions';
 import AdminInvites from './AdminInvites';
 import TelegramPosts from './TelegramPosts';
+import AdminFinanceSummary from './AdminFinanceSummary';
 import './SubscriptionServices.css';
 import './Subscribers.css';
 import './Charges.css';
@@ -193,27 +194,30 @@ export default function AdminDashboard({
                         </div>
                     </div>
                 ) : (
-                    <div className="admin-home-grid">
-                        {canAccessSubscriberCabinet && (
-                            <Link
-                                to="/subscriber/cabinet"
-                                className="admin-home-card admin-home-card-secondary"
-                            >
-                                <h3>Subscriber Cabinet</h3>
-                                <p>Open your personal subscriptions, balances, and invoices.</p>
-                            </Link>
-                        )}
-                        {SECTION_CONFIGS.map((section) => (
-                            <Link
-                                key={section.key}
-                                to={section.path}
-                                className="admin-home-card"
-                            >
-                                <h3>{section.title}</h3>
-                                <p>{section.description}</p>
-                            </Link>
-                        ))}
-                    </div>
+                    <>
+                        <AdminFinanceSummary/>
+                        <div className="admin-home-grid">
+                            {canAccessSubscriberCabinet && (
+                                <Link
+                                    to="/subscriber/cabinet"
+                                    className="admin-home-card admin-home-card-secondary"
+                                >
+                                    <h3>Subscriber Cabinet</h3>
+                                    <p>Open your personal subscriptions, balances, and invoices.</p>
+                                </Link>
+                            )}
+                            {SECTION_CONFIGS.map((section) => (
+                                <Link
+                                    key={section.key}
+                                    to={section.path}
+                                    className="admin-home-card"
+                                >
+                                    <h3>{section.title}</h3>
+                                    <p>{section.description}</p>
+                                </Link>
+                            ))}
+                        </div>
+                    </>
                 )}
             </div>
         </div>

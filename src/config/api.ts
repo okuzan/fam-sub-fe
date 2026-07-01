@@ -20,6 +20,7 @@ export const API_CONFIG = {
     ADMIN_RECOVERY_URL: `${API_BASE_URL}/admin/recovery`,
     ADMIN_ACCOUNTS_URL: `${API_BASE_URL}/admin/accounts`,
     ADMIN_INVITES_URL: `${API_BASE_URL}/admin/invites`,
+    ADMIN_FINANCE_SUMMARY_URL: `${API_BASE_URL}/admin/finance/summary`,
     ADMIN_INVITES_ACCEPT_URL: `${API_BASE_URL}/admin-invites/accept`,
     SUBSCRIBER_CABINET_URL: `${API_BASE_URL}/subscriber/cabinet`,
     SUBSCRIBER_INVOICES_URL: `${API_BASE_URL}/subscriber/invoices`,
