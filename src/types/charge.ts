@@ -8,6 +8,14 @@ export interface ChargeResponse {
     createdAt: string;
 }
 
+export interface ChargePageResponse {
+    content: ChargeResponse[];
+    page: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+}
+
 export interface ChargeCreateRequest {
     subscriptionServiceId: string;
     amount: number;

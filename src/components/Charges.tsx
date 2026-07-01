@@ -6,10 +6,13 @@ import {useEscapeClose} from '../utils/useEscapeClose';
 import {useToast} from './ToastContext';
 import type {
     ChargeCreateRequest,
+    ChargePageResponse,
     ChargeResponse,
     ChargeUpdateRequest
 } from '../types/charge';
 import type {SubscriptionServiceResponse} from '../types/subscription';
+
+const PAGE_SIZE = 6;
 
 export default function Charges() {
     const {showError, showSuccess} = useToast();
@@ -19,6 +22,9 @@ export default function Charges() {
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [editingCharge, setEditingCharge] = useState<ChargeResponse | null>(null);
     const [selectedService, setSelectedService] = useState<string>('');
+    const [page, setPage] = useState(0);
+    const [totalElements, setTotalElements] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
     const [formData, setFormData] = useState({
         subscriptionServiceId: '',
         amount: '',
@@ -32,11 +38,13 @@ export default function Charges() {
 
     useEffect(() => {
         if (selectedService) {
-            fetchChargesByService(selectedService);
+            fetchChargesByService(selectedService, page);
         } else {
             setCharges([]);
+            setTotalElements(0);
+            setTotalPages(0);
         }
-    }, [selectedService]);
+    }, [selectedService, page]);
 
     const fetchServices = async () => {
         try {
@@ -56,16 +64,21 @@ export default function Charges() {
         }
     };
 
-    const fetchChargesByService = async (serviceId: string) => {
+    const fetchChargesByService = async (serviceId: string, requestedPage = page) => {
         setLoading(true);
         try {
-            const response = await fetch(`${API_CONFIG.CHARGES_URL}/service/${serviceId}`, {
+            const response = await fetch(
+                `${API_CONFIG.CHARGES_URL}/service/${serviceId}?page=${requestedPage}&size=${PAGE_SIZE}`,
+                {
                 credentials: 'include'
-            });
+                }
+            );
 
             if (response.ok) {
-                const data = await response.json();
-                setCharges(data);
+                const data: ChargePageResponse = await response.json();
+                setCharges(data.content);
+                setTotalElements(data.totalElements);
+                setTotalPages(data.totalPages);
             } else {
                 showError(await getResponseErrorMessage(response, 'Failed to fetch charges'));
             }
@@ -96,7 +109,8 @@ export default function Charges() {
             });
 
             if (response.ok) {
-                await fetchChargesByService(formData.subscriptionServiceId);
+                setPage(0);
+                await fetchChargesByService(formData.subscriptionServiceId, 0);
                 setShowCreateForm(false);
                 setFormData({subscriptionServiceId: '', amount: '', chargeMonth: '', description: ''});
                 showSuccess('Charge created successfully');
@@ -127,7 +141,7 @@ export default function Charges() {
             });
 
             if (response.ok) {
-                await fetchChargesByService(editingCharge.subscriptionServiceId);
+                await fetchChargesByService(editingCharge.subscriptionServiceId, page);
                 setEditingCharge(null);
                 setFormData({subscriptionServiceId: '', amount: '', chargeMonth: '', description: ''});
                 showSuccess('Charge updated successfully');
@@ -150,7 +164,9 @@ export default function Charges() {
             });
 
             if (response.ok) {
-                await fetchChargesByService(selectedService);
+                const nextPage = charges.length === 1 && page > 0 ? page - 1 : page;
+                setPage(nextPage);
+                await fetchChargesByService(selectedService, nextPage);
                 showSuccess('Charge deleted successfully');
             } else {
                 showError(await getResponseErrorMessage(response, 'Failed to delete charge'));
@@ -204,7 +220,10 @@ export default function Charges() {
                 <div className="charges-controls">
                     <select
                         value={selectedService}
-                        onChange={(e) => setSelectedService(e.target.value)}
+                        onChange={(e) => {
+                            setSelectedService(e.target.value);
+                            setPage(0);
+                        }}
                         className="service-selector"
                     >
                         <option value="">Select a service to view charges</option>
@@ -298,6 +317,11 @@ export default function Charges() {
                 <div className="loading">Loading charges...</div>
             ) : (
                 <div className="charges-list">
+                    {charges.length > 0 && (
+                        <div className="charges-summary">
+                            {totalElements} {totalElements === 1 ? 'charge' : 'charges'} · newest first
+                        </div>
+                    )}
                     {charges.length === 0 ? (
                         <div className="empty-state">
                             <p>No charges found for this service. Create your first charge!</p>
@@ -326,6 +350,25 @@ export default function Charges() {
                                 </div>
                             ))}
                         </div>
+                    )}
+                    {totalPages > 1 && (
+                        <nav className="charges-pagination" aria-label="Charges pages">
+                            <button
+                                className="btn btn-sm btn-secondary"
+                                onClick={() => setPage((current) => current - 1)}
+                                disabled={page === 0}
+                            >
+                                Previous
+                            </button>
+                            <span>Page {page + 1} of {totalPages}</span>
+                            <button
+                                className="btn btn-sm btn-secondary"
+                                onClick={() => setPage((current) => current + 1)}
+                                disabled={page + 1 >= totalPages}
+                            >
+                                Next
+                            </button>
+                        </nav>
                     )}
                 </div>
             )}
