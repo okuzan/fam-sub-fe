@@ -3,6 +3,7 @@ import {API_CONFIG} from '../config/api';
 import {getResponseErrorMessage} from '../utils/errors';
 import type {
     CostCalculationRequest,
+    CostCalculationResult,
     CostCalculationSuggestion
 } from '../types/costCalculation';
 
@@ -61,10 +62,25 @@ export default function CostCalculations({onCalculationComplete}: CostCalculatio
             });
 
             if (response.ok) {
-                const result = await response.json();
-                setSuccess(`Ledger entries generated for ${formatDate(result.fromMonth)} - ${formatDate(result.toMonth)}`);
+                const result: CostCalculationResult = await response.json();
+                if (result.batchId === null) {
+                    setSuccess(result.chargesSkipped > 0
+                        ? `Nothing new to calculate. ${formatCount(result.chargesSkipped, 'charge')} already calculated.`
+                        : 'Nothing to calculate. No charges were found in the selected period.'
+                    );
+                } else {
+                    const skippedMessage = result.chargesSkipped > 0
+                        ? ` ${formatCount(result.chargesSkipped, 'charge')} already calculated and skipped.`
+                        : '';
+                    setSuccess(
+                        `Generated ${formatCount(result.ledgerEntriesCreated, 'ledger entry')} from ` +
+                        `${formatCount(result.chargesProcessed, 'new charge')}.${skippedMessage}`
+                    );
+                }
                 void fetchSuggestedPeriod();
-                onCalculationComplete?.();
+                if (result.batchId !== null) {
+                    onCalculationComplete?.();
+                }
             } else {
                 setError(await getResponseErrorMessage(response, 'Failed to calculate costs'));
             }
@@ -75,6 +91,9 @@ export default function CostCalculations({onCalculationComplete}: CostCalculatio
             setLoading(false);
         }
     };
+
+    const formatCount = (count: number, label: string) =>
+        `${count.toLocaleString('en-US')} ${label}${count === 1 ? '' : 's'}`;
 
     const useSuggestedPeriod = () => {
         if (suggestion) {
@@ -97,7 +116,6 @@ export default function CostCalculations({onCalculationComplete}: CostCalculatio
                         <p><strong>Suggested
                             Period:</strong> {formatDate(suggestion.suggestedFromMonth)} - {formatDate(suggestion.suggestedToMonth)}
                         </p>
-                        <p><em>{suggestion.reason}</em></p>
                         <button type="button" onClick={useSuggestedPeriod} className="btn btn-sm btn-secondary">
                             Use Suggested Period
                         </button>
