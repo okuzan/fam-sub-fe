@@ -21,7 +21,7 @@ export default function Subscribers() {
     const [selectedSubscriber, setSelectedSubscriber] = useState<SubscriberDetailResponse | null>(null);
     const [debtPaymentResult, setDebtPaymentResult] = useState<SubscriberDebtPaymentResult | null>(null);
     const [payingOffDebt, setPayingOffDebt] = useState(false);
-    const [formData, setFormData] = useState({name: '', email: '', balance: '', autoPayInvoices: false});
+    const [formData, setFormData] = useState({name: '', email: '', balance: '', billingExempt: false});
     const [searchName, setSearchName] = useState('');
     const [showOnlyDebtors, setShowOnlyDebtors] = useState(false);
 
@@ -119,7 +119,7 @@ export default function Subscribers() {
                 name: formData.name,
                 email: formData.email,
                 balance: creditBalance,
-                autoPayInvoices: formData.autoPayInvoices
+                billingExempt: formData.billingExempt
             };
 
             const response = await fetch(API_CONFIG.SUBSCRIBERS_URL, {
@@ -132,7 +132,7 @@ export default function Subscribers() {
             if (response.ok) {
                 await fetchSubscribers();
                 setShowCreateForm(false);
-                setFormData({name: '', email: '', balance: '', autoPayInvoices: false});
+                setFormData({name: '', email: '', balance: '', billingExempt: false});
                 showSuccess('Subscriber created successfully');
             } else {
                 showError(await getResponseErrorMessage(response, 'Failed to create subscriber'));
@@ -158,7 +158,7 @@ export default function Subscribers() {
                 name: formData.name,
                 email: formData.email,
                 balance: creditBalance,
-                autoPayInvoices: formData.autoPayInvoices
+                billingExempt: formData.billingExempt
             };
 
             const response = await fetch(`${API_CONFIG.SUBSCRIBERS_URL}/${editingSubscriber.id}`, {
@@ -171,7 +171,7 @@ export default function Subscribers() {
             if (response.ok) {
                 await fetchSubscribers();
                 setEditingSubscriber(null);
-                setFormData({name: '', email: '', balance: '', autoPayInvoices: false});
+                setFormData({name: '', email: '', balance: '', billingExempt: false});
                 showSuccess('Subscriber updated successfully');
             } else {
                 showError(await getResponseErrorMessage(response, 'Failed to update subscriber'));
@@ -312,21 +312,21 @@ export default function Subscribers() {
             name: subscriber.name,
             email: subscriber.email,
             balance: subscriber.balance.toString(),
-            autoPayInvoices: subscriber.autoPayInvoices
+            billingExempt: subscriber.billingExempt
         });
         setShowCreateForm(false);
     };
 
     const openCreateForm = () => {
         setEditingSubscriber(null);
-        setFormData({name: '', email: '', balance: '', autoPayInvoices: false});
+        setFormData({name: '', email: '', balance: '', billingExempt: false});
         setShowCreateForm(true);
     };
 
     const closeForm = () => {
         setShowCreateForm(false);
         setEditingSubscriber(null);
-        setFormData({name: '', email: '', balance: '', autoPayInvoices: false});
+        setFormData({name: '', email: '', balance: '', billingExempt: false});
     };
 
     useEscapeClose(showCreateForm || Boolean(editingSubscriber), closeForm);
@@ -389,8 +389,8 @@ export default function Subscribers() {
                                         <p className="balance">
                                             {subscriber.balance < 0 ? 'Legacy balance debt' : 'Credit balance'}: ₴{Math.abs(subscriber.balance).toFixed(2)}
                                         </p>
-                                        <p className={`auto-pay ${subscriber.autoPayInvoices ? 'enabled' : ''}`}>
-                                            Auto-pay invoices: {subscriber.autoPayInvoices ? 'On' : 'Off'}
+                                        <p className={`billing-exempt ${subscriber.billingExempt ? 'enabled' : ''}`}>
+                                            Billing exempt: {subscriber.billingExempt ? 'Yes' : 'No'}
                                         </p>
                                         <p className="date">Created: {new Date(subscriber.createdAt).toLocaleDateString()}</p>
                                     </div>
@@ -452,17 +452,17 @@ export default function Subscribers() {
                                 />
                             </div>
                             <div className="form-group checkbox-group">
-                                <label className="checkbox-label" htmlFor="autoPayInvoices">
+                                <label className="checkbox-label" htmlFor="billingExempt">
                                     <input
                                         type="checkbox"
-                                        id="autoPayInvoices"
-                                        checked={formData.autoPayInvoices}
+                                        id="billingExempt"
+                                        checked={formData.billingExempt}
                                         onChange={(e) => setFormData({
                                             ...formData,
-                                            autoPayInvoices: e.target.checked
+                                            billingExempt: e.target.checked
                                         })}
                                     />
-                                    <span>Auto-pay invoices</span>
+                                    <span>Billing exempt &mdash; still shares costs, never billed</span>
                                 </label>
                             </div>
                             <div className="form-actions">
@@ -489,7 +489,7 @@ export default function Subscribers() {
                                 <strong>{selectedSubscriber.balance < 0 ? 'Legacy balance debt' : 'Credit balance'}:</strong>{' '}
                                 ₴{Math.abs(selectedSubscriber.balance).toFixed(2)}
                             </p>
-                            <p><strong>Auto-pay invoices:</strong> {selectedSubscriber.autoPayInvoices ? 'On' : 'Off'}</p>
+                            <p><strong>Billing exempt:</strong> {selectedSubscriber.billingExempt ? 'Yes' : 'No'}</p>
                             <p><strong>Total Amount Owed:</strong> ₴{selectedSubscriber.totalAmountOwed.toFixed(2)}</p>
                         </div>
 

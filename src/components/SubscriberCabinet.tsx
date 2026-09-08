@@ -237,10 +237,6 @@ export default function SubscriberCabinet({userEmail, canAccessAdmin = false, on
                     <strong>{cabinet.unpaidInvoices.length}</strong>
                     <small>{formatMoney(unpaidTotal)}</small>
                 </article>
-                <article>
-                    <span>Auto-pay invoices</span>
-                    <strong>{cabinet.autoPayInvoices ? 'On' : 'Off'}</strong>
-                </article>
             </section>
 
             <div className="subscriber-tabs" role="tablist" aria-label="Subscriber cabinet sections">
