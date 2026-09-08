@@ -38,8 +38,10 @@ const hasRole = (user: User | null, roleName: 'admin' | 'subscriber') =>
 
 const hasBothPrimaryRoles = (user: User | null) => hasRole(user, 'admin') && hasRole(user, 'subscriber');
 
+const PENDING_ADMIN_INVITE_TOKEN_KEY = 'pendingAdminInviteToken';
+
 const hasPendingAdminInviteToken = () =>
-    typeof window !== 'undefined' && Boolean(window.sessionStorage.getItem('pendingAdminInviteToken'));
+    typeof window !== 'undefined' && Boolean(window.sessionStorage.getItem(PENDING_ADMIN_INVITE_TOKEN_KEY));
 
 interface NoAccessProps {
     userEmail?: string | null;
@@ -112,8 +114,9 @@ function App() {
 
     const clearClientState = () => {
         try {
-            window.sessionStorage.clear();
-            window.localStorage.clear();
+            // Only the keys this app owns. Clearing the whole origin also wipes
+            // anything else served from it.
+            window.sessionStorage.removeItem(PENDING_ADMIN_INVITE_TOKEN_KEY);
         } catch (error) {
             console.error('Error clearing client state:', error);
         }
@@ -227,8 +230,14 @@ function App() {
                                 <Navigate to={getRedirectPath()} replace/>
                         }
                     />
+                    {/*
+                      * AdminDashboard renders no <Outlet/> - it switches on
+                      * location.pathname itself - so a splat route is what
+                      * actually drives the admin sections. Declaring them as
+                      * nested <Route> children rendered nothing.
+                      */}
                     <Route
-                        path="/admin"
+                        path="/admin/*"
                         element={
                             hasRole(user, 'admin') ?
                                 <AdminDashboard
@@ -240,63 +249,7 @@ function App() {
                                 /> :
                                 <Navigate to={getRedirectPath()} replace/>
                         }
-                    >
-                        <Route path="services" element={
-                            hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} onCurrentAccountDeleted={handleCurrentAccountDeleted} userEmail={user?.email} userRoles={user?.roles} currentAccountId={user?.accountId}/> :
-                                <Navigate to={getRedirectPath()} replace/>
-                        }/>
-                        <Route path="subscribers" element={
-                            hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} onCurrentAccountDeleted={handleCurrentAccountDeleted} userEmail={user?.email} userRoles={user?.roles} currentAccountId={user?.accountId}/> :
-                                <Navigate to={getRedirectPath()} replace/>
-                        }/>
-                        <Route path="memberships" element={
-                            hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} onCurrentAccountDeleted={handleCurrentAccountDeleted} userEmail={user?.email} userRoles={user?.roles} currentAccountId={user?.accountId}/> :
-                                <Navigate to={getRedirectPath()} replace/>
-                        }/>
-                        <Route path="charges" element={
-                            hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} onCurrentAccountDeleted={handleCurrentAccountDeleted} userEmail={user?.email} userRoles={user?.roles} currentAccountId={user?.accountId}/> :
-                                <Navigate to={getRedirectPath()} replace/>
-                        }/>
-                        <Route path="cost-calculations" element={
-                            hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} onCurrentAccountDeleted={handleCurrentAccountDeleted} userEmail={user?.email} userRoles={user?.roles} currentAccountId={user?.accountId}/> :
-                                <Navigate to={getRedirectPath()} replace/>
-                        }/>
-                        <Route path="ledger" element={
-                            hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} onCurrentAccountDeleted={handleCurrentAccountDeleted} userEmail={user?.email} userRoles={user?.roles} currentAccountId={user?.accountId}/> :
-                                <Navigate to={getRedirectPath()} replace/>
-                        }/>
-                        <Route path="invoices" element={
-                            hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} onCurrentAccountDeleted={handleCurrentAccountDeleted} userEmail={user?.email} userRoles={user?.roles} currentAccountId={user?.accountId}/> :
-                                <Navigate to={getRedirectPath()} replace/>
-                        }/>
-                        <Route path="invites" element={
-                            hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} onCurrentAccountDeleted={handleCurrentAccountDeleted} userEmail={user?.email} userRoles={user?.roles} currentAccountId={user?.accountId}/> :
-                                <Navigate to={getRedirectPath()} replace/>
-                        }/>
-                        <Route path="actions" element={
-                            hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} onCurrentAccountDeleted={handleCurrentAccountDeleted} userEmail={user?.email} userRoles={user?.roles} currentAccountId={user?.accountId}/> :
-                                <Navigate to={getRedirectPath()} replace/>
-                        }/>
-                        <Route path="telegram-posts" element={
-                            hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} onCurrentAccountDeleted={handleCurrentAccountDeleted} userEmail={user?.email} userRoles={user?.roles} currentAccountId={user?.accountId}/> :
-                                <Navigate to={getRedirectPath()} replace/>
-                        }/>
-                        <Route path="profile" element={
-                            hasRole(user, 'admin') ?
-                                <AdminDashboard onLogout={handleLogout} onCurrentAccountDeleted={handleCurrentAccountDeleted} userEmail={user?.email} userRoles={user?.roles} currentAccountId={user?.accountId}/> :
-                                <Navigate to={getRedirectPath()} replace/>
-                        }/>
-                    </Route>
+                    />
                     <Route
                         path="/"
                         element={<Navigate to={getRedirectPath()} replace/>}
