@@ -8,7 +8,6 @@ import Ledger from './Ledger';
 import Invoices from './Invoices';
 import AdminActions from './AdminActions';
 import AdminInvites from './AdminInvites';
-import TelegramPosts from './TelegramPosts';
 import AdminFinanceSummary from './AdminFinanceSummary';
 import './SubscriptionServices.css';
 import './Subscribers.css';
@@ -19,7 +18,6 @@ import './Ledger.css';
 import './Invoices.css';
 import './AdminActions.css';
 import './AdminInvites.css';
-import './TelegramPosts.css';
 
 interface AdminDashboardProps {
     onLogout?: () => void;
@@ -38,7 +36,6 @@ type AdminSectionKey =
     | 'invoices'
     | 'admin-invites'
     | 'admin-actions'
-    | 'telegram-posts'
     | 'profile';
 
 interface SectionConfig {
@@ -86,12 +83,6 @@ const SECTION_CONFIGS: SectionConfig[] = [
         title: 'Admin Actions',
         description: 'Review cost and invoice generation history',
         path: '/admin/actions'
-    },
-    {
-        key: 'telegram-posts',
-        title: 'Telegram Posts',
-        description: 'Generate templated update posts for Telegram channel',
-        path: '/admin/telegram-posts'
     },
     {key: 'profile', title: 'Profile & Settings', description: 'Account details and logout', path: '/admin/profile'},
 ];
@@ -141,7 +132,6 @@ export default function AdminDashboard({
             );
         }
         if (path === '/admin/actions') return <AdminActions/>;
-        if (path === '/admin/telegram-posts') return <TelegramPosts/>;
         if (path === '/admin/profile') {
             return (
                 <div className="admin-profile-card">
