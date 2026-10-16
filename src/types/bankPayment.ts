@@ -1,6 +1,6 @@
 export type BankTransactionStatus = 'UNMATCHED' | 'APPLIED' | 'IGNORED';
 
-export type BankMatchMethod = 'PAYMENT_CODE' | 'SENDER_RULE' | 'ADMIN';
+export type BankMatchMethod = 'PAYMENT_CODE' | 'NAME' | 'SENDER_RULE' | 'ADMIN';
 
 export interface BankSyncStatus {
     configured: boolean;

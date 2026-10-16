@@ -9,6 +9,7 @@ import {parseAmount} from './people';
 
 interface SubscriberForm {
     name: string;
+    surname: string;
     email: string;
     balance: string;
     billingExempt: boolean;
@@ -45,11 +46,12 @@ export default function SubscriberFormDrawer({subscriber, onClose, onSaved}: Pro
     const [form, setForm] = useState<SubscriberForm>(() => subscriber
         ? {
             name: subscriber.name,
+            surname: subscriber.surname ?? '',
             email: subscriber.email,
             balance: String(subscriber.balance).replace('.', ','),
             billingExempt: subscriber.billingExempt
         }
-        : {name: '', email: '', balance: '', billingExempt: false});
+        : {name: '', surname: '', email: '', balance: '', billingExempt: false});
     const [errors, setErrors] = useState<FormErrors>({});
     const [serverError, setServerError] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
@@ -67,6 +69,7 @@ export default function SubscriberFormDrawer({subscriber, onClose, onSaved}: Pro
 
         const request: SubscriberCreateRequest | SubscriberUpdateRequest = {
             name: form.name.trim(),
+            surname: form.surname.trim() || null,
             email: form.email.trim(),
             balance: parseAmount(form.balance) ?? 0,
             billingExempt: form.billingExempt
@@ -120,6 +123,19 @@ export default function SubscriberFormDrawer({subscriber, onClose, onSaved}: Pro
                         value={form.name}
                         onChange={(event) => setForm({...form, name: event.target.value})}
                         autoFocus
+                    />
+                </Field>
+                <Field
+                    label="Surname"
+                    optional
+                    htmlFor="sub-surname"
+                    hint="As their bank writes it, e.g. Чернишова. A transfer from someone with this name and surname is applied to them on its own."
+                >
+                    <input
+                        id="sub-surname"
+                        className="ui-input"
+                        value={form.surname}
+                        onChange={(event) => setForm({...form, surname: event.target.value})}
                     />
                 </Field>
                 <Field

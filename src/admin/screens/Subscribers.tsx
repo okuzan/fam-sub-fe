@@ -106,7 +106,7 @@ export default function Subscribers() {
 
     const query = search.trim().toLocaleLowerCase();
     const searched = query
-        ? rows.filter((row) => row.subscriber.name.toLocaleLowerCase().includes(query))
+        ? rows.filter((row) => `${row.subscriber.name} ${row.subscriber.surname ?? ''}`.toLocaleLowerCase().includes(query))
         : rows;
     const visible = searched.filter((row) => matches(row, filter));
     const countOf = (value: Filter) => searched.filter((row) => matches(row, value)).length;
@@ -184,7 +184,7 @@ export default function Subscribers() {
                                     aria-label={`Open ${subscriber.name}`}
                                 >
                                     <td>
-                                        <span className="sub-name">{subscriber.name}</span>
+                                        <span className="sub-name">{subscriber.name}{subscriber.surname && ` ${subscriber.surname}`}</span>
                                         <span className="ui-cell-sub is-mono sub-email">{subscriber.email}</span>
                                     </td>
                                     <td className="sub-services">{names.length > 0 ? names.join(', ') : '—'}</td>

@@ -90,6 +90,7 @@ const headline = (count: number) => {
 
 const MATCH_WORDS: Record<BankMatchMethod, string> = {
     PAYMENT_CODE: 'matched by payment code',
+    NAME: 'matched by name',
     SENDER_RULE: 'known sender',
     ADMIN: 'assigned by admin'
 };

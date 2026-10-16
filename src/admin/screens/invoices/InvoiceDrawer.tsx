@@ -28,6 +28,7 @@ import {
 
 const MATCH_TEXT: Record<string, string> = {
     PAYMENT_CODE: 'matched by payment code',
+    NAME: 'matched by the sender’s name',
     SENDER_RULE: 'matched by a known sender',
     ADMIN: 'assigned by an admin',
 };

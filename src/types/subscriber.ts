@@ -1,6 +1,8 @@
 export interface SubscriberResponse {
     id: string;
     name: string;
+    /** As the bank writes it; with the name, it recognises their transfers. */
+    surname: string | null;
     email: string;
     balance: number;
     billingExempt: boolean;
@@ -10,6 +12,7 @@ export interface SubscriberResponse {
 
 export interface SubscriberCreateRequest {
     name: string;
+    surname: string | null;
     email: string;
     balance?: number;
     billingExempt: boolean;
@@ -17,6 +20,7 @@ export interface SubscriberCreateRequest {
 
 export interface SubscriberUpdateRequest {
     name: string;
+    surname: string | null;
     email: string;
     balance: number;
     billingExempt: boolean;

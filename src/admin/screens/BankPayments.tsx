@@ -27,6 +27,7 @@ const RECENT_APPLIED = 5;
 
 const MATCH_TAGS: Record<BankMatchMethod, { label: string; tone: Tone }> = {
     PAYMENT_CODE: {label: 'Payment code', tone: 'green'},
+    NAME: {label: 'Name match', tone: 'green'},
     SENDER_RULE: {label: 'Known sender', tone: 'slate'},
     ADMIN: {label: 'Admin', tone: 'grey'}
 };
