@@ -210,6 +210,7 @@ export default function SubscriberCabinet({userEmail, canAccessAdmin = false, on
                     <h1>{cabinet.name}</h1>
                 </div>
                 <nav className="subscriber-actions" aria-label="Cabinet actions">
+                    {cabinet.totalAmountOwed > 0 && cabinet.payToken && <a href={`/pay/${cabinet.payToken}`}>Pay</a>}
                     {canAccessAdmin && <a href="/admin">Admin</a>}
                     <button type="button" onClick={onLogout}>Logout</button>
                 </nav>

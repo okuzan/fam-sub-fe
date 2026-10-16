@@ -21,6 +21,8 @@ export const API_CONFIG = {
     ADMIN_ACCOUNTS_URL: `${API_BASE_URL}/admin/accounts`,
     ADMIN_INVITES_URL: `${API_BASE_URL}/admin/invites`,
     ADMIN_FINANCE_SUMMARY_URL: `${API_BASE_URL}/admin/finance/summary`,
+    ADMIN_BANK_PAYMENTS_URL: `${API_BASE_URL}/admin/bank-payments`,
+    PUBLIC_PAY_URL: `${API_BASE_URL}/public/pay`,
     ADMIN_INVITES_ACCEPT_URL: `${API_BASE_URL}/admin-invites/accept`,
     SUBSCRIBER_CABINET_URL: `${API_BASE_URL}/subscriber/cabinet`,
     SUBSCRIBER_INVOICES_URL: `${API_BASE_URL}/subscriber/invoices`,
@@ -45,6 +47,9 @@ export const apiFetch = (input: RequestInfo | URL, init: RequestInit = {}): Prom
         headers,
     });
 };
+
+// A subscriber's public pay page: the link their emails carry.
+export const getPayPageUrl = (payToken: string) => `${window.location.origin}/pay/${payToken}`;
 
 // Helper function to get invoice PDF URL
 export const getInvoicePdfUrl = (invoiceId: string) => {

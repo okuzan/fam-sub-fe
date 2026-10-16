@@ -1,0 +1,80 @@
+export type BankTransactionStatus = 'UNMATCHED' | 'APPLIED' | 'IGNORED';
+
+export type BankMatchMethod = 'PAYMENT_CODE' | 'SENDER_RULE' | 'ADMIN';
+
+export interface BankSyncStatus {
+    configured: boolean;
+    syncEnabled: boolean;
+    syncedTo: string | null;
+    lastAttemptAt: string | null;
+    lastSuccessAt: string | null;
+    lastError: string | null;
+}
+
+export interface BankPaymentSuggestion {
+    subscriberId: string;
+    subscriberName: string;
+    reason: string;
+}
+
+export interface BankTransactionResponse {
+    id: string;
+    occurredAt: string;
+    amount: number;
+    senderName: string | null;
+    description: string | null;
+    comment: string | null;
+    counterIban: string | null;
+    status: BankTransactionStatus;
+    subscriberId: string | null;
+    subscriberName: string | null;
+    matchMethod: BankMatchMethod | null;
+    reviewNote: string | null;
+    settledInvoiceCount: number;
+    settledAmount: number | null;
+    resolvedAt: string | null;
+    suggestions: BankPaymentSuggestion[];
+}
+
+export interface BankPaymentsOverview {
+    sync: BankSyncStatus;
+    transactions: BankTransactionResponse[];
+}
+
+export interface BankPaymentResolution {
+    transaction: BankTransactionResponse;
+    settledInvoiceIds: string[];
+    balanceAfter: number | null;
+    senderRemembered: boolean;
+}
+
+export interface BankSenderResponse {
+    id: string;
+    senderName: string | null;
+    subscriberId: string | null;
+    subscriberName: string | null;
+    ignored: boolean;
+    learnedAutomatically: boolean;
+    createdAt: string;
+}
+
+export interface BankSyncResult {
+    fetchedCount: number;
+    importedCount: number;
+    appliedCount: number;
+    needsReviewCount: number;
+    ignoredCount: number;
+    syncedTo: string;
+}
+
+export interface PayPageResponse {
+    subscriberName: string;
+    amountDue: number;
+    credit: number;
+    unpaidInvoiceCount: number;
+    recipientName: string;
+    iban: string;
+    cardNumber: string;
+    purpose: string;
+    nbuQrUrl: string | null;
+}

@@ -1,6 +1,6 @@
 import {useEffect, useState} from 'react';
 import {createPortal} from 'react-dom';
-import {API_CONFIG, apiFetch} from '../config/api';
+import {API_CONFIG, apiFetch, getPayPageUrl} from '../config/api';
 import {getResponseErrorMessage} from '../utils/errors';
 import {useEscapeClose} from '../utils/useEscapeClose';
 import {useToast} from './ToastContext';
@@ -482,6 +482,19 @@ export default function Subscribers() {
                             </p>
                             <p><strong>Billing exempt:</strong> {selectedSubscriber.billingExempt ? 'Yes' : 'No'}</p>
                             <p><strong>Total Amount Owed:</strong> ₴{selectedSubscriber.totalAmountOwed.toFixed(2)}</p>
+                            <p>
+                                <strong>Pay link:</strong>{' '}
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(getPayPageUrl(selectedSubscriber.payToken))
+                                            .then(() => showSuccess('Pay link copied'))
+                                            .catch(() => showError('Could not copy the pay link'));
+                                    }}
+                                >
+                                    Copy
+                                </button>
+                            </p>
                         </div>
 
                         <h5>Active Subscriptions ({selectedSubscriber.activeSubscriptions.length})</h5>

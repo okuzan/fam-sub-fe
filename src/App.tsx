@@ -5,6 +5,7 @@ import AdminDashboard from './components/AdminDashboard';
 import SubscriberCabinet from './components/SubscriberCabinet';
 import RoleChooser from './components/RoleChooser';
 import AdminInviteAccept from './components/AdminInviteAccept';
+import PayPage from './components/PayPage';
 import {API_CONFIG, apiFetch} from './config/api';
 import {ToastProvider} from './components/Toast';
 import './App.css'
@@ -177,6 +178,8 @@ function App() {
         <ToastProvider>
             <Router>
                 <Routes>
+                    {/* Public: the link in every email. Paying needs no login. */}
+                    <Route path="/pay/:payToken" element={<PayPage/>}/>
                     <Route
                         path="/login"
                         element={

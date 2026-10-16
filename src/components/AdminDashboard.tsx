@@ -9,6 +9,7 @@ import Invoices from './Invoices';
 import AdminActions from './AdminActions';
 import AdminInvites from './AdminInvites';
 import AdminFinanceSummary from './AdminFinanceSummary';
+import BankPayments from './BankPayments';
 import './SubscriptionServices.css';
 import './Subscribers.css';
 import './Charges.css';
@@ -34,6 +35,7 @@ type AdminSectionKey =
     | 'charges'
     | 'ledger'
     | 'invoices'
+    | 'bank-payments'
     | 'admin-invites'
     | 'admin-actions'
     | 'profile';
@@ -72,6 +74,12 @@ const SECTION_CONFIGS: SectionConfig[] = [
         path: '/admin/ledger'
     },
     {key: 'invoices', title: 'Invoices', description: 'Generate, filter, and manage invoices', path: '/admin/invoices'},
+    {
+        key: 'bank-payments',
+        title: 'Bank Payments',
+        description: 'Incoming Monobank transfers and the ones to review',
+        path: '/admin/bank-payments'
+    },
     {
         key: 'admin-invites',
         title: 'Admin Access',
@@ -123,6 +131,7 @@ export default function AdminDashboard({
         if (path === '/admin/cost-calculations') return <Navigate to="/admin/ledger" replace/>;
         if (path === '/admin/ledger') return <Ledger/>;
         if (path === '/admin/invoices') return <Invoices/>;
+        if (path === '/admin/bank-payments') return <BankPayments/>;
         if (path === '/admin/invites') {
             return (
                 <AdminInvites
