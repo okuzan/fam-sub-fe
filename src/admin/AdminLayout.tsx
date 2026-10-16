@@ -193,7 +193,7 @@ export default function AdminLayout({children, userEmail, canAccessCabinet, onLo
                 <aside className="admin-sidebar">
                     <div className="admin-sidebar-brand">
                         <Link to="/admin" className="ui-brand">
-                            <img src="/favicon.svg" alt="" width={19} height={18}/>
+                            <img src="/favicon.svg" alt="" width={18} height={18}/>
                             FamSub
                         </Link>
                         <span className="admin-role-chip">Admin</span>
@@ -203,7 +203,7 @@ export default function AdminLayout({children, userEmail, canAccessCabinet, onLo
                 </aside>
 
                 <header className="admin-topbar">
-                    <img src="/favicon.svg" alt="" width={17} height={16}/>
+                    <img src="/favicon.svg" alt="" width={16} height={16}/>
                     <span className="admin-topbar-title">{menuOpen ? 'FamSub' : current?.name ?? 'FamSub'}</span>
                     <button
                         type="button"

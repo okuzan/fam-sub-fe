@@ -285,7 +285,7 @@ export function Notice({tone = 'grey', children}: { tone?: 'red' | 'clay' | 'gre
 export function Brand({href = '/', label = 'FamSub'}: { href?: string; label?: ReactNode }) {
     return (
         <a className="ui-brand" href={href}>
-            <img src="/favicon.svg" alt="" width={19} height={18}/>
+            <img src="/favicon.svg" alt="" width={18} height={18}/>
             {label}
         </a>
     );

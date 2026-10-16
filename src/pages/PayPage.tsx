@@ -89,7 +89,7 @@ function PayShell({children, wide = false}: { children: ReactNode; wide?: boolea
         <main className="pay-page">
             <div className={`pay-column ${wide ? 'is-wide' : ''}`}>
                 <div className="pay-brand">
-                    <img src="/favicon.svg" alt="" width={17} height={16}/>
+                    <img src="/favicon.svg" alt="" width={16} height={16}/>
                     <span>FamSub</span>
                 </div>
                 {children}
