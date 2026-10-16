@@ -9,7 +9,6 @@ import type {
     InvoiceBulkBalancePaymentItemResult,
     InvoiceBulkBalancePaymentResult,
     InvoiceDetailResponse,
-    InvoiceOrigin,
     InvoiceGenerationRequest,
     InvoiceGenerationResult,
     InvoiceDuplicateRequest,
@@ -115,8 +114,6 @@ export default function Invoices() {
     const [deleteInvoiceData, setDeleteInvoiceData] = useState<{
         invoiceId: string;
         subscriberName: string;
-        origin: InvoiceOrigin;
-        addToBalance: boolean;
     } | null>(null);
 
     useEffect(() => {
@@ -283,9 +280,7 @@ export default function Invoices() {
     const openDeleteModal = (invoice: InvoiceResponse) => {
         setDeleteInvoiceData({
             invoiceId: invoice.id,
-            subscriberName: invoice.subscriberName,
-            origin: invoice.origin,
-            addToBalance: invoice.origin === 'OUTSTANDING_BALANCE'
+            subscriberName: invoice.subscriberName
         });
         setShowDeleteModal(true);
     };
@@ -389,13 +384,9 @@ export default function Invoices() {
         setLoading(true);
 
         try {
-            const addToBalance = deleteInvoiceData.addToBalance;
-            const response = await apiFetch(
-                `${API_CONFIG.INVOICES_URL}/${deleteInvoiceData.invoiceId}?addToBalance=${addToBalance}`,
-                {
-                    method: 'DELETE',
-                }
-            );
+            const response = await apiFetch(`${API_CONFIG.INVOICES_URL}/${deleteInvoiceData.invoiceId}`, {
+                method: 'DELETE',
+            });
 
             if (response.ok) {
                 const result = await response.json();
@@ -408,7 +399,7 @@ export default function Invoices() {
                 }
             } else {
                 const fallback = response.status === 400
-                    ? 'Only draft manual or outstanding balance invoices can be deleted'
+                    ? 'Only draft manual invoices can be deleted'
                     : response.status === 404
                         ? 'Invoice not found'
                         : 'Failed to delete invoice';
@@ -916,8 +907,6 @@ export default function Invoices() {
         switch (origin) {
             case 'SUBSCRIPTION_LEDGER':
                 return '#17a2b8';
-            case 'OUTSTANDING_BALANCE':
-                return '#fd7e14';
             case 'MANUAL':
                 return '#6f42c1';
             default:
@@ -929,8 +918,6 @@ export default function Invoices() {
         switch (origin) {
             case 'SUBSCRIPTION_LEDGER':
                 return 'Subscription Ledger';
-            case 'OUTSTANDING_BALANCE':
-                return 'Outstanding Balance';
             case 'MANUAL':
                 return 'Manual';
             default:
@@ -947,7 +934,7 @@ export default function Invoices() {
     };
 
     const canDeleteInvoice = (invoice: InvoiceResponse) =>
-        invoice.status === 'DRAFT' && (invoice.origin === 'OUTSTANDING_BALANCE' || invoice.origin === 'MANUAL');
+        invoice.status === 'DRAFT' && invoice.origin === 'MANUAL';
 
     const isInvoiceVoid = (invoice: Pick<InvoiceResponse, 'status'>) => invoice.status === 'VOID';
 
@@ -1334,7 +1321,6 @@ export default function Invoices() {
                                 >
                                     <option value="">All Origins</option>
                                     <option value="SUBSCRIPTION_LEDGER">Subscription Ledger</option>
-                                    <option value="OUTSTANDING_BALANCE">Outstanding Balance</option>
                                     <option value="MANUAL">Manual</option>
                                 </select>
                             </div>
@@ -1772,29 +1758,9 @@ export default function Invoices() {
                             This action cannot be undone. The invoice will be permanently deleted.
                         </p>
 
-                        {deleteInvoiceData.origin === 'OUTSTANDING_BALANCE' ? (
-                            <div className="form-group">
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        checked={deleteInvoiceData.addToBalance}
-                                        onChange={(e) => setDeleteInvoiceData({
-                                            ...deleteInvoiceData,
-                                            addToBalance: e.target.checked
-                                        })}
-                                    />
-                                    Restore legacy balance debt to subscriber's account
-                                </label>
-                                <small className="form-help">
-                                    When checked, this legacy invoice amount will be restored as negative balance debt.
-                                    When unchecked, the invoice is removed without affecting subscriber credit.
-                                </small>
-                            </div>
-                        ) : (
-                            <small className="form-help">
-                                Manual invoices are removed without touching subscriber credit.
-                            </small>
-                        )}
+                        <small className="form-help">
+                            Manual invoices are removed without touching subscriber credit.
+                        </small>
 
                         <div className="form-actions">
                             <button

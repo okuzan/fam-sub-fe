@@ -1,6 +1,5 @@
 export const InvoiceOrigin = {
     SUBSCRIPTION_LEDGER: 'SUBSCRIPTION_LEDGER',
-    OUTSTANDING_BALANCE: 'OUTSTANDING_BALANCE',
     MANUAL: 'MANUAL'
 } as const;
 
