@@ -5,7 +5,7 @@ import AdminDashboard from './components/AdminDashboard';
 import SubscriberCabinet from './components/SubscriberCabinet';
 import RoleChooser from './components/RoleChooser';
 import AdminInviteAccept from './components/AdminInviteAccept';
-import {API_CONFIG} from './config/api';
+import {API_CONFIG, apiFetch} from './config/api';
 import {ToastProvider} from './components/Toast';
 import './App.css'
 import './components/Login.css'
@@ -78,9 +78,7 @@ function App() {
 
     const checkAuthStatus = async () => {
         try {
-            const response = await fetch(API_CONFIG.AUTH_ME_URL, {
-                credentials: 'include'
-            });
+            const response = await apiFetch(API_CONFIG.AUTH_ME_URL);
 
             if (response.ok) {
                 const authData: AuthMeResponse = await response.json();
@@ -128,9 +126,8 @@ function App() {
 
     const handleLogout = async () => {
         try {
-            const response = await fetch(API_CONFIG.LOGOUT_URL, {
+            const response = await apiFetch(API_CONFIG.LOGOUT_URL, {
                 method: 'POST',
-                credentials: 'include'
             });
 
             if (!response.ok) {
@@ -147,9 +144,8 @@ function App() {
 
     const handleCurrentAccountDeleted = async () => {
         try {
-            await fetch(API_CONFIG.LOGOUT_URL, {
+            await apiFetch(API_CONFIG.LOGOUT_URL, {
                 method: 'POST',
-                credentials: 'include'
             });
         } catch (error) {
             console.error('Error clearing deleted account session:', error);

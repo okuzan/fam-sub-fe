@@ -1,6 +1,6 @@
 import {useEffect, useState} from 'react';
 import {createPortal} from 'react-dom';
-import {API_CONFIG} from '../config/api';
+import {API_CONFIG, apiFetch} from '../config/api';
 import {getResponseErrorMessage} from '../utils/errors';
 import {useEscapeClose} from '../utils/useEscapeClose';
 import {useToast} from './ToastContext';
@@ -64,9 +64,7 @@ export default function Subscribers() {
 
             const finalUrl = params.toString() ? `${url}?${params.toString()}` : url;
 
-            const response = await fetch(finalUrl, {
-                credentials: 'include'
-            });
+            const response = await apiFetch(finalUrl);
 
             if (response.ok) {
                 const data = await response.json();
@@ -84,9 +82,7 @@ export default function Subscribers() {
 
     const fetchSubscriberDetails = async (subscriberId: string) => {
         try {
-            const response = await fetch(`${API_CONFIG.SUBSCRIBERS_URL}/${subscriberId}/details`, {
-                credentials: 'include'
-            });
+            const response = await apiFetch(`${API_CONFIG.SUBSCRIBERS_URL}/${subscriberId}/details`);
 
             if (response.ok) {
                 const data = await response.json();
@@ -122,10 +118,9 @@ export default function Subscribers() {
                 billingExempt: formData.billingExempt
             };
 
-            const response = await fetch(API_CONFIG.SUBSCRIBERS_URL, {
+            const response = await apiFetch(API_CONFIG.SUBSCRIBERS_URL, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                credentials: 'include',
                 body: JSON.stringify(request)
             });
 
@@ -161,10 +156,9 @@ export default function Subscribers() {
                 billingExempt: formData.billingExempt
             };
 
-            const response = await fetch(`${API_CONFIG.SUBSCRIBERS_URL}/${editingSubscriber.id}`, {
+            const response = await apiFetch(`${API_CONFIG.SUBSCRIBERS_URL}/${editingSubscriber.id}`, {
                 method: 'PUT',
                 headers: {'Content-Type': 'application/json'},
-                credentials: 'include',
                 body: JSON.stringify(request)
             });
 
@@ -186,9 +180,8 @@ export default function Subscribers() {
         if (!confirm('Are you sure you want to delete this subscriber?')) return;
 
         try {
-            const response = await fetch(`${API_CONFIG.SUBSCRIBERS_URL}/${id}`, {
+            const response = await apiFetch(`${API_CONFIG.SUBSCRIBERS_URL}/${id}`, {
                 method: 'DELETE',
-                credentials: 'include'
             });
 
             if (response.ok) {
@@ -207,9 +200,8 @@ export default function Subscribers() {
         setLoading(true);
 
         try {
-            const response = await fetch(`${API_CONFIG.SUBSCRIBERS_URL}/${subscriberId}/email-situation`, {
+            const response = await apiFetch(`${API_CONFIG.SUBSCRIBERS_URL}/${subscriberId}/email-situation`, {
                 method: 'POST',
-                credentials: 'include'
             });
 
             if (response.ok) {
@@ -253,9 +245,8 @@ export default function Subscribers() {
         setDebtPaymentResult(null);
 
         try {
-            const response = await fetch(`${API_CONFIG.SUBSCRIBERS_URL}/${selectedSubscriber.id}/pay-off-debt?includeCredit=${includeCredit}`, {
+            const response = await apiFetch(`${API_CONFIG.SUBSCRIBERS_URL}/${selectedSubscriber.id}/pay-off-debt?includeCredit=${includeCredit}`, {
                 method: 'POST',
-                credentials: 'include'
             });
 
             if (response.ok) {

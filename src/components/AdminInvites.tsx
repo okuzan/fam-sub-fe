@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useState} from 'react';
-import {API_CONFIG} from '../config/api';
+import {API_CONFIG, apiFetch} from '../config/api';
 import {getResponseErrorMessage} from '../utils/errors';
 import {useToast} from './ToastContext';
 import type {AccountResponse} from '../types/account';
@@ -37,9 +37,7 @@ export default function AdminInvites({currentAccountId, onCurrentAccountDeleted}
     const [revokingId, setRevokingId] = useState<string | null>(null);
 
     const fetchAccounts = useCallback(async () => {
-        const response = await fetch(API_CONFIG.ADMIN_ACCOUNTS_URL, {
-            credentials: 'include'
-        });
+        const response = await apiFetch(API_CONFIG.ADMIN_ACCOUNTS_URL);
 
         if (response.ok) {
             setAccounts(await response.json());
@@ -51,9 +49,7 @@ export default function AdminInvites({currentAccountId, onCurrentAccountDeleted}
     const fetchInvites = useCallback(async () => {
         try {
             await fetchAccounts();
-            const response = await fetch(API_CONFIG.ADMIN_INVITES_URL, {
-                credentials: 'include'
-            });
+            const response = await apiFetch(API_CONFIG.ADMIN_INVITES_URL);
 
             if (response.ok) {
                 setInvites(await response.json());
@@ -82,10 +78,9 @@ export default function AdminInvites({currentAccountId, onCurrentAccountDeleted}
 
         setSubmitting(true);
         try {
-            const response = await fetch(API_CONFIG.ADMIN_INVITES_URL, {
+            const response = await apiFetch(API_CONFIG.ADMIN_INVITES_URL, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                credentials: 'include',
                 body: JSON.stringify({email: trimmedEmail})
             });
 
@@ -114,9 +109,8 @@ export default function AdminInvites({currentAccountId, onCurrentAccountDeleted}
 
         setDeletingAccountId(account.id);
         try {
-            const response = await fetch(`${API_CONFIG.ADMIN_ACCOUNTS_URL}/${account.id}`, {
+            const response = await apiFetch(`${API_CONFIG.ADMIN_ACCOUNTS_URL}/${account.id}`, {
                 method: 'DELETE',
-                credentials: 'include'
             });
 
             if (response.ok) {
@@ -142,9 +136,8 @@ export default function AdminInvites({currentAccountId, onCurrentAccountDeleted}
 
         setRevokingId(invite.id);
         try {
-            const response = await fetch(`${API_CONFIG.ADMIN_INVITES_URL}/${invite.id}/revoke`, {
+            const response = await apiFetch(`${API_CONFIG.ADMIN_INVITES_URL}/${invite.id}/revoke`, {
                 method: 'POST',
-                credentials: 'include'
             });
 
             if (response.ok) {

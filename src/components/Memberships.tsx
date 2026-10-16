@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {API_CONFIG} from '../config/api';
+import {API_CONFIG, apiFetch} from '../config/api';
 import {getResponseErrorMessage} from '../utils/errors';
 import {useEscapeClose} from '../utils/useEscapeClose';
 import {useToast} from './ToastContext';
@@ -64,9 +64,7 @@ export default function Memberships() {
                 }
             }
 
-            const response = await fetch(url, {
-                credentials: 'include'
-            });
+            const response = await apiFetch(url);
 
             if (response.ok) {
                 const data = await response.json();
@@ -86,9 +84,7 @@ export default function Memberships() {
 
     const fetchSubscribers = async () => {
         try {
-            const response = await fetch(API_CONFIG.SUBSCRIBERS_URL, {
-                credentials: 'include'
-            });
+            const response = await apiFetch(API_CONFIG.SUBSCRIBERS_URL);
 
             if (response.ok) {
                 const data = await response.json();
@@ -103,9 +99,7 @@ export default function Memberships() {
 
     const fetchServices = async () => {
         try {
-            const response = await fetch(API_CONFIG.SUBSCRIPTION_SERVICES_URL, {
-                credentials: 'include'
-            });
+            const response = await apiFetch(API_CONFIG.SUBSCRIPTION_SERVICES_URL);
 
             if (response.ok) {
                 const data = await response.json();
@@ -131,10 +125,9 @@ export default function Memberships() {
                 endMonth: formData.endMonth || undefined
             };
 
-            const response = await fetch(API_CONFIG.MEMBERSHIPS_URL, {
+            const response = await apiFetch(API_CONFIG.MEMBERSHIPS_URL, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                credentials: 'include',
                 body: JSON.stringify(request)
             });
 
@@ -164,10 +157,9 @@ export default function Memberships() {
                 endMonth: formData.endMonth || undefined
             };
 
-            const response = await fetch(`${API_CONFIG.MEMBERSHIPS_URL}/${editingMembership.id}`, {
+            const response = await apiFetch(`${API_CONFIG.MEMBERSHIPS_URL}/${editingMembership.id}`, {
                 method: 'PUT',
                 headers: {'Content-Type': 'application/json'},
-                credentials: 'include',
                 body: JSON.stringify(request)
             });
 
@@ -189,9 +181,8 @@ export default function Memberships() {
         if (!confirm('Are you sure you want to delete this membership?')) return;
 
         try {
-            const response = await fetch(`${API_CONFIG.MEMBERSHIPS_URL}/${id}`, {
+            const response = await apiFetch(`${API_CONFIG.MEMBERSHIPS_URL}/${id}`, {
                 method: 'DELETE',
-                credentials: 'include'
             });
 
             if (response.ok) {
@@ -213,10 +204,9 @@ export default function Memberships() {
         try {
             const request: MembershipEndRequest = {endMonth: endDate};
 
-            const response = await fetch(`${API_CONFIG.MEMBERSHIPS_URL}/${id}/end`, {
+            const response = await apiFetch(`${API_CONFIG.MEMBERSHIPS_URL}/${id}/end`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                credentials: 'include',
                 body: JSON.stringify(request)
             });
 

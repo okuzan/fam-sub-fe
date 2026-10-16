@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useMemo, useState} from 'react';
-import {API_CONFIG} from '../config/api';
+import {API_CONFIG, apiFetch} from '../config/api';
 import type {LedgerEntry, LedgerEntryFilter, CalculationBatch} from '../types/ledger';
 import type {SubscriberResponse} from '../types/subscriber';
 import type {SubscriptionServiceResponse} from '../types/subscription';
@@ -122,9 +122,7 @@ export default function Ledger() {
         setBatchesLoading(true);
 
         try {
-            const response = await fetch(`${API_CONFIG.LEDGER_URL}/calculation-batches?limit=10`, {
-                credentials: 'include'
-            });
+            const response = await apiFetch(`${API_CONFIG.LEDGER_URL}/calculation-batches?limit=10`);
 
             if (response.ok) {
                 const data = await response.json();
@@ -144,9 +142,7 @@ export default function Ledger() {
 
     const fetchSubscribers = useCallback(async () => {
         try {
-            const response = await fetch(API_CONFIG.SUBSCRIBERS_URL, {
-                credentials: 'include'
-            });
+            const response = await apiFetch(API_CONFIG.SUBSCRIBERS_URL);
 
             if (response.ok) {
                 const data = await response.json();
@@ -162,9 +158,7 @@ export default function Ledger() {
 
     const fetchServices = useCallback(async () => {
         try {
-            const response = await fetch(API_CONFIG.SUBSCRIPTION_SERVICES_URL, {
-                credentials: 'include'
-            });
+            const response = await apiFetch(API_CONFIG.SUBSCRIPTION_SERVICES_URL);
 
             if (response.ok) {
                 const data = await response.json();
@@ -183,9 +177,7 @@ export default function Ledger() {
         setSelectedEntry(null);
 
         try {
-            const response = await fetch(`${API_CONFIG.LEDGER_URL}/calculation-batches/${batchId}/entries`, {
-                credentials: 'include'
-            });
+            const response = await apiFetch(`${API_CONFIG.LEDGER_URL}/calculation-batches/${batchId}/entries`);
 
             if (response.ok) {
                 const data = await response.json();
@@ -217,9 +209,7 @@ export default function Ledger() {
         setDetailLoadingId(entryId);
 
         try {
-            const response = await fetch(`${API_CONFIG.LEDGER_URL}/entries/${entryId}`, {
-                credentials: 'include'
-            });
+            const response = await apiFetch(`${API_CONFIG.LEDGER_URL}/entries/${entryId}`);
 
             if (response.ok) {
                 const data: LedgerEntry = await response.json();
@@ -241,10 +231,9 @@ export default function Ledger() {
         setSelectedEntry(null);
 
         try {
-            const response = await fetch(`${API_CONFIG.LEDGER_URL}/filter`, {
+            const response = await apiFetch(`${API_CONFIG.LEDGER_URL}/filter`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                credentials: 'include',
                 body: JSON.stringify(buildFilterRequest(filters, selectedBatchId))
             });
 

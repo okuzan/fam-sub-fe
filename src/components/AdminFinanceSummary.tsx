@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useMemo, useState} from 'react';
-import {API_CONFIG} from '../config/api';
+import {API_CONFIG, apiFetch} from '../config/api';
 import type {FinanceSummary} from '../types/finance';
 import {getResponseErrorMessage} from '../utils/errors';
 
@@ -29,8 +29,7 @@ export default function AdminFinanceSummary() {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch(API_CONFIG.ADMIN_FINANCE_SUMMARY_URL, {
-                credentials: 'include',
+            const response = await apiFetch(API_CONFIG.ADMIN_FINANCE_SUMMARY_URL, {
                 signal
             });
             if (!response.ok) {

@@ -1,6 +1,6 @@
 import {useEffect, useState} from 'react';
 import {createPortal} from 'react-dom';
-import {API_CONFIG, getInvoicePdfUrl} from '../config/api';
+import {API_CONFIG, getInvoicePdfUrl, apiFetch} from '../config/api';
 import {getResponseErrorMessage} from '../utils/errors';
 import {useEscapeClose} from '../utils/useEscapeClose';
 import {useToast} from './ToastContext';
@@ -141,9 +141,7 @@ export default function Invoices() {
     const fetchInvoices = async (applyFilters: boolean = false) => {
         try {
             let url: string = API_CONFIG.INVOICES_URL;
-            const options: RequestInit = {
-                credentials: 'include'
-            };
+            const options: RequestInit = {};
 
             if (applyFilters && Object.keys(filters).length > 0) {
                 url = `${API_CONFIG.INVOICES_URL}/filter`;
@@ -152,7 +150,7 @@ export default function Invoices() {
                 options.body = JSON.stringify(filters);
             }
 
-            const response = await fetch(url, options);
+            const response = await apiFetch(url, options);
 
             if (response.ok) {
                 const data = await response.json();
@@ -167,9 +165,7 @@ export default function Invoices() {
 
     const fetchSubscribers = async () => {
         try {
-            const response = await fetch(API_CONFIG.SUBSCRIBERS_URL, {
-                credentials: 'include'
-            });
+            const response = await apiFetch(API_CONFIG.SUBSCRIBERS_URL);
 
             if (response.ok) {
                 const data = await response.json();
@@ -184,9 +180,7 @@ export default function Invoices() {
 
     const fetchSuggestedPeriod = async () => {
         try {
-            const response = await fetch(`${API_CONFIG.INVOICES_URL}/suggested-period`, {
-                credentials: 'include'
-            });
+            const response = await apiFetch(`${API_CONFIG.INVOICES_URL}/suggested-period`);
 
             if (response.ok) {
                 const data = await response.json();
@@ -215,10 +209,9 @@ export default function Invoices() {
                 subscriberIds: selectedSubscribers.length > 0 ? selectedSubscribers : undefined
             };
 
-            const response = await fetch(`${API_CONFIG.INVOICES_URL}/generate`, {
+            const response = await apiFetch(`${API_CONFIG.INVOICES_URL}/generate`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                credentials: 'include',
                 body: JSON.stringify(request)
             });
 
@@ -262,10 +255,9 @@ export default function Invoices() {
         setUpdatingInvoiceStatuses(prev => new Set(prev).add(invoiceId));
 
         try {
-            const response = await fetch(`${API_CONFIG.INVOICES_URL}/${invoiceId}/status`, {
+            const response = await apiFetch(`${API_CONFIG.INVOICES_URL}/${invoiceId}/status`, {
                 method: 'PATCH',
                 headers: {'Content-Type': 'application/json'},
-                credentials: 'include',
                 body: JSON.stringify(request)
             });
 
@@ -369,10 +361,9 @@ export default function Invoices() {
                 ? `${API_CONFIG.INVOICES_URL}/${duplicateSourceInvoice.id}/duplicate`
                 : `${API_CONFIG.INVOICES_URL}/manual`;
 
-            const response = await fetch(endpoint, {
+            const response = await apiFetch(endpoint, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                credentials: 'include',
                 body: JSON.stringify(request)
             });
 
@@ -399,11 +390,10 @@ export default function Invoices() {
 
         try {
             const addToBalance = deleteInvoiceData.addToBalance;
-            const response = await fetch(
+            const response = await apiFetch(
                 `${API_CONFIG.INVOICES_URL}/${deleteInvoiceData.invoiceId}?addToBalance=${addToBalance}`,
                 {
                     method: 'DELETE',
-                    credentials: 'include'
                 }
             );
 
@@ -442,10 +432,9 @@ export default function Invoices() {
                 reason: voidReason.trim() || undefined
             };
 
-            const response = await fetch(`${API_CONFIG.INVOICES_URL}/${voidInvoiceData.invoiceId}/void`, {
+            const response = await apiFetch(`${API_CONFIG.INVOICES_URL}/${voidInvoiceData.invoiceId}/void`, {
                 method: 'PATCH',
                 headers: {'Content-Type': 'application/json'},
-                credentials: 'include',
                 body: JSON.stringify(request)
             });
 
@@ -472,9 +461,7 @@ export default function Invoices() {
 
     const handleDownloadPdf = async (invoiceId: string) => {
         try {
-            const response = await fetch(getInvoicePdfUrl(invoiceId), {
-                credentials: 'include'
-            });
+            const response = await apiFetch(getInvoicePdfUrl(invoiceId));
 
             if (response.ok) {
                 const blob = await response.blob();
@@ -501,9 +488,8 @@ export default function Invoices() {
         setEmailingInvoices(prev => new Set(prev).add(invoiceId));
 
         try {
-            const response = await fetch(`${API_CONFIG.INVOICES_URL}/${invoiceId}/email`, {
+            const response = await apiFetch(`${API_CONFIG.INVOICES_URL}/${invoiceId}/email`, {
                 method: 'POST',
-                credentials: 'include'
             });
 
             if (response.ok) {
@@ -536,10 +522,9 @@ export default function Invoices() {
 
         try {
             const request: InvoiceFilterRequest = {status: 'DRAFT'};
-            const response = await fetch(`${API_CONFIG.INVOICES_URL}/filter`, {
+            const response = await apiFetch(`${API_CONFIG.INVOICES_URL}/filter`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                credentials: 'include',
                 body: JSON.stringify(request)
             });
 
@@ -566,9 +551,8 @@ export default function Invoices() {
         setEmailingDraftInvoices(true);
 
         try {
-            const response = await fetch(`${API_CONFIG.INVOICES_URL}/drafts/email`, {
+            const response = await apiFetch(`${API_CONFIG.INVOICES_URL}/drafts/email`, {
                 method: 'POST',
-                credentials: 'include'
             });
 
             if (response.ok) {
@@ -659,9 +643,8 @@ export default function Invoices() {
         setPayingDraftInvoicesFromBalance(true);
 
         try {
-            const response = await fetch(`${API_CONFIG.INVOICES_URL}/drafts/pay-from-balance`, {
+            const response = await apiFetch(`${API_CONFIG.INVOICES_URL}/drafts/pay-from-balance`, {
                 method: 'POST',
-                credentials: 'include'
             });
 
             if (response.ok) {
@@ -692,9 +675,8 @@ export default function Invoices() {
         setEmailingDetailInvoice(true);
 
         try {
-            const response = await fetch(`${API_CONFIG.INVOICES_URL}/${invoiceId}/email`, {
+            const response = await apiFetch(`${API_CONFIG.INVOICES_URL}/${invoiceId}/email`, {
                 method: 'POST',
-                credentials: 'include'
             });
 
             if (response.ok) {
@@ -716,9 +698,7 @@ export default function Invoices() {
     };
     const fetchSubscriberBalance = async (subscriberId: string) => {
         try {
-            const response = await fetch(`${API_CONFIG.SUBSCRIBERS_URL}/${subscriberId}`, {
-                credentials: 'include'
-            });
+            const response = await apiFetch(`${API_CONFIG.SUBSCRIBERS_URL}/${subscriberId}`);
 
             if (response.ok) {
                 const subscriber = await response.json();
@@ -733,9 +713,7 @@ export default function Invoices() {
 
     const handleViewInvoice = async (invoiceId: string) => {
         try {
-            const response = await fetch(`${API_CONFIG.INVOICES_URL}/${invoiceId}`, {
-                credentials: 'include'
-            });
+            const response = await apiFetch(`${API_CONFIG.INVOICES_URL}/${invoiceId}`);
 
             if (response.ok) {
                 const data = await response.json();
@@ -757,9 +735,7 @@ export default function Invoices() {
         setLoadingStatusHistory(true);
 
         try {
-            const response = await fetch(`${API_CONFIG.INVOICES_URL}/${invoice.id}/status-history`, {
-                credentials: 'include'
-            });
+            const response = await apiFetch(`${API_CONFIG.INVOICES_URL}/${invoice.id}/status-history`);
 
             if (response.ok) {
                 const data = await response.json();
@@ -783,9 +759,8 @@ export default function Invoices() {
         setLoading(true);
 
         try {
-            const response = await fetch(`${API_CONFIG.INVOICES_URL}/${selectedInvoice.invoice.id}/pay-from-balance`, {
+            const response = await apiFetch(`${API_CONFIG.INVOICES_URL}/${selectedInvoice.invoice.id}/pay-from-balance`, {
                 method: 'POST',
-                credentials: 'include'
             });
 
             if (response.ok) {
@@ -821,10 +796,9 @@ export default function Invoices() {
                 notes: notesInput.trim() || undefined
             };
 
-            const response = await fetch(`${API_CONFIG.INVOICES_URL}/${selectedInvoice.invoice.id}/notes`, {
+            const response = await apiFetch(`${API_CONFIG.INVOICES_URL}/${selectedInvoice.invoice.id}/notes`, {
                 method: 'PATCH',
                 headers: {'Content-Type': 'application/json'},
-                credentials: 'include',
                 body: JSON.stringify(request)
             });
 

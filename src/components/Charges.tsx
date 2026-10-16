@@ -1,6 +1,6 @@
 import {useEffect, useState} from 'react';
 import {createPortal} from 'react-dom';
-import {API_CONFIG} from '../config/api';
+import {API_CONFIG, apiFetch} from '../config/api';
 import {getResponseErrorMessage} from '../utils/errors';
 import {useEscapeClose} from '../utils/useEscapeClose';
 import {useToast} from './ToastContext';
@@ -48,9 +48,7 @@ export default function Charges() {
 
     const fetchServices = async () => {
         try {
-            const response = await fetch(API_CONFIG.SUBSCRIPTION_SERVICES_URL, {
-                credentials: 'include'
-            });
+            const response = await apiFetch(API_CONFIG.SUBSCRIPTION_SERVICES_URL);
 
             if (response.ok) {
                 const data = await response.json();
@@ -67,11 +65,8 @@ export default function Charges() {
     const fetchChargesByService = async (serviceId: string, requestedPage = page) => {
         setLoading(true);
         try {
-            const response = await fetch(
-                `${API_CONFIG.CHARGES_URL}/service/${serviceId}?page=${requestedPage}&size=${PAGE_SIZE}`,
-                {
-                credentials: 'include'
-                }
+            const response = await apiFetch(
+                `${API_CONFIG.CHARGES_URL}/service/${serviceId}?page=${requestedPage}&size=${PAGE_SIZE}`
             );
 
             if (response.ok) {
@@ -101,10 +96,9 @@ export default function Charges() {
                 description: formData.description || undefined
             };
 
-            const response = await fetch(API_CONFIG.CHARGES_URL, {
+            const response = await apiFetch(API_CONFIG.CHARGES_URL, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                credentials: 'include',
                 body: JSON.stringify(request)
             });
 
@@ -133,10 +127,9 @@ export default function Charges() {
                 description: formData.description || undefined
             };
 
-            const response = await fetch(`${API_CONFIG.CHARGES_URL}/${editingCharge.id}`, {
+            const response = await apiFetch(`${API_CONFIG.CHARGES_URL}/${editingCharge.id}`, {
                 method: 'PUT',
                 headers: {'Content-Type': 'application/json'},
-                credentials: 'include',
                 body: JSON.stringify(request)
             });
 
@@ -158,9 +151,8 @@ export default function Charges() {
         if (!confirm('Are you sure you want to delete this charge?')) return;
 
         try {
-            const response = await fetch(`${API_CONFIG.CHARGES_URL}/${id}`, {
+            const response = await apiFetch(`${API_CONFIG.CHARGES_URL}/${id}`, {
                 method: 'DELETE',
-                credentials: 'include'
             });
 
             if (response.ok) {

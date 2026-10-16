@@ -28,6 +28,24 @@ export const API_CONFIG = {
     LOGIN_FAILURE_URL: '/login?error=true',
 } as const;
 
+/**
+ * fetch() for every backend call. The API authenticates with a cross-subdomain
+ * session cookie, so credentials default to 'include'. Every request also
+ * carries `X-Requested-With: XMLHttpRequest`: the backend rejects state-changing
+ * requests without it, and a custom header forces a CORS preflight that only
+ * the FamSub origin passes (CSRF protection). Caller headers are merged, not
+ * replaced, so Content-Type and friends survive.
+ */
+export const apiFetch = (input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> => {
+    const headers = new Headers(init.headers);
+    headers.set('X-Requested-With', 'XMLHttpRequest');
+    return fetch(input, {
+        ...init,
+        credentials: init.credentials ?? 'include',
+        headers,
+    });
+};
+
 // Helper function to get invoice PDF URL
 export const getInvoicePdfUrl = (invoiceId: string) => {
     return `${API_CONFIG.INVOICES_URL}/${invoiceId}/pdf`;

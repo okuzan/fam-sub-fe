@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {API_CONFIG} from '../config/api';
+import {API_CONFIG, apiFetch} from '../config/api';
 import {getResponseErrorMessage} from '../utils/errors';
 import {useToast} from './ToastContext';
 import type {
@@ -386,22 +386,15 @@ export default function AdminActions() {
             let response: Response;
 
             if (tab === 'all' && shouldUseDirectEndpoint) {
-                response = await fetch(`${API_CONFIG.ADMIN_ACTIONS_URL}?limit=${limit}`, {
-                    credentials: 'include'
-                });
+                response = await apiFetch(`${API_CONFIG.ADMIN_ACTIONS_URL}?limit=${limit}`);
             } else if (tab === 'cost-runs' && shouldUseDirectEndpoint) {
-                response = await fetch(`${API_CONFIG.ADMIN_ACTIONS_URL}/cost-runs?limit=${limit}`, {
-                    credentials: 'include'
-                });
+                response = await apiFetch(`${API_CONFIG.ADMIN_ACTIONS_URL}/cost-runs?limit=${limit}`);
             } else if (tab === 'invoice-runs' && shouldUseDirectEndpoint) {
-                response = await fetch(`${API_CONFIG.ADMIN_ACTIONS_URL}/invoice-runs?limit=${limit}`, {
-                    credentials: 'include'
-                });
+                response = await apiFetch(`${API_CONFIG.ADMIN_ACTIONS_URL}/invoice-runs?limit=${limit}`);
             } else {
-                response = await fetch(`${API_CONFIG.ADMIN_ACTIONS_URL}/filter`, {
+                response = await apiFetch(`${API_CONFIG.ADMIN_ACTIONS_URL}/filter`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    credentials: 'include',
                     body: JSON.stringify(request)
                 });
             }
@@ -452,9 +445,7 @@ export default function AdminActions() {
         setPreviewLoadingRunId(runId);
 
         try {
-            const response = await fetch(`${API_CONFIG.ADMIN_RECOVERY_URL}/${runType}/${runId}/preview`, {
-                credentials: 'include'
-            });
+            const response = await apiFetch(`${API_CONFIG.ADMIN_RECOVERY_URL}/${runType}/${runId}/preview`);
 
             if (response.ok) {
                 const data: RunRecoveryPreviewResponse = await response.json();
@@ -486,10 +477,9 @@ export default function AdminActions() {
         try {
             const reason = undoReasons[runId]?.trim();
             const requestBody: RunUndoRequest = reason ? {reason} : {};
-            const response = await fetch(`${API_CONFIG.ADMIN_RECOVERY_URL}/${runType}/${runId}/undo`, {
+            const response = await apiFetch(`${API_CONFIG.ADMIN_RECOVERY_URL}/${runType}/${runId}/undo`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                credentials: 'include',
                 body: JSON.stringify(requestBody)
             });
 

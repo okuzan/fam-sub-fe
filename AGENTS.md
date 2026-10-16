@@ -24,9 +24,12 @@ Sibling repositories under `/media/ok/Space/Code/mine`:
 
 The API lives at `VITE_API_BASE_URL` (`http://localhost:8888/v1` in dev,
 `https://api.famsub.almonium.com/v1` in prod). Because the client and API are on
-different subdomains, **every fetch must pass `credentials: 'include'`** — auth
-is a server-side session cookie, not a token, and there is nothing in
-`localStorage` to attach. Sign-in is a full-page redirect to
+different subdomains, **every backend call goes through `apiFetch` in
+`src/config/api.ts`, never bare `fetch`**. It defaults `credentials: 'include'`
+— auth is a server-side session cookie, not a token, and there is nothing in
+`localStorage` to attach — and adds `X-Requested-With: XMLHttpRequest`, which
+the backend requires on every non-GET request as CSRF protection (the custom
+header forces a CORS preflight that only the FamSub origin passes). Sign-in is a full-page redirect to
 `API_CONFIG.GOOGLE_OAUTH_URL`; the backend redirects back to `app.web-domain`
 on success.
 
@@ -57,7 +60,7 @@ would render nothing.
   `path`); surface them through `src/utils/errors.ts` and the toast context
   rather than `alert` or bare console logging.
 - There is no data-fetching library and no global store: components own their
-  own `useState` + `fetch` + loading/error flags. Follow that pattern unless
+  own `useState` + `apiFetch` + loading/error flags. Follow that pattern unless
   the owner decides to adopt a query library across the app.
 
 ## Building and testing

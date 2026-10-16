@@ -1,5 +1,5 @@
 import {useEffect, useMemo, useState} from 'react';
-import {API_CONFIG} from '../config/api';
+import {API_CONFIG, apiFetch} from '../config/api';
 import {getResponseErrorMessage} from '../utils/errors';
 import {useEscapeClose} from '../utils/useEscapeClose';
 import type {InvoiceDetailResponse, InvoiceResponse, InvoiceStatus} from '../types/invoice';
@@ -75,9 +75,7 @@ export default function SubscriberCabinet({userEmail, canAccessAdmin = false, on
         setError(null);
 
         try {
-            const response = await fetch(API_CONFIG.SUBSCRIBER_CABINET_URL, {
-                credentials: 'include'
-            });
+            const response = await apiFetch(API_CONFIG.SUBSCRIBER_CABINET_URL);
 
             if (!response.ok) {
                 setError(await getResponseErrorMessage(response, 'Failed to load subscriber cabinet'));
@@ -99,9 +97,7 @@ export default function SubscriberCabinet({userEmail, canAccessAdmin = false, on
         setError(null);
 
         try {
-            const response = await fetch(API_CONFIG.SUBSCRIBER_INVOICES_URL, {
-                credentials: 'include'
-            });
+            const response = await apiFetch(API_CONFIG.SUBSCRIBER_INVOICES_URL);
 
             if (!response.ok) {
                 setError(await getResponseErrorMessage(response, 'Failed to load invoices'));
@@ -130,9 +126,7 @@ export default function SubscriberCabinet({userEmail, canAccessAdmin = false, on
         setError(null);
 
         try {
-            const response = await fetch(`${API_CONFIG.SUBSCRIBER_INVOICES_URL}/${invoiceId}`, {
-                credentials: 'include'
-            });
+            const response = await apiFetch(`${API_CONFIG.SUBSCRIBER_INVOICES_URL}/${invoiceId}`);
 
             if (!response.ok) {
                 setError(await getResponseErrorMessage(response, 'Failed to load invoice'));

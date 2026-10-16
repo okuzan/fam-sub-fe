@@ -1,6 +1,6 @@
 import {useEffect, useRef, useState} from 'react';
 import {Link, useNavigate, useSearchParams} from 'react-router-dom';
-import {API_CONFIG} from '../config/api';
+import {API_CONFIG, apiFetch} from '../config/api';
 import {getResponseErrorMessage} from '../utils/errors';
 import './AdminInviteAccept.css';
 
@@ -40,10 +40,9 @@ export default function AdminInviteAccept({isAuthenticated, onAuthRefresh}: Admi
             acceptedTokenRef.current = token;
             setState('accepting');
             try {
-                const response = await fetch(API_CONFIG.ADMIN_INVITES_ACCEPT_URL, {
+                const response = await apiFetch(API_CONFIG.ADMIN_INVITES_ACCEPT_URL, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    credentials: 'include',
                     body: JSON.stringify({token})
                 });
 
