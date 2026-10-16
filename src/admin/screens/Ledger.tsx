@@ -28,6 +28,7 @@ import {
 } from './ledger/ledgerModel';
 import {EntryTable, GroupedEntries} from './ledger/RunEntries';
 import './Ledger.css';
+import SubscriberOptions from './SubscriberOptions';
 
 const RUN_PAGE = 24;
 
@@ -549,9 +550,7 @@ export default function Ledger() {
                         <select className="ui-select is-compact" aria-label="Subscriber" value={filters.subscriberId}
                                 onChange={(event) => setFilter('subscriberId', event.target.value)}>
                             <option value="">All subscribers</option>
-                            {subscribers.map((subscriber) => (
-                                <option key={subscriber.id} value={subscriber.id}>{subscriber.name}</option>
-                            ))}
+                            <SubscriberOptions subscribers={subscribers}/>
                         </select>
                         <input type="month" className="ui-input is-compact led-filter-month" aria-label="Month"
                                value={filters.recordedMonth}

@@ -190,3 +190,22 @@
     min-height: 44px;
   }
 }
+
+/* Archived person's "Add membership" form in the drawer */
+.sub-join {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sub-join-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 600px) {
+  .sub-join-fields {
+    grid-template-columns: 1fr;
+  }
+}

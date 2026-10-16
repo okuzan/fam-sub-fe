@@ -8,6 +8,17 @@ export interface SubscriberResponse {
     billingExempt: boolean;
     createdAt: string;
     updatedAt: string;
+    /**
+     * Derived by the server: no current or upcoming membership, nothing unpaid
+     * or uninvoiced, and a balance of exactly 0. Adding a membership undoes it.
+     */
+    archived: boolean;
+    /** Distinct service names of every membership they ever had, sorted. */
+    formerServices: string[];
+    /** "YYYY-MM"; null when a membership is open-ended or they never had one. */
+    lastMembershipEndMonth: string | null;
+    /** When their latest paid invoice was marked paid. */
+    lastInvoicePaidAt: string | null;
 }
 
 export interface SubscriberCreateRequest {

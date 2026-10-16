@@ -1,11 +1,21 @@
-import {useCallback, useEffect, useRef, useState} from 'react';
+import {type FormEvent, useCallback, useEffect, useRef, useState} from 'react';
 import {API_CONFIG, apiFetch, getPayPageUrl} from '../../config/api';
 import {useToast} from '../../components/ToastContext';
-import {Drawer, DrawerSection, Notice, Tag} from '../../ui/components';
+import {Drawer, DrawerSection, Field, Notice, Tag} from '../../ui/components';
 import {useConfirm} from '../../ui/confirmContext';
-import {daysSince, formatInstantDate, formatMoney, formatMonth, formatPeriod, plural} from '../../ui/format';
+import {
+    currentMonth,
+    daysSince,
+    formatInstantDate,
+    formatMoney,
+    formatMonth,
+    formatPeriod,
+    plural
+} from '../../ui/format';
 import {getResponseErrorMessage} from '../../utils/errors';
 import type {BankSenderResponse} from '../../types/bankPayment';
+import type {MembershipCreateRequest, MembershipResponse} from '../../types/membership';
+import type {SubscriptionServiceResponse} from '../../types/subscription';
 import type {
     SubscriberDebtPaymentResult,
     SubscriberDetailResponse,
@@ -18,6 +28,10 @@ interface Props {
     subscriber: SubscriberResponse;
     /** Active members per service name this month, for the share column. */
     membersByServiceName: Map<string, number>;
+    /** Every membership this subscriber ever had, for an archived person's history. */
+    memberships: MembershipResponse[];
+    /** The services a new membership can be on. */
+    services: SubscriptionServiceResponse[];
     onClose: () => void;
     onEdit: () => void;
     /** Something about this subscriber changed; reload the list. */
@@ -44,16 +58,33 @@ function CreditChoice({balance, onChange}: { balance: number; onChange: (value: 
     );
 }
 
+const MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
+
+const membershipRange = (membership: MembershipResponse) =>
+    membership.endMonth ? formatPeriod(membership.startMonth, membership.endMonth) : `since ${formatMonth(membership.startMonth)}`;
+
 const invoicePeriod = (invoice: UnpaidInvoiceDto) =>
     invoice.origin === 'SUBSCRIPTION_LEDGER' ? formatPeriod(invoice.fromMonth, invoice.toMonth) : 'Manual invoice';
 
-export default function SubscriberDetailDrawer({subscriber, membersByServiceName, onClose, onEdit, onChanged, onDeleted}: Props) {
+export default function SubscriberDetailDrawer({
+    subscriber,
+    membersByServiceName,
+    memberships,
+    services,
+    onClose,
+    onEdit,
+    onChanged,
+    onDeleted
+}: Props) {
     const {showSuccess, showError} = useToast();
     const confirm = useConfirm();
     const [details, setDetails] = useState<SubscriberDetailResponse | null>(null);
     const [senders, setSenders] = useState<BankSenderResponse[] | null>(null);
     const [debtResult, setDebtResult] = useState<SubscriberDebtPaymentResult | null>(null);
-    const [busy, setBusy] = useState<'pay' | 'email' | 'delete' | null>(null);
+    const [busy, setBusy] = useState<'pay' | 'email' | 'delete' | 'join' | null>(null);
+    /** The archived person's "Add membership" form; null while closed. */
+    const [joinForm, setJoinForm] = useState<{ serviceId: string; startMonth: string } | null>(null);
+    const [joinError, setJoinError] = useState<string | null>(null);
     const includeCredit = useRef(false);
 
     const loadDetails = useCallback(async () => {
@@ -208,6 +239,45 @@ export default function SubscriberDetailDrawer({subscriber, membersByServiceName
         }
     };
 
+    const addMembership = async (event: FormEvent) => {
+        event.preventDefault();
+        if (!joinForm) return;
+        if (!joinForm.serviceId) {
+            setJoinError('Choose the service.');
+            return;
+        }
+        if (!MONTH_PATTERN.test(joinForm.startMonth)) {
+            setJoinError('Choose the first month they pay for.');
+            return;
+        }
+        setJoinError(null);
+        setBusy('join');
+        try {
+            const body: MembershipCreateRequest = {
+                subscriberId: subscriber.id,
+                subscriptionServiceId: joinForm.serviceId,
+                startMonth: joinForm.startMonth
+            };
+            const response = await apiFetch(API_CONFIG.MEMBERSHIPS_URL, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(body)
+            });
+            if (!response.ok) {
+                setJoinError(await getResponseErrorMessage(response, 'Could not add the membership.'));
+                return;
+            }
+            const saved = await response.json() as MembershipResponse;
+            showSuccess('Membership added', `${saved.subscriberName} · ${saved.subscriptionServiceName}, back in Active`);
+            setJoinForm(null);
+            await Promise.all([loadDetails(), onChanged()]);
+        } catch {
+            setJoinError('Could not reach the server.');
+        } finally {
+            setBusy(null);
+        }
+    };
+
     const owed = details?.totalAmountOwed ?? 0;
     const balance = details?.balance ?? subscriber.balance;
     const payable = details?.unpaidInvoices.filter((invoice) => PAYABLE.includes(invoice.status)) ?? [];
@@ -215,103 +285,203 @@ export default function SubscriberDetailDrawer({subscriber, membersByServiceName
 
     return (
         <Drawer open title={subscriber.name} onClose={() => busy === null && onClose()} flush wide>
-            <DrawerSection>
-                <span className="sub-detail-email">{subscriber.email}</span>
-                {subscriber.billingExempt && (
-                    <span className="sub-detail-exempt">
-                        <Tag tone="grey">Exempt</Tag> Shares costs, never billed.
-                    </span>
-                )}
-                <div className="sub-figures">
-                    <div className="sub-figure">
-                        <span className="ui-label">Owes</span>
-                        <span className="sub-figure-value">{details ? formatMoney(owed) : '…'}</span>
-                    </div>
-                    <div className="sub-figure">
-                        <span className="ui-label">Balance</span>
-                        <span className={`sub-figure-value ${balance > 0 ? 'is-green' : ''}`}>{formatMoney(balance)}</span>
-                    </div>
-                </div>
-                <div className="sub-detail-actions">
-                    <button type="button" className="ui-btn is-primary is-small" onClick={copyPayLink} disabled={!details}>
-                        Copy pay link
-                    </button>
-                    <button type="button" className="ui-btn is-small" onClick={emailSituation} disabled={busy !== null}>
-                        {busy === 'email' ? 'Sending…' : 'Email situation'}
-                    </button>
-                    <button type="button" className="ui-btn is-small sub-edit-btn" onClick={onEdit} disabled={busy !== null}>
-                        Edit
-                    </button>
-                </div>
-                {details && <span className="sub-pay-link" title={payLink}>{payLink}</span>}
-            </DrawerSection>
+            {subscriber.archived ? (
+                <>
+                    <DrawerSection>
+                        <span className="sub-detail-email">{subscriber.email}</span>
+                        <span className="sub-detail-exempt"><Tag tone="grey">Archived</Tag></span>
+                        <Notice tone="grey">
+                            On no service
+                            {subscriber.lastMembershipEndMonth && ` since ${formatMonth(subscriber.lastMembershipEndMonth)}`},
+                            owes nothing and holds no credit, so they are out of the main list. Adding a membership
+                            moves them back to Active.
+                        </Notice>
+                        {joinForm === null ? (
+                            <div className="sub-detail-actions">
+                                <button
+                                    type="button"
+                                    className="ui-btn is-primary is-small"
+                                    onClick={() => {
+                                        setJoinError(null);
+                                        setJoinForm({serviceId: '', startMonth: currentMonth()});
+                                    }}
+                                    disabled={busy !== null}
+                                >
+                                    Add membership
+                                </button>
+                                <button type="button" className="ui-btn is-small" onClick={copyPayLink} disabled={!details}>
+                                    Copy pay link
+                                </button>
+                                <button type="button" className="ui-btn is-small sub-edit-btn" onClick={onEdit} disabled={busy !== null}>
+                                    Edit
+                                </button>
+                            </div>
+                        ) : (
+                            <form className="sub-join" onSubmit={addMembership} noValidate>
+                                {joinError && <Notice tone="red">{joinError}</Notice>}
+                                <div className="sub-join-fields">
+                                    <Field label="Service" htmlFor="sub-join-service">
+                                        <select
+                                            id="sub-join-service"
+                                            className="ui-select"
+                                            value={joinForm.serviceId}
+                                            onChange={(event) => setJoinForm({...joinForm, serviceId: event.target.value})}
+                                        >
+                                            <option value="">Choose a service</option>
+                                            {services.map((service) => (
+                                                <option key={service.id} value={service.id}>{service.name}</option>
+                                            ))}
+                                        </select>
+                                    </Field>
+                                    <Field label="Start month" htmlFor="sub-join-start">
+                                        <input
+                                            id="sub-join-start"
+                                            type="month"
+                                            className="ui-input"
+                                            value={joinForm.startMonth}
+                                            onChange={(event) => setJoinForm({...joinForm, startMonth: event.target.value})}
+                                        />
+                                    </Field>
+                                </div>
+                                <div className="sub-detail-actions">
+                                    <button type="submit" className="ui-btn is-primary is-small" disabled={busy !== null}>
+                                        {busy === 'join' ? 'Adding…' : 'Add membership'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="ui-btn is-small sub-edit-btn"
+                                        onClick={() => setJoinForm(null)}
+                                        disabled={busy !== null}
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        )}
+                    </DrawerSection>
 
-            {!details ? (
-                <DrawerSection>
-                    <span className="sub-muted">Loading…</span>
-                </DrawerSection>
+                    <DrawerSection title={`Past memberships · ${memberships.length}`}>
+                        {memberships.length === 0 ? (
+                            <span className="sub-muted">Never on a service.</span>
+                        ) : [...memberships]
+                            .sort((a, b) => b.startMonth.localeCompare(a.startMonth))
+                            .map((membership) => (
+                                <div key={membership.id} className="sub-line">
+                                    <span>{membership.subscriptionServiceName}</span>
+                                    <span className="sub-muted">{membershipRange(membership)}</span>
+                                </div>
+                            ))}
+                    </DrawerSection>
+
+                    <DrawerSection title="Invoices">
+                        <span className="sub-muted">
+                            {subscriber.lastInvoicePaidAt
+                                ? `All paid, the last on ${formatInstantDate(subscriber.lastInvoicePaidAt)}.`
+                                : 'Nothing open.'}
+                        </span>
+                    </DrawerSection>
+                </>
             ) : (
                 <>
-                    <DrawerSection title={`Memberships · ${details.activeSubscriptions.length}`}>
-                        {details.activeSubscriptions.length === 0 ? (
-                            <span className="sub-muted">Not on any service now.</span>
-                        ) : details.activeSubscriptions.map((membership) => {
-                            const members = membersByServiceName.get(membership.serviceName) ?? 0;
-                            return (
-                                <div key={membership.id} className="sub-line">
-                                    <span>
-                                        {membership.serviceName}{' '}
-                                        <span className="sub-muted">· since {formatMonth(membership.startMonth)}</span>
-                                    </span>
-                                    <span
-                                        className="sub-line-amount"
-                                        title={members > 0
-                                            ? `${formatMoney(membership.servicePrice)} split ${members} ways`
-                                            : 'Full price'}
-                                    >
-                                        {formatMoney(evenShare(membership.servicePrice, members))}
-                                    </span>
-                                </div>
-                            );
-                        })}
+                    <DrawerSection>
+                        <span className="sub-detail-email">{subscriber.email}</span>
+                        {subscriber.billingExempt && (
+                            <span className="sub-detail-exempt">
+                                <Tag tone="grey">Exempt</Tag> Shares costs, never billed.
+                            </span>
+                        )}
+                        <div className="sub-figures">
+                            <div className="sub-figure">
+                                <span className="ui-label">Owes</span>
+                                <span className="sub-figure-value">{details ? formatMoney(owed) : '…'}</span>
+                            </div>
+                            <div className="sub-figure">
+                                <span className="ui-label">Balance</span>
+                                <span className={`sub-figure-value ${balance > 0 ? 'is-green' : ''}`}>{formatMoney(balance)}</span>
+                            </div>
+                        </div>
+                        <div className="sub-detail-actions">
+                            <button type="button" className="ui-btn is-primary is-small" onClick={copyPayLink} disabled={!details}>
+                                Copy pay link
+                            </button>
+                            <button type="button" className="ui-btn is-small" onClick={emailSituation} disabled={busy !== null}>
+                                {busy === 'email' ? 'Sending…' : 'Email situation'}
+                            </button>
+                            <button type="button" className="ui-btn is-small sub-edit-btn" onClick={onEdit} disabled={busy !== null}>
+                                Edit
+                            </button>
+                        </div>
+                        {details && <span className="sub-pay-link" title={payLink}>{payLink}</span>}
                     </DrawerSection>
 
-                    <DrawerSection title={`Open invoices · ${details.unpaidInvoices.length}`}>
-                        {details.unpaidInvoices.length === 0 ? (
-                            <span className="sub-muted">Nothing open.</span>
-                        ) : details.unpaidInvoices.map((invoice) => (
-                            <div key={invoice.id} className="sub-line">
-                                <span>
-                                    {invoicePeriod(invoice)}{' '}
-                                    <span className="sub-muted">
-                                        · {invoice.status === 'DRAFT' ? 'draft, ' : ''}open {plural(daysSince(invoice.invoiceDate), 'day')}
-                                    </span>
-                                    {invoice.notes && <span className="ui-cell-sub">{invoice.notes}</span>}
-                                </span>
-                                <span className="sub-line-amount">{formatMoney(invoice.totalAmount)}</span>
-                            </div>
-                        ))}
-                        {payable.length > 0 && (
-                            <div className="sub-payoff">
-                                <button type="button" className="ui-btn is-small" onClick={payOffDebt} disabled={busy !== null}>
-                                    {busy === 'pay' ? 'Paying…' : 'Pay off debt'}
-                                </button>
-                                <span className="sub-muted">Marks every draft and sent invoice as paid.</span>
-                            </div>
-                        )}
-                        {debtResult && (
-                            <Notice tone="green">
-                                Paid {debtResult.paidCount} of {debtResult.attemptedCount}, {formatMoney(debtResult.totalPaidAmount)}.
-                                {debtResult.creditWrittenOff > 0 && ` Credit cleared ${formatMoney(debtResult.creditWrittenOff)}.`}
-                                {' '}Balance now {formatMoney(debtResult.balanceAfter)}.
-                                {debtResult.items.filter((item) => !item.paid).map((item) => (
-                                    <span key={item.invoiceId} className="sub-skip">
-                                        Skipped {formatMoney(item.invoiceAmount)} ({item.statusBefore.toLowerCase()}): {item.message}
-                                    </span>
+                    {!details ? (
+                        <DrawerSection>
+                            <span className="sub-muted">Loading…</span>
+                        </DrawerSection>
+                    ) : (
+                        <>
+                            <DrawerSection title={`Memberships · ${details.activeSubscriptions.length}`}>
+                                {details.activeSubscriptions.length === 0 ? (
+                                    <span className="sub-muted">Not on any service now.</span>
+                                ) : details.activeSubscriptions.map((membership) => {
+                                    const members = membersByServiceName.get(membership.serviceName) ?? 0;
+                                    return (
+                                        <div key={membership.id} className="sub-line">
+                                            <span>
+                                                {membership.serviceName}{' '}
+                                                <span className="sub-muted">· since {formatMonth(membership.startMonth)}</span>
+                                            </span>
+                                            <span
+                                                className="sub-line-amount"
+                                                title={members > 0
+                                                    ? `${formatMoney(membership.servicePrice)} split ${members} ways`
+                                                    : 'Full price'}
+                                            >
+                                                {formatMoney(evenShare(membership.servicePrice, members))}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </DrawerSection>
+
+                            <DrawerSection title={`Open invoices · ${details.unpaidInvoices.length}`}>
+                                {details.unpaidInvoices.length === 0 ? (
+                                    <span className="sub-muted">Nothing open.</span>
+                                ) : details.unpaidInvoices.map((invoice) => (
+                                    <div key={invoice.id} className="sub-line">
+                                        <span>
+                                            {invoicePeriod(invoice)}{' '}
+                                            <span className="sub-muted">
+                                                · {invoice.status === 'DRAFT' ? 'draft, ' : ''}open {plural(daysSince(invoice.invoiceDate), 'day')}
+                                            </span>
+                                            {invoice.notes && <span className="ui-cell-sub">{invoice.notes}</span>}
+                                        </span>
+                                        <span className="sub-line-amount">{formatMoney(invoice.totalAmount)}</span>
+                                    </div>
                                 ))}
-                            </Notice>
-                        )}
-                    </DrawerSection>
+                                {payable.length > 0 && (
+                                    <div className="sub-payoff">
+                                        <button type="button" className="ui-btn is-small" onClick={payOffDebt} disabled={busy !== null}>
+                                            {busy === 'pay' ? 'Paying…' : 'Pay off debt'}
+                                        </button>
+                                        <span className="sub-muted">Marks every draft and sent invoice as paid.</span>
+                                    </div>
+                                )}
+                                {debtResult && (
+                                    <Notice tone="green">
+                                        Paid {debtResult.paidCount} of {debtResult.attemptedCount}, {formatMoney(debtResult.totalPaidAmount)}.
+                                        {debtResult.creditWrittenOff > 0 && ` Credit cleared ${formatMoney(debtResult.creditWrittenOff)}.`}
+                                        {' '}Balance now {formatMoney(debtResult.balanceAfter)}.
+                                        {debtResult.items.filter((item) => !item.paid).map((item) => (
+                                            <span key={item.invoiceId} className="sub-skip">
+                                                Skipped {formatMoney(item.invoiceAmount)} ({item.statusBefore.toLowerCase()}): {item.message}
+                                            </span>
+                                        ))}
+                                    </Notice>
+                                )}
+                            </DrawerSection>
+                        </>
+                    )}
                 </>
             )}
 
@@ -333,6 +503,11 @@ export default function SubscriberDetailDrawer({subscriber, membersByServiceName
                         <button type="button" className="ui-link-btn is-muted" onClick={() => forgetSender(sender)}>Forget</button>
                     </div>
                 ))}
+                {subscriber.archived && (
+                    <span className="sub-muted">
+                        Their transfers still match automatically, and they can still sign in to their cabinet.
+                    </span>
+                )}
             </DrawerSection>
 
             <DrawerSection>

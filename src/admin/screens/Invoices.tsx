@@ -21,6 +21,7 @@ import InvoiceDrawer from './invoices/InvoiceDrawer';
 import {GenerateDrawer, ManualInvoiceDrawer} from './invoices/InvoiceForms';
 import {addMonths, getJson, invoicePeriodLabel, invoiceSubLine, sendJson, statusTone} from './invoices/invoiceUtils';
 import './invoices/Invoices.css';
+import SubscriberOptions from './SubscriberOptions';
 
 const PAGE_SIZE = 25;
 
@@ -360,9 +361,7 @@ export default function Invoices() {
                 <select className="ui-select is-compact" value={subscriberId} aria-label="Subscriber"
                         onChange={(event) => withPageReset(setSubscriberId)(event.target.value)}>
                     <option value="">All subscribers</option>
-                    {subscribers.map((subscriber) => (
-                        <option key={subscriber.id} value={subscriber.id}>{subscriber.name}</option>
-                    ))}
+                    <SubscriberOptions subscribers={subscribers}/>
                 </select>
                 <select className="ui-select is-compact" value={dateFilter} aria-label="Invoice date"
                         onChange={(event) => withPageReset(setDateFilter)(event.target.value as DateFilter)}>

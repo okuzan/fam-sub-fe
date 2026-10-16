@@ -16,6 +16,7 @@ import type {SubscriberResponse} from '../../types/subscriber';
 import type {SubscriptionServiceResponse} from '../../types/subscription';
 import {getAllMemberships, getJson, getServices, isEnded, sortByName} from './people';
 import './Memberships.css';
+import SubscriberOptions from './SubscriberOptions';
 
 type StateFilter = 'active' | 'ended' | 'all';
 
@@ -243,9 +244,7 @@ export default function Memberships() {
                         aria-label="Subscriber"
                     >
                         <option value="">All subscribers</option>
-                        {subscribers.map((subscriber) => (
-                            <option key={subscriber.id} value={subscriber.id}>{subscriber.name}</option>
-                        ))}
+                        <SubscriberOptions subscribers={subscribers}/>
                     </select>
                     <select
                         className="ui-select is-compact"
@@ -360,11 +359,7 @@ export default function Memberships() {
                                         onChange={(event) => setForm({...form, subscriberId: event.target.value})}
                                     >
                                         <option value="">Choose a subscriber</option>
-                                        {subscribers.map((subscriber) => (
-                                            <option key={subscriber.id} value={subscriber.id}>
-                                                {subscriber.name} ({subscriber.email})
-                                            </option>
-                                        ))}
+                                        <SubscriberOptions subscribers={subscribers} label={(subscriber) => `${subscriber.name} (${subscriber.email})`}/>
                                     </select>
                                 </Field>
                                 <Field label="Service" htmlFor="mem-service" error={errors.serviceId}>

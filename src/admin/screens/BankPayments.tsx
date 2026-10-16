@@ -18,6 +18,7 @@ import type {
     BankTransactionStatus
 } from '../../types/bankPayment';
 import './BankPayments.css';
+import SubscriberOptions from './SubscriberOptions';
 
 type TabKey = BankTransactionStatus | 'ALL';
 
@@ -503,9 +504,7 @@ function ReviewCard({transaction, draft, subscribers, busy, onDraft, onAssign, o
                     disabled={busy}
                 >
                     <option value="">Choose subscriber</option>
-                    {subscribers.map((subscriber) => (
-                        <option key={subscriber.id} value={subscriber.id}>{subscriber.name}</option>
-                    ))}
+                    <SubscriberOptions subscribers={subscribers}/>
                 </select>
                 <button type="button" className="ui-btn is-primary bank-apply" onClick={onAssign}
                         disabled={busy || !draft.subscriberId}>

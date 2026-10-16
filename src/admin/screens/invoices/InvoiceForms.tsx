@@ -13,6 +13,7 @@ import type {
 } from '../../../types/invoice';
 import type {SubscriberResponse} from '../../../types/subscriber';
 import {invoiceName, invoiceUrl, sendJson, suggestedPeriod, todayIso} from './invoiceUtils';
+import SubscriberOptions from '../SubscriberOptions';
 
 interface GenerateDrawerProps {
     suggestion: InvoiceSuggestion | null;
@@ -103,9 +104,7 @@ export function GenerateDrawer({suggestion, subscribers, onClose, onDone}: Gener
                     <select id="inv-gen-subscriber" className="ui-select" value={subscriberId}
                             onChange={(event) => setSubscriberId(event.target.value)}>
                         <option value="">Everyone</option>
-                        {subscribers.map((subscriber) => (
-                            <option key={subscriber.id} value={subscriber.id}>{subscriber.name}</option>
-                        ))}
+                        <SubscriberOptions subscribers={subscribers}/>
                     </select>
                 </Field>
                 <label className="ui-checkbox">
@@ -203,11 +202,8 @@ export function ManualInvoiceDrawer({source, subscribers, onClose, onDone}: Manu
                     <select id="inv-manual-subscriber" className="ui-select" value={subscriberId}
                             onChange={(event) => setSubscriberId(event.target.value)}>
                         <option value="">Select subscriber</option>
-                        {subscribers.map((subscriber) => (
-                            <option key={subscriber.id} value={subscriber.id}>
-                                {subscriber.name}{subscriber.billingExempt ? ' · exempt' : ''}
-                            </option>
-                        ))}
+                        <SubscriberOptions subscribers={subscribers}
+                            label={(subscriber) => `${subscriber.name}${subscriber.billingExempt ? ' · exempt' : ''}`}/>
                     </select>
                 </Field>
                 <div className="inv-form-row">

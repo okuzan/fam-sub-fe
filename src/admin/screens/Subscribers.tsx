@@ -1,8 +1,8 @@
-import {useCallback, useEffect, useMemo, useState} from 'react';
+import {type KeyboardEvent, useCallback, useEffect, useMemo, useState} from 'react';
 import {API_CONFIG} from '../../config/api';
 import {useToast} from '../../components/ToastContext';
 import {EmptyState, PageHeader, Segmented, TableSkeleton, Tag, type Tone} from '../../ui/components';
-import {currentMonth, formatMoney} from '../../ui/format';
+import {currentMonth, formatInstantDate, formatMoney, formatMonth} from '../../ui/format';
 import {useAdminNav} from '../adminNavContext';
 import type {FinanceSummary} from '../../types/finance';
 import type {MembershipResponse} from '../../types/membership';
@@ -14,6 +14,7 @@ import SubscriberFormDrawer from './SubscriberFormDrawer';
 import './Subscribers.css';
 
 type Filter = 'everyone' | 'owes' | 'credit' | 'exempt';
+type View = 'active' | 'archived';
 
 interface Row {
     subscriber: SubscriberResponse;
@@ -22,9 +23,13 @@ interface Row {
     status: { label: string; tone: Tone };
 }
 
-const statusOf = (subscriber: SubscriberResponse, owes: number): Row['status'] => {
+/** onService: on a service now or later (an open end, or an end not yet passed). */
+const statusOf = (subscriber: SubscriberResponse, owes: number, onService: boolean): Row['status'] => {
+    if (subscriber.archived) return {label: 'Archived', tone: 'grey'};
     if (subscriber.billingExempt) return {label: 'Exempt', tone: 'grey'};
     if (owes > 0) return {label: 'Owes', tone: 'slate'};
+    // Off every service but still holding money: stays out of the archive until it is spent or refunded.
+    if (subscriber.balance > 0 && !onService) return {label: 'Holds credit', tone: 'green'};
     if (subscriber.balance > 0) return {label: 'Credit', tone: 'green'};
     return {label: 'Settled', tone: 'green'};
 };
@@ -46,6 +51,7 @@ export default function Subscribers() {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [filter, setFilter] = useState<Filter>('everyone');
+    const [view, setView] = useState<View>('active');
     const [selectedId, setSelectedId] = useState<string | null>(null);
     /** undefined: no form; null: adding; a subscriber: editing. */
     const [formFor, setFormFor] = useState<SubscriberResponse | null | undefined>(undefined);
@@ -82,7 +88,9 @@ export default function Subscribers() {
     const rows = useMemo<Row[]>(() => {
         const serviceNames = new Map(services.map((service) => [service.id, service.name]));
         const servicesBySubscriber = new Map<string, string[]>();
+        const onService = new Set<string>();
         for (const membership of memberships) {
+            if (!membership.endMonth || membership.endMonth >= month) onService.add(membership.subscriberId);
             if (!isActiveIn(membership, month)) continue;
             const list = servicesBySubscriber.get(membership.subscriberId) ?? [];
             list.push(serviceNames.get(membership.subscriptionServiceId) ?? membership.subscriptionServiceName);
@@ -94,7 +102,7 @@ export default function Subscribers() {
                 subscriber,
                 services: (servicesBySubscriber.get(subscriber.id) ?? []).sort(),
                 owes,
-                status: statusOf(subscriber, owes)
+                status: statusOf(subscriber, owes, onService.has(subscriber.id))
             };
         });
     }, [subscribers, services, memberships, debts, month]);
@@ -108,8 +116,21 @@ export default function Subscribers() {
     const searched = query
         ? rows.filter((row) => `${row.subscriber.name} ${row.subscriber.surname ?? ''}`.toLocaleLowerCase().includes(query))
         : rows;
-    const visible = searched.filter((row) => matches(row, filter));
-    const countOf = (value: Filter) => searched.filter((row) => matches(row, value)).length;
+    const activeRows = searched.filter((row) => !row.subscriber.archived);
+    const archivedRows = searched.filter((row) => row.subscriber.archived);
+    const archivedTotal = rows.filter((row) => row.subscriber.archived).length;
+    // A search in the main list also finds archived people, tagged Archived, after everyone else.
+    const visible = view === 'archived'
+        ? archivedRows
+        : [...activeRows.filter((row) => matches(row, filter)), ...(query ? archivedRows : [])];
+    const countOf = (value: Filter) => activeRows.filter((row) => matches(row, value)).length;
+
+    const openOnKey = (event: KeyboardEvent, id: string) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            setSelectedId(id);
+        }
+    };
 
     const selected = subscribers.find((subscriber) => subscriber.id === selectedId) ?? null;
 
@@ -127,6 +148,15 @@ export default function Subscribers() {
             <PageHeader eyebrow="People" title="Subscribers" actions={addButton}/>
             <div className="ui-page-body sub-body">
                 <div className="ui-filters">
+                    <Segmented<View>
+                        ariaLabel="List"
+                        value={view}
+                        onChange={setView}
+                        options={[
+                            {value: 'active', label: 'Active', count: rows.length - archivedTotal},
+                            {value: 'archived', label: 'Archived', count: archivedTotal}
+                        ]}
+                    />
                     <input
                         type="search"
                         className="ui-input is-compact sub-search"
@@ -135,7 +165,7 @@ export default function Subscribers() {
                         onChange={(event) => setSearch(event.target.value)}
                         aria-label="Search by name"
                     />
-                    <Segmented<Filter>
+                    {view === 'active' && <Segmented<Filter>
                         ariaLabel="Show"
                         value={filter}
                         onChange={setFilter}
@@ -145,7 +175,7 @@ export default function Subscribers() {
                             {value: 'credit', label: 'Credit', count: countOf('credit')},
                             {value: 'exempt', label: 'Exempt', count: countOf('exempt')}
                         ]}
-                    />
+                    />}
                 </div>
 
                 {loading ? (
@@ -154,8 +184,47 @@ export default function Subscribers() {
                     <EmptyState title="No subscribers yet" action={addButton}>
                         Add the people who share the family’s subscriptions. They sign in with the email you enter.
                     </EmptyState>
+                ) : view === 'archived' && archivedTotal === 0 ? (
+                    <EmptyState title="Nobody is archived">
+                        Someone moves here on their own once they are on no service, owe nothing and hold no credit.
+                    </EmptyState>
                 ) : visible.length === 0 ? (
                     <EmptyState title="Nobody matches">Try another name or filter.</EmptyState>
+                ) : view === 'archived' ? (
+                    <div className="ui-table-wrap">
+                        <table className="ui-table sub-table">
+                            <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Was on</th>
+                                <th>Last membership ended</th>
+                                <th className="is-num">Last invoice paid</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {visible.map(({subscriber}) => (
+                                <tr
+                                    key={subscriber.id}
+                                    className={`is-clickable ${subscriber.id === selectedId ? 'is-selected' : ''}`}
+                                    onClick={() => setSelectedId(subscriber.id)}
+                                    onKeyDown={(event) => openOnKey(event, subscriber.id)}
+                                    tabIndex={0}
+                                    aria-label={`Open ${subscriber.name}`}
+                                >
+                                    <td>
+                                        <span className="sub-name">{subscriber.name}{subscriber.surname && ` ${subscriber.surname}`}</span>
+                                        <span className="ui-cell-sub is-mono sub-email">{subscriber.email}</span>
+                                    </td>
+                                    <td className="sub-services">
+                                        {subscriber.formerServices.length > 0 ? subscriber.formerServices.join(', ') : 'Never on a service'}
+                                    </td>
+                                    <td className="sub-services">{formatMonth(subscriber.lastMembershipEndMonth)}</td>
+                                    <td className="is-num sub-services">{formatInstantDate(subscriber.lastInvoicePaidAt)}</td>
+                                </tr>
+                            ))}
+                            </tbody>
+                        </table>
+                    </div>
                 ) : (
                     <div className="ui-table-wrap">
                         <table className="ui-table sub-table">
@@ -174,12 +243,7 @@ export default function Subscribers() {
                                     key={subscriber.id}
                                     className={`is-clickable ${subscriber.id === selectedId ? 'is-selected' : ''}`}
                                     onClick={() => setSelectedId(subscriber.id)}
-                                    onKeyDown={(event) => {
-                                        if (event.key === 'Enter' || event.key === ' ') {
-                                            event.preventDefault();
-                                            setSelectedId(subscriber.id);
-                                        }
-                                    }}
+                                    onKeyDown={(event) => openOnKey(event, subscriber.id)}
                                     tabIndex={0}
                                     aria-label={`Open ${subscriber.name}`}
                                 >
@@ -199,6 +263,14 @@ export default function Subscribers() {
                             ))}
                             </tbody>
                         </table>
+                        {view === 'active' && archivedTotal > 0 && (
+                            <div className="ui-table-footer">
+                                <span>{archivedTotal} archived: no memberships, no debt, zero balance</span>
+                                <button type="button" className="ui-link-btn" onClick={() => setView('archived')}>
+                                    Show archived →
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
@@ -208,6 +280,8 @@ export default function Subscribers() {
                     key={selected.id}
                     subscriber={selected}
                     membersByServiceName={membersByServiceName}
+                    memberships={memberships.filter((membership) => membership.subscriberId === selected.id)}
+                    services={services}
                     onClose={() => setSelectedId(null)}
                     onEdit={() => setFormFor(selected)}
                     onChanged={afterChange}
