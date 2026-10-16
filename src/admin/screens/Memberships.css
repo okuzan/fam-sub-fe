@@ -1,0 +1,57 @@
+.mem-body {
+  gap: 16px;
+}
+
+.mem-table td.is-strong {
+  font-size: 14.5px;
+}
+
+.mem-table tr.mem-ended td {
+  color: var(--ink-2);
+}
+
+.mem-table tr.mem-ended td .mem-end {
+  color: var(--ink);
+}
+
+.mem-ongoing {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.mem-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.mem-who {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+}
+
+.mem-who-name {
+  font: 600 15px/1.3 var(--sans);
+}
+
+.mem-who-meta,
+.mem-note {
+  font: 400 13px/1.4 var(--sans);
+  color: var(--ink-2);
+}
+
+@media (max-width: 900px) {
+  .mem-body .ui-filters > * {
+    flex: 1 1 140px;
+  }
+
+  .mem-table .is-actions .ui-link-btn {
+    min-height: 44px;
+  }
+}

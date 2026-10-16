@@ -22,7 +22,7 @@ export interface LedgerEntry {
     subscriberId: string;
     subscriberName: string;
     recordedMonth: string;
-    amount: string;
+    amount: number;
     participantCount: number;
     calculatedAt: string;
     calculationBatchId: string;
@@ -46,3 +46,6 @@ export interface LedgerEntryFilter {
     generatedByAccountId?: string;
     invoiceId?: string;
 }
+
+/** The backend's name for a ledger entry row. */
+export type LedgerEntryResponse = LedgerEntry;

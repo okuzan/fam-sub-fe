@@ -1,0 +1,453 @@
+.led-month-select {
+  width: 170px;
+  font-size: 14px;
+}
+
+/* ── Pipeline strip ───────────────────────────────────── */
+.led-pipeline {
+  margin: 0 40px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.led-pipeline-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.led-pipeline-title {
+  font: 600 10.5px/1 var(--mono);
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.led-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.led-step {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.led-step-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+  margin-bottom: 6px;
+}
+
+.led-step-state {
+  font: 600 10.5px/1 var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.led-step-name {
+  font: 600 15px/1.3 var(--sans);
+}
+
+.led-step-note {
+  font: 400 13px/1.4 var(--sans);
+  color: var(--ink-2);
+}
+
+.led-step-skeleton {
+  width: 70%;
+  margin-top: 4px;
+}
+
+.led-step.is-done .led-step-bar { background: var(--green); }
+.led-step.is-done .led-step-state { color: var(--green); }
+.led-step.is-next .led-step-bar { background: var(--red); }
+.led-step.is-next .led-step-state { color: var(--red); }
+
+/* ── Runs and entries ─────────────────────────────────── */
+.led-main {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  padding: 24px 40px 40px;
+  align-items: start;
+}
+
+.led-col-title {
+  padding-bottom: 12px;
+}
+
+.led-runs {
+  display: flex;
+  flex-direction: column;
+  padding-right: 28px;
+  min-width: 0;
+}
+
+.led-runs-empty {
+  font: 400 14px/1.5 var(--sans);
+  color: var(--ink-2);
+  padding: 14px 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.led-run-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.led-run {
+  position: relative;
+  margin: 0 -14px;
+  border-top: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+}
+
+.led-run:hover {
+  background: var(--paper);
+}
+
+.led-run.is-selected {
+  background: var(--sand);
+}
+
+.led-run-select {
+  width: 100%;
+  border: 0;
+  background: none;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+  font: inherit;
+  color: var(--ink);
+  cursor: pointer;
+  border-radius: var(--radius);
+}
+
+.led-run-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.led-run-period {
+  font: 600 15px/1.3 var(--sans);
+}
+
+.led-run-total {
+  font: 500 14px/1 var(--mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.led-run-meta {
+  font: 400 13px/1.3 var(--sans);
+  color: var(--ink-2);
+  padding-right: 110px;
+}
+
+.led-run-act {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  line-height: 1.3;
+}
+
+.led-run-status {
+  font: 600 12.5px/1.3 var(--sans);
+  color: var(--ink-3);
+}
+
+.led-run-undo {
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.led-run.is-undone .led-run-period,
+.led-run.is-undone .led-run-total {
+  color: var(--ink-3);
+}
+
+.led-runs-more {
+  align-self: flex-start;
+  margin-top: 12px;
+}
+
+.led-entries {
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--line);
+  padding-left: 28px;
+  min-width: 0;
+}
+
+.led-entries-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.led-entries-by {
+  font: 400 13px/1.3 var(--sans);
+  color: var(--ink-2);
+  padding-bottom: 12px;
+}
+
+.led-filters {
+  padding-bottom: 14px;
+}
+
+.led-filter-month {
+  min-width: 150px;
+}
+
+.led-groups {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.led-group {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr) 120px;
+  gap: 18px;
+  align-items: start;
+  padding: 16px 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.led-group-service {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.led-group-name {
+  font: 600 15px/1.3 var(--sans);
+}
+
+.led-group-split {
+  font: 400 13px/1.3 var(--mono);
+  color: var(--ink-2);
+}
+
+.led-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.led-chip {
+  border: 0;
+  font: 500 13px/1 var(--sans);
+  padding: 6px 9px;
+  border-radius: 6px;
+  background: var(--sand);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.led-chip:hover {
+  background: var(--grey-bg);
+}
+
+/* Not on an invoice yet: outlined instead of filled. */
+.led-chip.is-open {
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+
+.led-group-each {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: flex-end;
+}
+
+.led-group-amount {
+  font: 500 15px/1.2 var(--mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.led-group-each-label {
+  font: 400 12px/1.2 var(--sans);
+  color: var(--ink-2);
+}
+
+.led-total {
+  display: flex;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-top: 1px solid var(--line-strong);
+  font: 600 14px/1 var(--sans);
+}
+
+.led-total-amount {
+  font: 600 15px/1 var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.led-entry-table + .led-total,
+.ui-table-wrap + .led-total {
+  border-top: 0;
+}
+
+/* ── Drawers ──────────────────────────────────────────── */
+.led-drawer-lead {
+  font: 400 14px/1.5 var(--sans);
+  color: var(--ink-2);
+}
+
+.led-suggestion {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.led-drawer-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.led-mono-input {
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+.led-detail-amount {
+  font: 500 25px/1.1 var(--mono);
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums;
+}
+
+.led-detail-row {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 12px;
+  font: 400 14px/1.4 var(--sans);
+}
+
+.led-detail-label {
+  color: var(--ink-2);
+}
+
+.led-id {
+  font: 400 12px/1.4 var(--mono);
+  word-break: break-all;
+  color: var(--ink-2);
+}
+
+/* ── Phone ────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .led-month-select {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .led-pipeline {
+    margin: 0 18px;
+    padding: 14px 16px;
+  }
+
+  .led-pipeline-head {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .led-steps {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .led-step {
+    display: grid;
+    grid-template-columns: 4px 1fr;
+    column-gap: 12px;
+  }
+
+  .led-step-bar {
+    grid-row: 1 / span 3;
+    height: auto;
+    margin: 0;
+  }
+
+  .led-main {
+    grid-template-columns: 1fr;
+    padding: 20px 18px 28px;
+    gap: 24px;
+  }
+
+  .led-runs {
+    padding-right: 0;
+  }
+
+  .led-run-list {
+    max-height: 320px;
+    overflow-y: auto;
+  }
+
+  .led-run {
+    margin: 0;
+  }
+
+  .led-run-select {
+    min-height: 44px;
+  }
+
+  .led-entries {
+    border-left: 0;
+    padding-left: 0;
+  }
+
+  .led-filters .ui-select,
+  .led-filters .ui-input {
+    flex: 1 1 140px;
+    min-height: 44px;
+  }
+
+  .led-filters .ui-link-btn {
+    padding: 13px 0;
+  }
+
+  .led-group {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px 14px;
+  }
+
+  .led-chips {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .led-chip {
+    padding: 10px 11px;
+  }
+
+  .led-entry-table {
+    min-width: 560px;
+  }
+}

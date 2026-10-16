@@ -1,0 +1,30 @@
+.svc-body {
+  max-width: 980px;
+}
+
+.svc-table .svc-name {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.svc-table td {
+  padding-top: 13px;
+  padding-bottom: 13px;
+}
+
+.svc-table .svc-total-label {
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+
+.svc-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .svc-table .is-actions .ui-link-btn {
+    min-height: 44px;
+  }
+}

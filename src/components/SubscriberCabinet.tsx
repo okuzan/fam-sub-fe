@@ -1,9 +1,20 @@
-import {useEffect, useMemo, useState} from 'react';
+import {useCallback, useEffect, useMemo, useState} from 'react';
 import {API_CONFIG, apiFetch} from '../config/api';
 import {getResponseErrorMessage} from '../utils/errors';
-import {useEscapeClose} from '../utils/useEscapeClose';
-import type {InvoiceDetailResponse, InvoiceResponse, InvoiceStatus} from '../types/invoice';
-import type {ActiveSubscriptionDto, SubscriberDetailResponse, UnpaidInvoiceDto} from '../types/subscriber';
+import {Brand, Drawer, DrawerSection, EmptyState, Notice, Tabs, Tag, type Tone} from '../ui/components';
+import {
+    currentMonth,
+    daysSince,
+    formatDate,
+    formatMoney,
+    formatMonth,
+    formatMonthLong,
+    formatPeriod,
+    formatWhen,
+    plural
+} from '../ui/format';
+import type {SubscriberCabinetResponse, SubscriberInvoiceDetail, SubscriberInvoiceSummary} from '../types/cabinet';
+import type {SubscriberPaymentResponse} from '../types/bankPayment';
 import './SubscriberCabinet.css';
 
 interface SubscriberCabinetProps {
@@ -14,324 +25,393 @@ interface SubscriberCabinetProps {
 
 type CabinetTab = 'overview' | 'invoices';
 
-const formatMoney = (value: number | string | null | undefined) => {
-    const amount = Number(value ?? 0);
-    return `₴${amount.toLocaleString('uk-UA', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+const STATUS: Record<string, { label: string; tone: Tone }> = {
+    DRAFT: {label: 'Open', tone: 'clay'},
+    SENT: {label: 'Open', tone: 'clay'},
+    PAID: {label: 'Paid', tone: 'green'},
+    VOID: {label: 'Void', tone: 'grey'},
 };
 
-const formatMonth = (value?: string | null) => {
-    if (!value) return 'Open';
-    const [year, month] = value.split('-');
-    if (!year || !month) return value;
-    return new Date(Number(year), Number(month) - 1, 1).toLocaleDateString('en-US', {
-        month: 'short',
-        year: 'numeric'
-    });
+const statusOf = (status: string) => STATUS[status] ?? {label: status, tone: 'grey' as Tone};
+
+const isOpen = (invoice: SubscriberInvoiceSummary) => invoice.status === 'DRAFT' || invoice.status === 'SENT';
+
+/** "Aug 2026", or for a manual invoice the day it was issued. */
+const invoiceTitle = (invoice: SubscriberInvoiceSummary) =>
+    invoice.origin === 'MANUAL'
+        ? `Invoice of ${formatDate(invoice.invoiceDate)}`
+        : formatPeriod(invoice.fromMonth, invoice.toMonth);
+
+/** "2026-06" or "2026-04..2026-05" → "Jun 2026" / "Apr – May 2026". */
+const settledPeriodLabel = (period: string) => {
+    const [from, to] = period.split('..');
+    return to ? formatPeriod(from, to) : formatMonth(from);
 };
 
-const formatDate = (value?: string | null) => value ? new Date(value).toLocaleDateString('en-US') : 'Unknown';
-
-const formatInvoiceDate = (value?: string | null) => {
-    if (!value) return 'Unknown';
-    const [year, month, day] = value.split('-').map(Number);
-
-    if (!year || !month || !day) return value;
-
-    return new Date(year, month - 1, day).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-    });
+const paymentOutcome = (payment: SubscriberPaymentResponse) => {
+    const periods = payment.settledPeriods.map(settledPeriodLabel);
+    if (periods.length === 0) return 'added to your balance';
+    if (periods.length === 1) return `settled the ${periods[0]} invoice`;
+    return `settled the ${periods.slice(0, -1).join(', ')} and ${periods[periods.length - 1]} invoices`;
 };
-
-const formatPeriod = (item: Pick<InvoiceResponse, 'fromMonth' | 'toMonth'> | UnpaidInvoiceDto) => {
-    if (item.fromMonth === item.toMonth) return formatMonth(item.fromMonth);
-    return `${formatMonth(item.fromMonth)} - ${formatMonth(item.toMonth)}`;
-};
-
-const getStatusClass = (status: InvoiceStatus | string) => `subscriber-status subscriber-status-${status.toLowerCase()}`;
 
 export default function SubscriberCabinet({userEmail, canAccessAdmin = false, onLogout}: SubscriberCabinetProps) {
-    const [cabinet, setCabinet] = useState<SubscriberDetailResponse | null>(null);
-    const [invoices, setInvoices] = useState<InvoiceResponse[]>([]);
-    const [selectedInvoice, setSelectedInvoice] = useState<InvoiceDetailResponse | null>(null);
+    const [cabinet, setCabinet] = useState<SubscriberCabinetResponse | null>(null);
+    const [payments, setPayments] = useState<SubscriberPaymentResponse[] | null>(null);
+    const [invoices, setInvoices] = useState<SubscriberInvoiceSummary[] | null>(null);
+    const [selectedInvoice, setSelectedInvoice] = useState<SubscriberInvoiceDetail | null>(null);
     const [activeTab, setActiveTab] = useState<CabinetTab>('overview');
     const [loading, setLoading] = useState(true);
     const [loadingInvoices, setLoadingInvoices] = useState(false);
     const [loadingInvoiceId, setLoadingInvoiceId] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        fetchCabinet();
-    }, []);
-
-    const unpaidTotal = useMemo(
-        () => cabinet?.unpaidInvoices.reduce((sum, invoice) => sum + Number(invoice.totalAmount), 0) ?? 0,
-        [cabinet]
-    );
-
-    const fetchCabinet = async () => {
+    const fetchCabinet = useCallback(async () => {
         setLoading(true);
         setError(null);
-
         try {
             const response = await apiFetch(API_CONFIG.SUBSCRIBER_CABINET_URL);
-
             if (!response.ok) {
-                setError(await getResponseErrorMessage(response, 'Failed to load subscriber cabinet'));
+                setError(await getResponseErrorMessage(response, 'Could not load your cabinet'));
                 return;
             }
-
-            const data: SubscriberDetailResponse = await response.json();
-            setCabinet(data);
+            setCabinet(await response.json());
         } catch (err) {
             console.error('Failed to load subscriber cabinet:', err);
-            setError('Failed to load subscriber cabinet');
+            setError('Could not load your cabinet');
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
-    const fetchInvoices = async () => {
+    // Payments are a nice-to-have: if they fail the rest of the cabinet still works.
+    const fetchPayments = useCallback(async () => {
+        try {
+            const response = await apiFetch(API_CONFIG.SUBSCRIBER_PAYMENTS_URL);
+            setPayments(response.ok ? await response.json() : []);
+        } catch (err) {
+            console.error('Failed to load subscriber payments:', err);
+            setPayments([]);
+        }
+    }, []);
+
+    const fetchInvoices = useCallback(async () => {
         setLoadingInvoices(true);
         setError(null);
-
         try {
             const response = await apiFetch(API_CONFIG.SUBSCRIBER_INVOICES_URL);
-
             if (!response.ok) {
-                setError(await getResponseErrorMessage(response, 'Failed to load invoices'));
+                setError(await getResponseErrorMessage(response, 'Could not load your invoices'));
                 return;
             }
-
-            const data: InvoiceResponse[] = await response.json();
-            setInvoices(data);
+            setInvoices(await response.json());
         } catch (err) {
             console.error('Failed to load subscriber invoices:', err);
-            setError('Failed to load invoices');
+            setError('Could not load your invoices');
         } finally {
             setLoadingInvoices(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        void fetchCabinet();
+        void fetchPayments();
+    }, [fetchCabinet, fetchPayments]);
 
     const handleTabChange = (tab: CabinetTab) => {
         setActiveTab(tab);
-        if (tab === 'invoices' && invoices.length === 0 && !loadingInvoices) {
-            fetchInvoices();
-        }
+        if (tab === 'invoices' && invoices === null && !loadingInvoices) void fetchInvoices();
     };
 
     const handleViewInvoice = async (invoiceId: string) => {
         setLoadingInvoiceId(invoiceId);
         setError(null);
-
         try {
             const response = await apiFetch(`${API_CONFIG.SUBSCRIBER_INVOICES_URL}/${invoiceId}`);
-
             if (!response.ok) {
-                setError(await getResponseErrorMessage(response, 'Failed to load invoice'));
+                setError(await getResponseErrorMessage(response, 'Could not load the invoice'));
                 return;
             }
-
-            const data: InvoiceDetailResponse = await response.json();
-            setSelectedInvoice(data);
-            setActiveTab('invoices');
+            setSelectedInvoice(await response.json());
         } catch (err) {
             console.error('Failed to load subscriber invoice:', err);
-            setError('Failed to load invoice');
+            setError('Could not load the invoice');
         } finally {
             setLoadingInvoiceId(null);
         }
     };
 
-    const renderSubscription = (subscription: ActiveSubscriptionDto) => (
-        <div key={subscription.id} className="subscriber-list-row">
-            <div>
-                <strong>{subscription.serviceName}</strong>
-                <span>{formatMonth(subscription.startMonth)} - {formatMonth(subscription.endMonth)}</span>
-            </div>
-            <b>{formatMoney(subscription.servicePrice)}</b>
-        </div>
+    const openInvoices = useMemo(
+        () => [...(cabinet?.unpaidInvoices ?? [])].sort((a, b) => b.invoiceDate.localeCompare(a.invoiceDate)),
+        [cabinet]
     );
 
-    const renderInvoiceSummary = (invoice: UnpaidInvoiceDto | InvoiceResponse) => (
-        <div key={invoice.id} className="subscriber-invoice-row">
-            <div>
-                <strong>
-                    {invoice.origin === 'MANUAL'
-                        ? formatInvoiceDate(invoice.invoiceDate)
-                        : formatPeriod(invoice)}
-                </strong>
-                <span>Invoice date {formatInvoiceDate(invoice.invoiceDate)}</span>
-                <span>Created {formatDate(invoice.createdAt)}</span>
-                {invoice.notes && <span>{invoice.notes}</span>}
-            </div>
-            <div className="subscriber-invoice-meta">
-                <span className={getStatusClass(invoice.status)}>{invoice.status}</span>
-                <b>{formatMoney(invoice.totalAmount)}</b>
-                <button
-                    type="button"
-                    onClick={() => handleViewInvoice(invoice.id)}
-                    disabled={loadingInvoiceId === invoice.id}
-                >
-                    {loadingInvoiceId === invoice.id ? 'Loading...' : 'Details'}
-                </button>
-            </div>
-        </div>
+    const header = (
+        <header className="cab-top">
+            <Brand href="/subscriber/cabinet"/>
+            <nav className="cab-top-actions" aria-label="Account">
+                <span className="cab-top-email">{userEmail ?? cabinet?.subscriber.email}</span>
+                {canAccessAdmin && <a className="ui-btn is-small cab-top-btn" href="/admin">Admin</a>}
+                <button type="button" className="ui-btn is-small cab-top-btn" onClick={onLogout}>Log out</button>
+            </nav>
+        </header>
     );
-
-    useEscapeClose(Boolean(selectedInvoice), () => setSelectedInvoice(null));
 
     if (loading) {
         return (
-            <main className="subscriber-cabinet">
-                <div className="subscriber-loading">Loading cabinet...</div>
+            <main className="cab">
+                {header}
+                <div className="cab-body" aria-busy="true" aria-label="Loading">
+                    <div className="cab-hero">
+                        <div className="cab-hero-text">
+                            <span className="ui-skeleton-bar" style={{width: 140}}/>
+                            <span className="ui-skeleton-bar cab-skeleton-amount"/>
+                            <span className="ui-skeleton-bar" style={{width: 220}}/>
+                        </div>
+                    </div>
+                </div>
             </main>
         );
     }
 
     if (!cabinet) {
         return (
-            <main className="subscriber-cabinet">
-                <section className="subscriber-error-panel">
-                    <h1>Subscriber cabinet</h1>
-                    <p>{error ?? 'Cabinet is unavailable.'}</p>
-                    <button type="button" onClick={fetchCabinet}>Retry</button>
-                </section>
+            <main className="cab">
+                {header}
+                <div className="cab-body">
+                    <Notice tone="red">{error ?? 'Your cabinet is unavailable right now.'}</Notice>
+                    <div>
+                        <button type="button" className="ui-btn" onClick={() => void fetchCabinet()}>Try again</button>
+                    </div>
+                </div>
             </main>
         );
     }
 
+    const owed = Number(cabinet.totalAmountOwed);
+    const balance = Number(cabinet.balance);
+    const name = cabinet.subscriber.name;
+    const openCount = cabinet.unpaidInvoices.length;
+    const monthName = formatMonthLong(currentMonth()).split(' ')[0];
+
+    const renderInvoiceRow = (invoice: SubscriberInvoiceSummary, withStatus: boolean) => {
+        const status = statusOf(invoice.status);
+        const open = isOpen(invoice);
+        return (
+            <button
+                key={invoice.id}
+                type="button"
+                className="cab-row cab-invoice-row"
+                onClick={() => void handleViewInvoice(invoice.id)}
+                disabled={loadingInvoiceId === invoice.id}
+            >
+                <span className="cab-row-text">
+                    <span className="cab-row-title">{invoiceTitle(invoice)}</span>
+                    <span className="cab-row-meta">
+                        Invoice date {formatDate(invoice.invoiceDate)}
+                        {open && ` · open ${plural(daysSince(invoice.invoiceDate), 'day')}`}
+                        {invoice.notes && ` · ${invoice.notes}`}
+                    </span>
+                </span>
+                {withStatus && <Tag tone={status.tone}>{status.label}</Tag>}
+                <span className="cab-row-link">{loadingInvoiceId === invoice.id ? 'Opening…' : 'Details'}</span>
+                <span className="cab-row-amount ui-money">{formatMoney(invoice.totalAmount)}</span>
+            </button>
+        );
+    };
+
     return (
-        <main className="subscriber-cabinet">
-            <header className="subscriber-header">
-                <div>
-                    <p>{userEmail ?? cabinet.email}</p>
-                    <h1>{cabinet.name}</h1>
-                </div>
-                <nav className="subscriber-actions" aria-label="Cabinet actions">
-                    {cabinet.totalAmountOwed > 0 && cabinet.payToken && <a href={`/pay/${cabinet.payToken}`}>Pay</a>}
-                    {canAccessAdmin && <a href="/admin">Admin</a>}
-                    <button type="button" onClick={onLogout}>Logout</button>
-                </nav>
-            </header>
+        <main className="cab">
+            {header}
 
-            {error && <div className="subscriber-alert">{error}</div>}
-
-            <section className="subscriber-summary-grid">
-                <article>
-                    <span>Balance</span>
-                    <strong>{formatMoney(cabinet.balance)}</strong>
-                </article>
-                <article>
-                    <span>Total owed</span>
-                    <strong>{formatMoney(cabinet.totalAmountOwed)}</strong>
-                </article>
-                <article>
-                    <span>Unpaid invoices</span>
-                    <strong>{cabinet.unpaidInvoices.length}</strong>
-                    <small>{formatMoney(unpaidTotal)}</small>
-                </article>
-            </section>
-
-            <div className="subscriber-tabs" role="tablist" aria-label="Subscriber cabinet sections">
-                <button
-                    type="button"
-                    className={activeTab === 'overview' ? 'is-active' : ''}
-                    onClick={() => handleTabChange('overview')}
-                >
-                    Overview
-                </button>
-                <button
-                    type="button"
-                    className={activeTab === 'invoices' ? 'is-active' : ''}
-                    onClick={() => handleTabChange('invoices')}
-                >
-                    Invoices
-                </button>
-            </div>
-
-            {activeTab === 'overview' ? (
-                <section className="subscriber-content-grid">
-                    <article className="subscriber-panel">
-                        <h2>Active subscriptions</h2>
-                        {cabinet.activeSubscriptions.length > 0 ? (
-                            <div className="subscriber-list">
-                                {cabinet.activeSubscriptions.map(renderSubscription)}
-                            </div>
-                        ) : (
-                            <p className="subscriber-empty">No active subscriptions.</p>
-                        )}
-                    </article>
-
-                    <article className="subscriber-panel">
-                        <h2>Unpaid invoices</h2>
-                        {cabinet.unpaidInvoices.length > 0 ? (
-                            <div className="subscriber-list">
-                                {cabinet.unpaidInvoices.map(renderInvoiceSummary)}
-                            </div>
-                        ) : (
-                            <p className="subscriber-empty">No unpaid invoices.</p>
-                        )}
-                    </article>
+            <div className="cab-body">
+                <section className="cab-hero">
+                    <div className="cab-hero-text">
+                        <span className="cab-hero-eyebrow">
+                            {owed > 0 ? `${name}, you owe` : `${name}, you’re all paid up`}
+                        </span>
+                        <span className="cab-hero-amount">{formatMoney(owed)}</span>
+                        <span className="cab-hero-note">
+                            {owed > 0
+                                ? `${plural(openCount, 'open invoice')}. Balance ${formatMoney(balance)}.`
+                                : balance > 0
+                                    ? `Nothing owed. You have ${formatMoney(balance)} credit; it pays your next invoices.`
+                                    : 'Nothing owed right now.'}
+                        </span>
+                    </div>
+                    {owed > 0 && cabinet.payToken && (
+                        <div className="cab-pay">
+                            <a className="cab-pay-btn" href={`/pay/${cabinet.payToken}`}>Pay {formatMoney(owed)}</a>
+                            <span className="cab-pay-note">From your banking app, settles automatically</span>
+                        </div>
+                    )}
                 </section>
-            ) : (
-                <section className="subscriber-content-grid">
-                    <article className="subscriber-panel subscriber-panel-wide">
-                        <div className="subscriber-panel-heading">
-                            <h2>Invoices</h2>
-                            <button type="button" onClick={fetchInvoices} disabled={loadingInvoices}>
-                                {loadingInvoices ? 'Refreshing...' : 'Refresh'}
-                            </button>
+
+                {error && <Notice tone="red">{error}</Notice>}
+
+                <Tabs<CabinetTab>
+                    value={activeTab}
+                    onChange={handleTabChange}
+                    options={[
+                        {value: 'overview', label: 'Overview'},
+                        {value: 'invoices', label: 'All invoices'},
+                    ]}
+                />
+
+                {activeTab === 'overview' ? (
+                    <div className="cab-grid">
+                        <div className="cab-col">
+                            <section className="ui-card">
+                                <div className="cab-card-head"><h2 className="ui-section-title">Open invoices</h2></div>
+                                {openInvoices.length > 0
+                                    ? openInvoices.map((invoice) => renderInvoiceRow(invoice, false))
+                                    : <p className="cab-card-empty">Nothing open. Every invoice is paid.</p>}
+                            </section>
+
+                            <section className="ui-card">
+                                <div className="cab-card-head"><h2 className="ui-section-title">Recent payments</h2></div>
+                                {payments === null ? (
+                                    <p className="cab-card-empty">Loading…</p>
+                                ) : payments.length === 0 ? (
+                                    <p className="cab-card-empty">No bank transfers from you yet.</p>
+                                ) : payments.map((payment) => (
+                                    <div key={payment.id} className="cab-row">
+                                        <span className="cab-row-text">
+                                            <span className="cab-row-title is-light">
+                                                Bank transfer{payment.senderName ? ` from ${payment.senderName}` : ''}
+                                            </span>
+                                            <span className="cab-row-meta">
+                                                {formatWhen(payment.occurredAt)} · {paymentOutcome(payment)}
+                                            </span>
+                                        </span>
+                                        <span className="cab-row-amount is-small is-green ui-money">
+                                            {formatMoney(payment.amount)}
+                                        </span>
+                                    </div>
+                                ))}
+                            </section>
                         </div>
 
-                        {loadingInvoices ? (
-                            <p className="subscriber-empty">Loading invoices...</p>
-                        ) : invoices.length > 0 ? (
-                            <div className="subscriber-list">
-                                {invoices.map(renderInvoiceSummary)}
+                        <section className="ui-card">
+                            <div className="cab-card-head">
+                                <h2 className="ui-section-title">What you’re on · {monthName}</h2>
                             </div>
+                            {cabinet.activeSubscriptions.length > 0 ? (
+                                <>
+                                    {cabinet.activeSubscriptions.map((subscription) => (
+                                        <div key={subscription.id} className="cab-row">
+                                            <span className="cab-row-text">
+                                                <span className="cab-row-title">{subscription.serviceName}</span>
+                                                <span className="cab-row-meta">
+                                                    Since {formatMonth(subscription.startMonth)}
+                                                    {subscription.endMonth && ` · until ${formatMonth(subscription.endMonth)}`}
+                                                </span>
+                                            </span>
+                                            <span className="cab-row-amount is-small is-muted ui-money"
+                                                  title="Full price, split with everyone on it">
+                                                {formatMoney(subscription.servicePrice)}
+                                            </span>
+                                        </div>
+                                    ))}
+                                    <div className="cab-card-foot">
+                                        Full prices, split evenly with everyone on each. Your share is on each invoice.
+                                    </div>
+                                </>
+                            ) : (
+                                <p className="cab-card-empty">You aren’t on any subscriptions right now.</p>
+                            )}
+                        </section>
+                    </div>
+                ) : (
+                    <section className="ui-card">
+                        <div className="cab-card-head">
+                            <h2 className="ui-section-title">All invoices</h2>
+                            <button
+                                type="button"
+                                className="ui-link-btn"
+                                onClick={() => void fetchInvoices()}
+                                disabled={loadingInvoices}
+                            >
+                                {loadingInvoices ? 'Refreshing…' : 'Refresh'}
+                            </button>
+                        </div>
+                        {loadingInvoices && invoices === null ? (
+                            <p className="cab-card-empty">Loading…</p>
+                        ) : invoices && invoices.length > 0 ? (
+                            invoices.map((invoice) => renderInvoiceRow(invoice, true))
                         ) : (
-                            <p className="subscriber-empty">No invoices found.</p>
+                            <EmptyState title="No invoices yet">Your first invoice appears here once it is issued.</EmptyState>
                         )}
-                    </article>
+                    </section>
+                )}
+            </div>
 
-                    {selectedInvoice && (
-                        <article className="subscriber-panel subscriber-panel-wide">
-                            <div className="subscriber-panel-heading">
-                                <h2>Invoice detail</h2>
-                                <button type="button" onClick={() => setSelectedInvoice(null)}>Close</button>
+            <Drawer
+                open={Boolean(selectedInvoice)}
+                eyebrow="Invoice"
+                title={selectedInvoice ? invoiceTitle(selectedInvoice.invoice) : ''}
+                onClose={() => setSelectedInvoice(null)}
+                flush
+            >
+                {selectedInvoice && (
+                    <>
+                        <DrawerSection>
+                            <div className="cab-detail-head">
+                                <span className="cab-detail-amount ui-money">
+                                    {formatMoney(selectedInvoice.invoice.totalAmount)}
+                                </span>
+                                <Tag tone={statusOf(selectedInvoice.invoice.status).tone}>
+                                    {statusOf(selectedInvoice.invoice.status).label}
+                                </Tag>
                             </div>
-                            <div className="subscriber-detail-grid">
-                                {selectedInvoice.invoice.origin === 'SUBSCRIPTION_LEDGER' && (
-                                    <div><span>Period</span><strong>{formatPeriod(selectedInvoice.invoice)}</strong></div>
+                            <dl className="cab-detail-list">
+                                {selectedInvoice.invoice.origin !== 'MANUAL' && (
+                                    <>
+                                        <dt>Period</dt>
+                                        <dd>{formatPeriod(selectedInvoice.invoice.fromMonth, selectedInvoice.invoice.toMonth)}</dd>
+                                    </>
                                 )}
-                                <div><span>Invoice date</span><strong>{formatInvoiceDate(selectedInvoice.invoice.invoiceDate)}</strong></div>
-                                <div><span>Total</span><strong>{formatMoney(selectedInvoice.invoice.totalAmount)}</strong></div>
-                                <div><span>Status</span><strong>{selectedInvoice.invoice.status}</strong></div>
-                                <div><span>Created</span><strong>{formatDate(selectedInvoice.invoice.createdAt)}</strong></div>
-                            </div>
-
-                            <h3>Ledger entries</h3>
+                                <dt>Invoice date</dt>
+                                <dd>{formatDate(selectedInvoice.invoice.invoiceDate)}</dd>
+                                {selectedInvoice.invoice.notes && (
+                                    <>
+                                        <dt>Note</dt>
+                                        <dd>{selectedInvoice.invoice.notes}</dd>
+                                    </>
+                                )}
+                            </dl>
+                        </DrawerSection>
+                        <DrawerSection title="What it covers">
                             {selectedInvoice.entries.length > 0 ? (
-                                <div className="subscriber-ledger-list">
+                                <div className="cab-entries">
                                     {selectedInvoice.entries.map((entry) => (
-                                        <div key={entry.ledgerEntryId} className="subscriber-list-row">
-                                            <div>
-                                                <strong>{entry.subscriptionServiceName}</strong>
-                                                <span>{formatMonth(entry.recordedMonth)} · {entry.participantCount} participant(s)</span>
-                                            </div>
-                                            <b>{formatMoney(entry.amount)}</b>
+                                        <div key={entry.ledgerEntryId} className="cab-entry">
+                                            <span className="cab-row-text">
+                                                <span className="cab-row-title is-light">{entry.subscriptionServiceName}</span>
+                                                <span className="cab-row-meta">
+                                                    {formatMonth(entry.recordedMonth)} · split {entry.participantCount} ways
+                                                </span>
+                                            </span>
+                                            <span className="ui-money">{formatMoney(entry.amount)}</span>
                                         </div>
                                     ))}
                                 </div>
                             ) : (
-                                <p className="subscriber-empty">No ledger entries for this invoice.</p>
+                                <p className="cab-detail-empty">
+                                    A one-off invoice, not tied to subscription costs.
+                                </p>
                             )}
-                        </article>
-                    )}
-                </section>
-            )}
+                        </DrawerSection>
+                        {isOpen(selectedInvoice.invoice) && cabinet.payToken && (
+                            <DrawerSection>
+                                <a className="ui-btn is-primary is-block" href={`/pay/${cabinet.payToken}`}>
+                                    Pay what you owe
+                                </a>
+                            </DrawerSection>
+                        )}
+                    </>
+                )}
+            </Drawer>
         </main>
     );
 }

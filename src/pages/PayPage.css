@@ -1,0 +1,515 @@
+/* Public pay page (design 2c). No admin layout: sand background, centred card. */
+
+.pay-page {
+  flex: 1;
+  min-height: 100svh;
+  background: var(--sand);
+  display: flex;
+  justify-content: center;
+  padding: 14px 16px 28px;
+}
+
+.pay-column {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pay-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 0;
+  font: 700 15px/1 var(--sans);
+}
+
+.pay-brand img {
+  display: block;
+}
+
+.pay-card {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+}
+
+.pay-main {
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Amount ───────────────────────────────────────────── */
+.pay-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pay-greeting {
+  font: 500 15px/1.3 var(--sans);
+  color: var(--ink-2);
+}
+
+.pay-amount {
+  font: 500 44px/1 var(--mono);
+  letter-spacing: -2.2px;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.pay-amount.is-credit {
+  font-size: 36px;
+  line-height: 1.05;
+  letter-spacing: -1.6px;
+  color: var(--green);
+}
+
+.pay-summary-note {
+  font: 400 14px/1.45 var(--sans);
+  color: var(--ink-2);
+}
+
+/* ── Banking app ──────────────────────────────────────── */
+.pay-apps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pay-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 54px;
+  border-radius: 12px;
+  background: var(--green);
+  color: #fff;
+  font: 700 16.5px/1 var(--sans);
+  text-decoration: none;
+  text-align: center;
+}
+
+.pay-primary:hover,
+.pay-primary:active {
+  background: var(--green-hover);
+  color: #fff;
+}
+
+.pay-primary.is-secondary {
+  height: 50px;
+  background: var(--white);
+  border: 1px solid var(--line-strong);
+  color: var(--ink);
+  font-size: 15.5px;
+}
+
+.pay-primary.is-secondary:hover,
+.pay-primary.is-secondary:active {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.pay-apps-note {
+  font: 400 13px/1.45 var(--sans);
+  color: var(--ink-2);
+  text-align: center;
+  text-wrap: pretty;
+}
+
+.pay-label {
+  font: 600 10.5px/1 var(--mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.pay-banks-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pay-banks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.pay-bank {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line-strong);
+  background: var(--white);
+  border-radius: 10px;
+  font: 600 14px/1.1 var(--sans);
+  color: var(--ink);
+  text-decoration: none;
+  text-align: center;
+}
+
+.pay-bank:active {
+  background: var(--paper);
+}
+
+.pay-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pay-divider > span:not(.pay-label) {
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.pay-text-link {
+  font: 600 14px/1.2 var(--sans);
+  color: var(--green);
+  text-decoration: none;
+}
+
+.pay-show-qr {
+  align-self: center;
+  border: 0;
+  background: none;
+  padding: 12px;
+  margin: -12px 0;
+  cursor: pointer;
+}
+
+/* ── Details ──────────────────────────────────────────── */
+.pay-details {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.pay-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'label copy'
+    'value copy';
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 4px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--white);
+}
+
+.pay-row.is-highlight {
+  background: #fbf7ef;
+}
+
+.pay-row-label {
+  grid-area: label;
+  font: 600 10px/1 var(--mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.pay-row-value {
+  grid-area: value;
+  font: 500 14.5px/1.35 var(--mono);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.pay-row-value.is-muted {
+  color: var(--ink-2);
+}
+
+.pay-copy {
+  grid-area: copy;
+  border: 0;
+  background: none;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 0 0 8px;
+  font: 600 13px/1 var(--sans);
+  color: var(--green);
+  cursor: pointer;
+  text-align: right;
+}
+
+.pay-copy-gap {
+  grid-area: copy;
+}
+
+.pay-copy-all {
+  border: 0;
+  background: var(--panel);
+  padding: 13px;
+  min-height: 44px;
+  font: 600 14px/1 var(--sans);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.pay-copy-all:hover {
+  background: var(--paper);
+}
+
+.pay-notice {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--clay-bg);
+  font: 400 13.5px/1.5 var(--sans);
+  color: #5b3a0e;
+  text-wrap: pretty;
+}
+
+.pay-notice strong {
+  font-weight: 700;
+}
+
+/* ── QR ───────────────────────────────────────────────── */
+.pay-qr-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.pay-qr {
+  position: relative;
+  width: 252px;
+  height: 252px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--white);
+}
+
+.pay-qr img,
+.pay-qr-placeholder {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.pay-qr-placeholder {
+  border-radius: 6px;
+  background: var(--grey-bg);
+}
+
+.pay-qr-mark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 46px;
+  height: 46px;
+  margin: -23px 0 0 -23px;
+  border-radius: 50%;
+  background: var(--ink);
+  border: 4px solid var(--white);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 700 22px/1 var(--sans);
+}
+
+.pay-qr-caption {
+  margin: 0;
+  font: 400 13.5px/1.45 var(--sans);
+  color: var(--ink-2);
+  text-align: center;
+  text-wrap: pretty;
+}
+
+/* ── Open invoices (phone) ────────────────────────────── */
+.pay-invoices {
+  padding: 6px 20px;
+}
+
+.pay-invoice {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.pay-invoice:last-child {
+  border-bottom: 0;
+}
+
+.pay-invoice-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pay-invoice-period {
+  font: 600 14.5px/1.3 var(--sans);
+}
+
+.pay-invoice-meta {
+  font: 400 12.5px/1.3 var(--sans);
+  color: var(--ink-2);
+}
+
+.pay-invoice-amount {
+  font: 500 14.5px/1 var(--mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+/* ── Messages and loading ─────────────────────────────── */
+.pay-message {
+  padding: 26px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pay-message-title {
+  margin: 0;
+  font: 700 21px/1.25 var(--sans);
+  letter-spacing: -0.3px;
+}
+
+.pay-message-text {
+  margin: 0;
+  font: 400 14.5px/1.5 var(--sans);
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+
+.pay-loading {
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pay-skel {
+  display: block;
+  height: 14px;
+  border-radius: 7px;
+  background: var(--grey-bg);
+  animation: pay-pulse 1.4s ease-in-out infinite;
+}
+
+.pay-skel.is-big {
+  height: 40px;
+  width: 70%;
+  border-radius: 8px;
+}
+
+@keyframes pay-pulse {
+  50% { opacity: 0.55; }
+}
+
+/* ── Desktop: QR on the left, details on the right ────── */
+@media (min-width: 900px) {
+  .pay-page {
+    padding: 40px 24px 48px;
+  }
+
+  .pay-column {
+    gap: 18px;
+  }
+
+  .pay-brand {
+    padding: 0;
+    font-size: 16px;
+  }
+
+  .pay-column.is-wide {
+    max-width: 860px;
+  }
+
+  .pay-desktop {
+    overflow: hidden;
+  }
+
+  .pay-desktop-head {
+    padding: 28px 32px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  .pay-desktop-head .pay-amount {
+    font-size: 48px;
+    letter-spacing: -2.4px;
+  }
+
+  .pay-desktop-invoices {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+  }
+
+  .pay-desktop-invoices li {
+    display: flex;
+    gap: 16px;
+    font: 400 14px/1.3 var(--sans);
+    color: var(--ink-2);
+  }
+
+  .pay-desktop-invoices .pay-invoice-amount {
+    font-size: 14px;
+    line-height: 1.3;
+    min-width: 80px;
+    text-align: right;
+  }
+
+  .pay-desktop-body {
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    gap: 32px;
+    padding: 28px 32px 32px;
+  }
+
+  .pay-desktop-side {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .pay-details.is-wide .pay-row {
+    grid-template-columns: 100px minmax(0, 1fr) auto;
+    grid-template-areas: 'label value copy';
+    gap: 14px;
+    padding: 13px 16px;
+  }
+
+  .pay-details.is-wide .pay-row-label {
+    font-size: 10.5px;
+  }
+
+  .pay-details.is-wide .pay-row-value {
+    font-size: 15px;
+  }
+
+  .pay-details.is-wide .pay-copy {
+    min-height: 0;
+  }
+
+  .pay-desktop .pay-notice {
+    font-size: 14px;
+  }
+}

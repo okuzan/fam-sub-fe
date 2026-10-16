@@ -17,7 +17,10 @@ export type InvoiceStatus = typeof InvoiceStatus[keyof typeof InvoiceStatus];
 export interface InvoiceGenerationRequest {
     fromMonth: string; // YYYY-MM format
     toMonth: string;   // YYYY-MM format
-    subscriberIds?: string[]; // Optional: generate for specific subscribers only
+    /** Optional: generate for one subscriber only; omitted means everyone. */
+    subscriberId?: string;
+    /** Email each new invoice right away (drafts become sent). */
+    sendEmail?: boolean;
 }
 
 export interface ManualInvoiceCreateRequest {
@@ -61,6 +64,8 @@ export interface InvoiceResponse {
     notes?: string;
     origin: InvoiceOrigin;
     invoiceGenerationRunId?: string | null;
+    /** Set when a bank transfer settled it; GET /admin/bank-payments/{id} describes the transfer. */
+    paidByBankTransactionId?: string | null;
 }
 
 export interface InvoiceLedgerEntryResponse {
@@ -90,7 +95,7 @@ export interface InvoiceStatusHistoryResponse {
 }
 
 export interface InvoiceGenerationResult {
-    runId?: string;
+    runId: string;
     invoicesCreated: number;
     ledgerEntriesAssigned: number;
     totalAmount: number;
@@ -112,13 +117,13 @@ export interface InvoiceGenerationItemResult {
 
 export interface DraftInvoiceBulkEmailItemResult {
     invoiceId: string;
-    subscriberId?: string;
-    subscriberName?: string;
-    success?: boolean;
-    emailSent?: boolean;
-    statusUpdated?: boolean;
-    message?: string;
-    error?: string;
+    subscriberId: string;
+    subscriberName: string;
+    statusBefore: string;
+    statusAfter: string;
+    sent: boolean;
+    updated: boolean;
+    message: string;
 }
 
 export interface DraftInvoiceBulkEmailResult {
@@ -128,7 +133,6 @@ export interface DraftInvoiceBulkEmailResult {
     failedCount: number;
     dryRun: boolean;
     items: DraftInvoiceBulkEmailItemResult[];
-    failedInvoiceIds?: string[];
 }
 
 export interface InvoiceBulkBalancePaymentItemResult {

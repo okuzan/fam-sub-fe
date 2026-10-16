@@ -1,0 +1,166 @@
+/* Finance (design 2f). */
+.fin-net {
+  display: block;
+  font: 500 42px/1.05 var(--mono);
+  letter-spacing: -2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.fin-notice {
+  padding: 16px 40px 0;
+}
+
+.fin-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-bottom: 1px solid var(--line);
+}
+
+.fin-metric {
+  padding: 20px 26px;
+  border-left: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  margin-bottom: -1px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.fin-metric:nth-child(3n + 1) {
+  border-left: 0;
+}
+
+.fin-metric-value {
+  font: 500 23px/1.15 var(--mono);
+  letter-spacing: -0.8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.fin-metric-note {
+  font: 400 13px/1.4 var(--sans);
+  color: var(--ink-2);
+}
+
+.fin-debtors {
+  padding: 30px 40px 40px;
+  display: flex;
+  flex-direction: column;
+}
+
+.fin-debtors-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 14px;
+}
+
+.fin-debtors-line {
+  font: 400 13px/1 var(--sans);
+  color: var(--ink-2);
+}
+
+.fin-table th:first-child,
+.fin-table td:first-child {
+  padding-left: 0;
+}
+
+.fin-table td.is-strong {
+  font-size: 14.5px;
+}
+
+.fin-muted {
+  color: var(--ink-2);
+}
+
+.fin-faint {
+  color: var(--ink-3);
+}
+
+.fin-table td.fin-credit {
+  color: var(--green);
+}
+
+.fin-table td.fin-net-debt {
+  font-weight: 600;
+  font-size: 14.5px;
+}
+
+.fin-share-col {
+  width: 210px;
+}
+
+.fin-share {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fin-share-track {
+  flex: 1;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--line-soft);
+  overflow: hidden;
+}
+
+.fin-share-bar {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--ink);
+}
+
+.fin-share-pct {
+  font: 400 13px/1 var(--mono);
+  color: var(--ink-2);
+  width: 60px;
+  text-align: right;
+}
+
+@media (max-width: 900px) {
+  .fin-net {
+    font-size: 32px;
+    letter-spacing: -1.4px;
+  }
+
+  .fin-notice {
+    padding: 12px 18px 0;
+  }
+
+  .fin-metrics {
+    grid-template-columns: 1fr 1fr;
+    margin: 12px 18px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    gap: 1px;
+    background: var(--line);
+  }
+
+  .fin-metric,
+  .fin-metric:nth-child(3n + 1) {
+    border: 0;
+    margin: 0;
+    background: var(--white);
+    padding: 12px 14px;
+  }
+
+  .fin-metric-value {
+    font-size: 17px;
+    letter-spacing: -0.5px;
+  }
+
+  .fin-debtors {
+    padding: 18px 18px 28px;
+  }
+
+  .fin-debtors-head {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .fin-table {
+    min-width: 720px;
+  }
+}

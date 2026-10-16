@@ -2,6 +2,8 @@ import {useEffect, useRef, useState} from 'react';
 import {Link, useNavigate, useSearchParams} from 'react-router-dom';
 import {API_CONFIG, apiFetch} from '../config/api';
 import {getResponseErrorMessage} from '../utils/errors';
+import {Brand} from '../ui/components';
+import {GoogleMark} from './Login';
 import './AdminInviteAccept.css';
 
 interface AdminInviteAcceptProps {
@@ -20,7 +22,7 @@ export default function AdminInviteAccept({isAuthenticated, onAuthRefresh}: Admi
     const token = tokenFromUrl || sessionStorage.getItem(STORAGE_KEY) || '';
     const acceptedTokenRef = useRef<string | null>(null);
     const [state, setState] = useState<AcceptState>('accepting');
-    const [message, setMessage] = useState('Checking invite...');
+    const [message, setMessage] = useState('Checking your invite…');
 
     useEffect(() => {
         if (tokenFromUrl) {
@@ -50,20 +52,20 @@ export default function AdminInviteAccept({isAuthenticated, onAuthRefresh}: Admi
                     sessionStorage.removeItem(STORAGE_KEY);
                     await onAuthRefresh();
                     setState('accepted');
-                    setMessage('Admin access has been enabled.');
+                    setMessage('You now have the admin panel. Taking you there…');
                     setTimeout(() => navigate('/admin', {replace: true}), 900);
                 } else {
                     setState('failed');
-                    setMessage(await getResponseErrorMessage(response, 'Failed to accept admin invite'));
+                    setMessage(await getResponseErrorMessage(response, 'This invite could not be accepted.'));
                 }
             } catch (err) {
                 console.error(err);
                 setState('failed');
-                setMessage('Error accepting admin invite');
+                setMessage('Something went wrong accepting the invite.');
             }
         };
 
-        acceptInvite();
+        void acceptInvite();
     }, [isAuthenticated, navigate, onAuthRefresh, token]);
 
     const handleGoogleLogin = () => {
@@ -73,35 +75,55 @@ export default function AdminInviteAccept({isAuthenticated, onAuthRefresh}: Admi
         window.location.href = API_CONFIG.GOOGLE_OAUTH_URL;
     };
 
-    const displayMessage = !token
-        ? 'This admin invite link is missing its token.'
-        : !isAuthenticated
-            ? 'Sign in with the invited Google account to accept this admin invite.'
-            : message;
+    const title = state === 'accepted' ? 'Invite accepted' : 'Accept admin access';
 
     return (
-        <main className="admin-invite-accept">
-            <section className="admin-invite-accept-panel">
-                <p className="admin-invite-accept-kicker">Admin invitation</p>
-                <h1>{state === 'accepted' ? 'Invite accepted' : 'Accept admin access'}</h1>
-                <p>{displayMessage}</p>
+        <main className="auth-page">
+            <Brand href="/"/>
+            <section className="auth-card invite-card">
+                <span className="auth-eyebrow">Admin invitation</span>
+                <h1 className="auth-title">{title}</h1>
 
-                {token && !isAuthenticated && (
-                    <button type="button" onClick={handleGoogleLogin}>
-                        Sign in with Google
-                    </button>
-                )}
-
-                {state === 'failed' && (
-                    <div className="admin-invite-accept-actions">
-                        <button type="button" onClick={() => window.location.reload()}>
-                            Try again
-                        </button>
-                        <Link to="/login">Go to login</Link>
+                {!token ? (
+                    <div className="auth-notice" role="alert">
+                        <span className="auth-notice-title">This invite link is incomplete</span>
+                        <span className="auth-notice-text">Open the link from your invite email again, in full.</span>
                     </div>
+                ) : !isAuthenticated ? (
+                    <>
+                        <p className="auth-text">
+                            Sign in with the Google account the invite was sent to. Access is granted right after.
+                        </p>
+                        <button type="button" className="auth-google-btn" onClick={handleGoogleLogin}>
+                            <GoogleMark/>
+                            Sign in with Google
+                        </button>
+                    </>
+                ) : state === 'failed' ? (
+                    <>
+                        <div className="auth-notice" role="alert">
+                            <span className="auth-notice-title">{message}</span>
+                            <span className="auth-notice-text">
+                                Invites last 7 days and work only for the invited email. Ask for a new one if needed.
+                            </span>
+                        </div>
+                        <div className="auth-actions">
+                            <button type="button" className="ui-btn" onClick={() => window.location.reload()}>
+                                Try again
+                            </button>
+                            <Link to="/login" className="ui-btn">Go to sign in</Link>
+                        </div>
+                    </>
+                ) : state === 'accepted' ? (
+                    <>
+                        <div className="auth-notice tone-green" role="status">
+                            <span className="auth-notice-text">{message}</span>
+                        </div>
+                        <Link to="/admin" className="ui-btn is-primary is-block">Continue to admin</Link>
+                    </>
+                ) : (
+                    <p className="auth-text invite-pending" role="status">{message}</p>
                 )}
-
-                {state === 'accepted' && <Link to="/admin">Continue to admin</Link>}
             </section>
         </main>
     );

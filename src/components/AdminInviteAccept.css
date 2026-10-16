@@ -1,64 +1,27 @@
-.admin-invite-accept {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
-    background: linear-gradient(135deg, #0f766e 0%, #1d4ed8 100%);
-    color: #111827;
+/* Admin invite accept. Card system comes from .auth-* in Login.css. */
+.invite-pending {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.admin-invite-accept-panel {
-    width: min(100%, 560px);
-    background: white;
-    border-radius: 12px;
-    padding: 2rem;
-    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.24);
+.invite-pending::before {
+  content: '';
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  border: 2px solid var(--line-strong);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: invite-spin 0.8s linear infinite;
 }
 
-.admin-invite-accept-kicker {
-    margin: 0 0 0.5rem;
-    color: #2563eb;
-    font-size: 0.82rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
+@keyframes invite-spin {
+  to { transform: rotate(360deg); }
 }
 
-.admin-invite-accept-panel h1 {
-    margin: 0 0 0.75rem;
-    color: #111827;
-    font-size: 2rem;
-    font-weight: 700;
-    line-height: 1.15;
-    letter-spacing: 0;
-}
-
-.admin-invite-accept-panel p:not(.admin-invite-accept-kicker) {
-    color: #1f2937;
-    line-height: 1.5;
-    margin: 0 0 1.25rem;
-    max-width: 44rem;
-    text-wrap: pretty;
-}
-
-.admin-invite-accept-panel button,
-.admin-invite-accept-panel a {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 0;
-    border-radius: 8px;
-    background: #2563eb;
-    color: white;
-    padding: 0.75rem 1rem;
-    font-weight: 700;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-.admin-invite-accept-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
+@media (prefers-reduced-motion: reduce) {
+  .invite-pending::before {
+    animation: none;
+  }
 }

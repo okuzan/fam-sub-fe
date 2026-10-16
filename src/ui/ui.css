@@ -1,0 +1,849 @@
+/* Shared building blocks of the FamSub design. Screens compose these; screen
+   CSS files only add layout that is specific to one screen. */
+
+/* ── Type ─────────────────────────────────────────────── */
+.ui-eyebrow {
+  font: 600 11px/1 var(--mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.ui-label {
+  font: 600 10.5px/1 var(--mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.ui-section-title {
+  margin: 0;
+  font: 700 13px/1 var(--mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.ui-money {
+  font-family: var(--mono);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ui-mono {
+  font-family: var(--mono);
+}
+
+.ui-muted {
+  color: var(--ink-2);
+}
+
+.ui-faint {
+  color: var(--ink-3);
+}
+
+/* ── Page header ──────────────────────────────────────── */
+.ui-page-header {
+  padding: 32px 40px 20px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.ui-page-header.has-rule {
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.ui-page-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ui-page-title {
+  font: 700 28px/1.15 var(--sans);
+  letter-spacing: -0.6px;
+}
+
+.ui-page-title.is-large {
+  font-size: 31px;
+  letter-spacing: -0.7px;
+}
+
+.ui-page-lead {
+  font: 400 15.5px/1.5 var(--sans);
+  color: var(--ink-2);
+  max-width: 680px;
+  text-wrap: pretty;
+}
+
+.ui-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.ui-page-body {
+  padding: 0 40px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ── Buttons ──────────────────────────────────────────── */
+.ui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--line-strong);
+  background: var(--white);
+  color: var(--ink);
+  border-radius: var(--radius);
+  padding: 11px 15px;
+  font: 600 14px/1 var(--sans);
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.12s, border-color 0.12s;
+}
+
+.ui-btn:hover {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.ui-btn:disabled,
+.ui-btn[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ui-btn.is-small {
+  padding: 8px 12px;
+  font-size: 13.5px;
+  border-radius: 7px;
+}
+
+.ui-btn.is-primary {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+
+.ui-btn.is-primary:hover:not(:disabled) {
+  background: var(--green-hover);
+  border-color: var(--green-hover);
+  color: #fff;
+}
+
+.ui-btn.is-danger {
+  background: var(--red);
+  border-color: var(--red);
+  color: #fff;
+}
+
+.ui-btn.is-dark {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--ink-inverse);
+}
+
+.ui-btn.is-block {
+  width: 100%;
+}
+
+/* Text-only actions in table rows: "Edit", "Delete", "Forget". */
+.ui-link-btn {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: 500 13px/1.2 var(--sans);
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.ui-link-btn.is-muted {
+  color: var(--ink-2);
+}
+
+.ui-link-btn.is-danger {
+  color: var(--red);
+}
+
+.ui-link-btn.is-green {
+  color: var(--green);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.ui-link-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ── Tags and dots ────────────────────────────────────── */
+.ui-tag {
+  display: inline-flex;
+  align-items: center;
+  font: 600 10.5px/1 var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 4px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.ui-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.tone-red { color: var(--red); background: var(--red-bg); }
+.tone-clay { color: var(--clay); background: var(--clay-bg); }
+.tone-green { color: var(--green); background: var(--green-bg); }
+.tone-slate { color: var(--slate); background: var(--slate-bg); }
+.tone-grey { color: var(--grey); background: var(--grey-bg); }
+.tone-dark { color: var(--ink-inverse); background: var(--ink); }
+
+.ui-dot.tone-red { background: var(--red); }
+.ui-dot.tone-clay { background: var(--clay); }
+.ui-dot.tone-green { background: var(--green); }
+.ui-dot.tone-slate { background: var(--slate); }
+.ui-dot.tone-grey { background: var(--ink-3); }
+
+.ui-count-badge {
+  font: 600 11px/1 var(--mono);
+  background: var(--red);
+  color: #fff;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+
+/* ── Stat strip ───────────────────────────────────────── */
+.ui-stat-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.ui-stat {
+  padding: 20px 24px;
+  border-left: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.ui-stat:first-child {
+  border-left: 0;
+}
+
+.ui-stat-value {
+  font: 500 25px/1.1 var(--mono);
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.ui-stat-value.is-red { color: var(--red); }
+.ui-stat-value.is-green { color: var(--green); }
+
+.ui-stat-note {
+  font: 400 13px/1.35 var(--sans);
+  color: var(--ink-2);
+}
+
+.ui-stat.is-alert {
+  background: #fbf1ee;
+}
+
+.ui-stat.is-alert .ui-label {
+  color: #7a2419;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.ui-stat.is-alert .ui-stat-note {
+  color: #5a2a22;
+}
+
+/* ── Tables ───────────────────────────────────────────── */
+.ui-table-wrap {
+  overflow-x: auto;
+}
+
+.ui-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ui-table th {
+  font: 600 10.5px/1 var(--mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  text-align: left;
+  padding: 10px;
+  border-bottom: 1px solid var(--line-strong);
+  white-space: nowrap;
+}
+
+.ui-table td {
+  padding: 11px 10px;
+  border-bottom: 1px solid var(--line-soft);
+  font: 400 14px/1.35 var(--sans);
+  vertical-align: middle;
+}
+
+.ui-table tbody tr:hover td {
+  background: var(--paper);
+}
+
+.ui-table tr.is-selected td {
+  background: var(--sand);
+}
+
+.ui-table tr.is-selected td:first-child {
+  box-shadow: inset 3px 0 0 var(--ink);
+}
+
+.ui-table tr.is-clickable {
+  cursor: pointer;
+}
+
+.ui-table tr.is-dim td {
+  color: var(--ink-3);
+}
+
+.ui-table .is-num {
+  text-align: right;
+  font-family: var(--mono);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ui-table .is-strong {
+  font-weight: 600;
+}
+
+.ui-table .is-actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.ui-table .is-actions > * + * {
+  margin-left: 14px;
+}
+
+.ui-table tfoot td {
+  background: var(--panel);
+  font-weight: 600;
+  border-bottom: 0;
+}
+
+.ui-cell-sub {
+  display: block;
+  font: 400 12.5px/1.35 var(--sans);
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+
+.ui-cell-sub.is-mono {
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.ui-table-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 10px;
+  font: 400 13.5px/1.3 var(--sans);
+  color: var(--ink-2);
+}
+
+/* ── Filters ──────────────────────────────────────────── */
+.ui-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.ui-filter-note {
+  font: 400 13.5px/1.2 var(--sans);
+  color: var(--ink-2);
+  margin-left: 4px;
+}
+
+.ui-segmented {
+  display: inline-flex;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--white);
+}
+
+.ui-segmented button {
+  border: 0;
+  border-left: 1px solid var(--line-strong);
+  background: none;
+  padding: 9px 12px;
+  font: 500 13.5px/1 var(--sans);
+  color: var(--ink);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.ui-segmented button:first-child {
+  border-left: 0;
+}
+
+.ui-segmented button.is-active {
+  background: var(--ink);
+  color: var(--ink-inverse);
+  font-weight: 600;
+}
+
+.ui-segmented .ui-seg-count {
+  font: 500 11.5px/1 var(--mono);
+  color: var(--ink-3);
+}
+
+.ui-segmented button.is-active .ui-seg-count {
+  color: rgba(247, 246, 243, 0.75);
+}
+
+/* Underlined tabs, as on Bank payments. */
+.ui-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--line);
+}
+
+.ui-tabs button {
+  border: 0;
+  background: none;
+  padding: 12px 12px 11px;
+  font: 500 14.5px/1 var(--sans);
+  color: var(--ink-2);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ui-tabs button.is-active {
+  color: var(--ink);
+  font-weight: 600;
+  border-bottom-color: var(--ink);
+}
+
+.ui-tab-count {
+  font: 500 11.5px/1 var(--mono);
+  padding: 3px 5px;
+  border-radius: 4px;
+  background: var(--grey-bg);
+  color: var(--ink-2);
+}
+
+.ui-tab-count.is-alert {
+  background: var(--red);
+  color: #fff;
+}
+
+/* ── Form fields ──────────────────────────────────────── */
+.ui-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.ui-field-label {
+  font: 600 13.5px/1.2 var(--sans);
+  color: var(--ink);
+}
+
+.ui-field-optional {
+  font-weight: 400;
+  color: var(--ink-2);
+}
+
+.ui-field-hint {
+  font: 400 13px/1.4 var(--sans);
+  color: var(--ink-2);
+}
+
+.ui-field-error {
+  font: 500 13px/1.4 var(--sans);
+  color: var(--red);
+}
+
+.ui-input,
+.ui-select,
+.ui-textarea {
+  width: 100%;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font: 500 14.5px/1.3 var(--sans);
+  color: var(--ink);
+  background: var(--white);
+}
+
+.ui-select {
+  appearance: none;
+  padding-right: 32px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink-3) 50%),
+    linear-gradient(135deg, var(--ink-3) 50%, transparent 50%);
+  background-position: calc(100% - 17px) 50%, calc(100% - 12px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+
+.ui-select.is-compact,
+.ui-input.is-compact {
+  width: auto;
+  min-width: 150px;
+  padding-top: 9px;
+  padding-bottom: 9px;
+  font-size: 13.5px;
+}
+
+.ui-textarea {
+  min-height: 64px;
+  resize: vertical;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.ui-input::placeholder,
+.ui-textarea::placeholder {
+  color: var(--ink-3);
+  font-weight: 400;
+}
+
+.ui-input.is-money {
+  font-family: var(--mono);
+}
+
+.ui-field.has-error .ui-input,
+.ui-field.has-error .ui-select,
+.ui-field.has-error .ui-textarea {
+  border: 1.5px solid var(--red-field);
+  background-color: var(--red-field-bg);
+}
+
+.ui-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: 400 14px/1.35 var(--sans);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.ui-checkbox input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--green);
+  margin: 0;
+}
+
+/* ── Drawer ───────────────────────────────────────────── */
+.ui-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(38, 40, 45, 0.18);
+  z-index: 900;
+}
+
+.ui-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(420px, 100vw);
+  background: var(--panel);
+  border-left: 1px solid var(--line);
+  box-shadow: var(--shadow-drawer);
+  display: flex;
+  flex-direction: column;
+  z-index: 901;
+  animation: ui-drawer-in 0.16s ease-out;
+}
+
+.ui-drawer.is-wide {
+  width: min(480px, 100vw);
+}
+
+@keyframes ui-drawer-in {
+  from { transform: translateX(24px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+.ui-drawer-head {
+  padding: 24px 26px 18px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.ui-drawer-title {
+  font: 700 20px/1.2 var(--sans);
+  letter-spacing: -0.3px;
+}
+
+.ui-drawer-close {
+  border: 0;
+  background: none;
+  font: 500 22px/1 var(--sans);
+  color: var(--ink-2);
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+.ui-drawer-body {
+  padding: 22px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.ui-drawer-body.is-flush {
+  padding: 0;
+  gap: 0;
+}
+
+.ui-drawer-section {
+  padding: 18px 26px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ui-drawer-foot {
+  padding: 16px 26px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* ── Dialog ───────────────────────────────────────────── */
+.ui-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(38, 40, 45, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1000;
+}
+
+.ui-dialog {
+  width: min(460px, 100%);
+  background: var(--white);
+  border-radius: 14px;
+  box-shadow: var(--shadow-pop);
+  overflow: hidden;
+}
+
+.ui-dialog-body {
+  padding: 24px 26px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ui-dialog-title {
+  font: 700 19px/1.25 var(--sans);
+  letter-spacing: -0.2px;
+}
+
+.ui-dialog-text {
+  font: 400 14.5px/1.55 var(--sans);
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+
+.ui-dialog-foot {
+  padding: 14px 26px;
+  background: var(--panel);
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* ── Empty, skeleton, notices ─────────────────────────── */
+.ui-empty {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--white);
+  padding: 44px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.ui-empty-title {
+  font: 700 17px/1.3 var(--sans);
+}
+
+.ui-empty-text {
+  font: 400 14px/1.55 var(--sans);
+  color: var(--ink-2);
+  max-width: 360px;
+  text-wrap: pretty;
+}
+
+.ui-skeleton-row {
+  display: grid;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 10px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.ui-skeleton-bar {
+  height: 12px;
+  border-radius: 6px;
+  background: var(--grey-bg);
+  animation: ui-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes ui-pulse {
+  50% { opacity: 0.55; }
+}
+
+.ui-notice {
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  font: 400 14px/1.45 var(--sans);
+}
+
+.ui-notice.tone-red { border: 1px solid #e8c9c2; background: #fbf1ee; color: #5a2a22; }
+.ui-notice.tone-clay { border: 1px solid #ecdcc0; background: #fbf5ea; color: #5c3d10; }
+.ui-notice.tone-green { border: 1px solid #c9e0d3; background: #f1f8f4; color: #164d37; }
+.ui-notice.tone-grey { border: 1px solid var(--line); background: var(--panel); color: var(--ink-2); }
+
+/* ── Cards on sand pages (cabinet, pay page, sign in) ─── */
+.ui-card {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.ui-card-head {
+  padding: 16px 18px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.ui-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font: 700 18px/1 var(--sans);
+  letter-spacing: -0.2px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.ui-brand img {
+  display: block;
+  width: 19px;
+  height: 18px;
+}
+
+/* ── Phone ────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .ui-page-header {
+    padding: 20px 18px 14px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ui-page-title.is-large,
+  .ui-page-title {
+    font-size: 24px;
+    letter-spacing: -0.5px;
+  }
+
+  .ui-page-body {
+    padding: 0 18px 28px;
+  }
+
+  .ui-stat-strip {
+    grid-template-columns: 1fr 1fr;
+    margin: 12px 18px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    gap: 1px;
+    background: var(--line);
+  }
+
+  .ui-stat,
+  .ui-stat:first-child {
+    border-left: 0;
+    background: var(--panel);
+    padding: 12px 14px;
+  }
+
+  .ui-stat-value {
+    font-size: 17px;
+    letter-spacing: -0.5px;
+  }
+
+  .ui-stat-note {
+    display: none;
+  }
+
+  .ui-btn {
+    min-height: 44px;
+  }
+
+  .ui-drawer,
+  .ui-drawer.is-wide {
+    width: 100vw;
+  }
+}

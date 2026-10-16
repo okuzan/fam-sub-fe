@@ -26,6 +26,7 @@ export const API_CONFIG = {
     ADMIN_INVITES_ACCEPT_URL: `${API_BASE_URL}/admin-invites/accept`,
     SUBSCRIBER_CABINET_URL: `${API_BASE_URL}/subscriber/cabinet`,
     SUBSCRIBER_INVOICES_URL: `${API_BASE_URL}/subscriber/invoices`,
+    SUBSCRIBER_PAYMENTS_URL: `${API_BASE_URL}/subscriber/payments`,
     LOGIN_SUCCESS_URL: '/dashboard',
     LOGIN_FAILURE_URL: '/login?error=true',
 } as const;

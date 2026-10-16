@@ -67,11 +67,31 @@ export interface BankSyncResult {
     syncedTo: string;
 }
 
+export interface PayPageInvoice {
+    fromMonth: string;
+    toMonth: string;
+    invoiceDate: string;
+    amount: number;
+    openDays: number;
+}
+
+/** A bank transfer as the subscriber sees it in their cabinet (GET /subscriber/payments). */
+export interface SubscriberPaymentResponse {
+    id: string;
+    occurredAt: string;
+    amount: number;
+    senderName: string | null;
+    /** "2026-06" or "2026-04..2026-05"; what it did not settle went to their balance. */
+    settledPeriods: string[];
+}
+
 export interface PayPageResponse {
     subscriberName: string;
     amountDue: number;
     credit: number;
     unpaidInvoiceCount: number;
+    /** Newest first. */
+    unpaidInvoices: PayPageInvoice[];
     recipientName: string;
     iban: string;
     cardNumber: string;

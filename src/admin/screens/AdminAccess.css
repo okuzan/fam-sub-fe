@@ -1,0 +1,107 @@
+.acc-filters {
+  padding: 0 40px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.acc-section {
+  padding: 0 40px 32px;
+}
+
+.acc-table td.acc-name {
+  font: 600 14.5px/1.3 var(--sans);
+}
+
+.acc-table td.acc-email {
+  font: 400 13px/1.3 var(--mono);
+  color: var(--ink-2);
+  word-break: break-all;
+}
+
+.acc-table td.acc-email.is-ink {
+  font-size: 13.5px;
+  color: var(--ink);
+}
+
+.acc-roles {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.acc-you {
+  font: 500 13px/1 var(--sans);
+  color: var(--ink-3);
+}
+
+.acc-invites {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-bottom: 40px;
+}
+
+.acc-invites-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+}
+
+.acc-invites-note {
+  font: 400 13px/1.3 var(--sans);
+  color: var(--ink-2);
+}
+
+.acc-invite-form {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.acc-invite-field {
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.acc-invite-field .ui-input.acc-input-error {
+  border-color: var(--red-field);
+  background: var(--red-field-bg);
+}
+
+@media (max-width: 900px) {
+  .acc-filters {
+    padding: 0 18px 14px;
+    overflow-x: auto;
+  }
+
+  .acc-section {
+    padding: 0 18px 24px;
+  }
+
+  .acc-invites-head {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .acc-invite-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .acc-invite-field {
+    width: 100%;
+  }
+
+  .acc-invite-field .ui-input {
+    min-height: 44px;
+  }
+
+  .acc-table .ui-link-btn {
+    min-height: 44px;
+  }
+}

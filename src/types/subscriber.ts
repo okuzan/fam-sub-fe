@@ -49,7 +49,6 @@ export interface SubscriberDetailResponse {
     /** The secret in their pay page link; see getPayPageUrl. */
     payToken: string;
     balance: number;
-    billingExempt: boolean;
     totalAmountOwed: number;
     activeSubscriptions: ActiveSubscriptionDto[];
     unpaidInvoices: UnpaidInvoiceDto[];

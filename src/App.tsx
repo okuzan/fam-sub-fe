@@ -5,12 +5,13 @@ import AdminDashboard from './components/AdminDashboard';
 import SubscriberCabinet from './components/SubscriberCabinet';
 import RoleChooser from './components/RoleChooser';
 import AdminInviteAccept from './components/AdminInviteAccept';
-import PayPage from './components/PayPage';
+import PayPage from './pages/PayPage';
 import {API_CONFIG, apiFetch} from './config/api';
 import {ToastProvider} from './components/Toast';
+import {ConfirmProvider} from './ui/ConfirmProvider';
+import {Brand} from './ui/components';
 import './App.css'
 import './components/Login.css'
-import './components/AdminDashboard.css'
 import './components/RoleChooser.css'
 import './components/AdminInviteAccept.css'
 
@@ -52,17 +53,22 @@ interface NoAccessProps {
 
 function NoAccess({userEmail, onRetry, onLogout}: NoAccessProps) {
     return (
-        <main className="no-access">
-            <section className="no-access-panel">
-                <p className="no-access-kicker">{userEmail ?? 'Signed in'}</p>
-                <h1>No workspace access</h1>
-                <p>
-                    This Google account is authenticated, but it does not currently have an admin or subscriber role.
-                    If you just accepted an invitation, retry the session check.
-                </p>
-                <div className="no-access-actions">
-                    <button type="button" onClick={onRetry}>Retry</button>
-                    <button type="button" className="no-access-logout" onClick={onLogout}>Logout</button>
+        <main className="auth-page">
+            <Brand href="/"/>
+            <section className="auth-card">
+                <h1 className="auth-title">No workspace access</h1>
+                <div className="auth-notice" role="alert">
+                    <span className="auth-notice-title">
+                        {userEmail ? `${userEmail} isn’t in FamSub` : 'This Google account isn’t in FamSub'}
+                    </span>
+                    <span className="auth-notice-text">
+                        It signed in, but has no cabinet or admin access. Ask your FamSub admin to add this email.
+                        If you just accepted an invite, check again.
+                    </span>
+                </div>
+                <div className="auth-actions">
+                    <button type="button" className="ui-btn" onClick={onRetry}>Check again</button>
+                    <button type="button" className="ui-btn" onClick={onLogout}>Use another Google account</button>
                 </div>
             </section>
         </main>
@@ -176,6 +182,7 @@ function App() {
 
     return (
         <ToastProvider>
+            <ConfirmProvider>
             <Router>
                 <Routes>
                     {/* Public: the link in every email. Paying needs no login. */}
@@ -255,6 +262,7 @@ function App() {
                     />
                 </Routes>
             </Router>
+            </ConfirmProvider>
         </ToastProvider>
     );
 }

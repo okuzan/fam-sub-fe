@@ -1,0 +1,392 @@
+/* Bank payments (design 2b). Shared pieces come from ui.css. */
+
+.bank-page {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* ── Sync strip ───────────────────────────────────────── */
+.bank-sync {
+  margin: 0 40px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+
+.bank-sync-title {
+  font: 600 14px/1.3 var(--sans);
+}
+
+.bank-sync-text {
+  font: 400 14px/1.3 var(--sans);
+  color: var(--ink-2);
+  min-width: 0;
+}
+
+.bank-sync-btn {
+  margin-left: auto;
+}
+
+.bank-sync.is-error {
+  border-color: #e8c9c2;
+  background: #fbf1ee;
+}
+
+.bank-sync.is-error .bank-sync-title {
+  color: #7a2419;
+}
+
+.bank-sync.is-error .bank-sync-text {
+  color: #5a2a22;
+}
+
+.bank-sync.is-error .bank-sync-btn {
+  border-color: #d9b3aa;
+  color: #7a2419;
+}
+
+/* ── Tabs and body ────────────────────────────────────── */
+.bank-tabs {
+  padding: 22px 40px 0;
+}
+
+.bank-tabs .ui-tabs button {
+  padding: 10px 14px 12px;
+}
+
+.bank-body {
+  padding: 24px 40px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.bank-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.bank-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding-bottom: 12px;
+}
+
+.bank-section-link {
+  font-size: 13px;
+}
+
+.bank-section-note {
+  font: 400 13px/1.3 var(--sans);
+  color: var(--ink-2);
+}
+
+.bank-hint {
+  margin: 0;
+  font: 400 13.5px/1.45 var(--sans);
+  color: var(--ink-2);
+}
+
+.bank-section .bank-hint {
+  padding-top: 10px;
+}
+
+/* ── Review cards ─────────────────────────────────────── */
+.bank-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.bank-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--white);
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.bank-card.is-ignored {
+  background: var(--panel);
+}
+
+.bank-card-top {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: start;
+}
+
+.bank-card-amount {
+  font: 500 24px/1.1 var(--mono);
+  letter-spacing: -0.8px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.bank-card-who {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.bank-card-sender {
+  font: 600 16px/1.3 var(--sans);
+}
+
+.bank-card-purpose {
+  font: 400 13.5px/1.4 var(--mono);
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+}
+
+.bank-card-iban {
+  font: 400 12px/1.3 var(--mono);
+  color: var(--ink-3);
+  overflow-wrap: anywhere;
+}
+
+.bank-card-when {
+  font: 400 13px/1.3 var(--mono);
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+/* Rows under the header line up with the sender column. */
+.bank-card-row {
+  padding-left: 170px;
+}
+
+.bank-card-note {
+  margin: 0;
+  font: 400 13.5px/1.4 var(--sans);
+  color: var(--ink-2);
+}
+
+.bank-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.bank-chips-label {
+  margin-right: 4px;
+}
+
+.bank-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  border: 1px solid #c9d9cf;
+  background: #f1f6f2;
+  border-radius: 999px;
+  padding: 7px 13px;
+  cursor: pointer;
+  font-family: var(--sans);
+  text-align: left;
+}
+
+.bank-chip:hover:not(:disabled) {
+  border-color: var(--green);
+}
+
+.bank-chip.is-selected {
+  border-color: var(--green);
+  box-shadow: inset 0 0 0 1px var(--green);
+}
+
+.bank-chip-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--green-hover);
+}
+
+.bank-chip-reason {
+  font-size: 13px;
+  color: #2f4a3c;
+}
+
+.bank-card-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.bank-select {
+  width: 220px;
+}
+
+.bank-select.is-empty {
+  color: var(--ink-3);
+}
+
+.bank-apply {
+  padding: 10px 16px;
+  font-size: 13.5px;
+}
+
+.bank-remember {
+  font-size: 13.5px;
+}
+
+.bank-card-links {
+  margin-left: auto;
+  display: flex;
+  gap: 16px;
+}
+
+/* ── Tables ───────────────────────────────────────────── */
+.bank-table {
+  min-width: 860px;
+}
+
+.bank-table th:first-child,
+.bank-table td:first-child,
+.bank-senders-table th:first-child,
+.bank-senders-table td:first-child {
+  padding-left: 0;
+}
+
+.bank-table th:last-child,
+.bank-table td:last-child,
+.bank-senders-table th:last-child,
+.bank-senders-table td:last-child {
+  padding-right: 0;
+}
+
+.bank-table td {
+  padding-top: 13px;
+  padding-bottom: 13px;
+}
+
+.ui-table td.bank-mono-cell {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.ui-table td.bank-strong {
+  font-weight: 500;
+  font-size: 14.5px;
+}
+
+.ui-table td.bank-purpose-cell {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--ink-2);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bank-table .is-num {
+  font-size: 15px;
+}
+
+.ui-table .bank-col-end {
+  text-align: right;
+}
+
+.bank-senders-table {
+  min-width: 560px;
+}
+
+.bank-forget {
+  text-decoration: none;
+}
+
+/* ── Phone ────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .bank-sync {
+    margin: 0 18px;
+  }
+
+  .bank-sync-btn {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .bank-tabs {
+    padding: 16px 18px 0;
+    overflow-x: auto;
+  }
+
+  .bank-tabs .ui-tabs button {
+    min-height: 44px;
+    white-space: nowrap;
+  }
+
+  .bank-body {
+    padding: 18px 18px 28px;
+    gap: 28px;
+  }
+
+  .bank-card {
+    padding: 16px;
+    gap: 14px;
+  }
+
+  .bank-card-top {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px 12px;
+  }
+
+  .bank-card-amount {
+    font-size: 22px;
+  }
+
+  .bank-card-who {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .bank-card-row {
+    padding-left: 0;
+  }
+
+  .bank-chip {
+    min-height: 44px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .bank-select {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .bank-apply {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .bank-remember {
+    min-height: 44px;
+  }
+
+  .bank-card-links {
+    margin-left: 0;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .bank-card-links .ui-link-btn {
+    min-height: 44px;
+  }
+}

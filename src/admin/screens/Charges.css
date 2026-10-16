@@ -1,0 +1,111 @@
+.chg-filters {
+  padding: 0 32px 16px 40px;
+}
+
+.chg-body {
+  padding: 0 32px 40px 40px;
+}
+
+.chg-table .chg-service {
+  font-size: 14.5px;
+  font-weight: 600;
+  width: 22%;
+}
+
+.chg-table .chg-month {
+  width: 120px;
+  white-space: nowrap;
+}
+
+.chg-table .chg-amount {
+  width: 130px;
+  font-size: 14.5px;
+}
+
+.chg-table .chg-notes {
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: var(--ink-2);
+}
+
+.chg-table .chg-notes.is-empty {
+  color: var(--ink-3);
+}
+
+.chg-table .is-actions {
+  width: 110px;
+}
+
+.chg-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.chg-pager {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.chg-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.chg-money {
+  position: relative;
+}
+
+.chg-money .ui-input {
+  padding-right: 34px;
+}
+
+.chg-money-sign {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font: 500 14.5px/1 var(--sans);
+  color: var(--ink-2);
+  pointer-events: none;
+}
+
+.chg-form .ui-input:disabled,
+.chg-form .ui-select:disabled,
+.chg-form .ui-textarea:disabled {
+  background-color: var(--paper);
+  color: var(--ink-2);
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  .chg-filters {
+    padding: 0 18px 12px;
+  }
+
+  .chg-filters .ui-select {
+    flex: 1 1 140px;
+  }
+
+  .chg-body {
+    padding: 0 18px 28px;
+  }
+
+  .chg-table {
+    min-width: 620px;
+  }
+
+  .chg-table .ui-link-btn {
+    display: inline-block;
+    padding: 13px 0;
+  }
+
+  .chg-form .ui-input,
+  .chg-form .ui-select {
+    min-height: 44px;
+  }
+}

@@ -39,19 +39,32 @@ returns: `ADMIN` → `/admin`, `SUBSCRIBER` → `/subscriber/cabinet`, both →
 with the `ROLE_` prefix stripped; keep using the existing `hasRole` helper
 rather than comparing strings inline.
 
-`AdminDashboard` does its own switching on `location.pathname` in
-`renderSectionContent()` and renders no `<Outlet/>`, so `App.tsx` routes the
-whole admin area through a single `/admin/*` splat. Add a new admin section by
-extending `SECTION_CONFIGS` and `renderSectionContent` — a nested `<Route>`
-would render nothing.
+`AdminDashboard` picks the admin screen from `location.pathname` itself and
+renders no `<Outlet/>`, so `App.tsx` routes the whole admin area through a
+single `/admin/*` splat — a nested `<Route>` would render nothing. Add a section
+by adding a screen in `src/admin/screens/`, a case in `AdminDashboard`, and an
+item in `NAV_GROUPS` in `src/admin/AdminLayout.tsx` (the sidebar, which becomes
+a top bar and menu sheet below 900px). Screens read sidebar counts and the bank
+sync status through `useAdminNav()` and call `refreshCounts()` after changes.
+
+The public pay page (`/pay/:payToken`, `src/pages/PayPage.tsx`) needs no login.
 
 ## Conventions
 
-- One component per feature area in `src/components/`, each with a sibling
-  plain-CSS file imported by `AdminDashboard`. There is no CSS framework, no
-  CSS modules, and no design-token file — colors and spacing are literal values
-  repeated per file. Match the neighbouring file rather than introducing a new
-  styling approach in a single component.
+- The design comes from Claude Design (FamSub Redesign v2): warm-neutral
+  canvas, Public Sans for text, Roboto Mono for money and labels. Tokens live
+  in `src/index.css`; shared classes in `src/ui/ui.css` (`ui-` prefix) and
+  shared components in `src/ui/components.tsx` (PageHeader, StatStrip, Tag,
+  Segmented, Tabs, Field, Drawer, Dialog, EmptyState, TableSkeleton …). Each
+  screen adds only its own layout in a sibling CSS file with a short unique
+  prefix (`inv-`, `bank-`, `led-` …). Use the tokens, never literal colours.
+- Every amount and date goes through `src/ui/format.ts` (`formatMoney` →
+  "1 240,00 ₴", `formatMonth` → "Sep 2026", `formatWhen` …), so there is one
+  format everywhere.
+- Add and edit forms open in the right-side `Drawer`. Destructive actions ask
+  through `useConfirm()` (`src/ui/confirmContext.ts`), never `window.confirm`.
+  Results are toasts (`useToast`), loading is `TableSkeleton`, empty lists are
+  `EmptyState`.
 - API endpoint URLs are centralised in `src/config/api.ts`. Add new ones there;
   do not build URLs inline.
 - Response types mirror backend DTOs one-to-one in `src/types/*.ts`. Keep field
