@@ -1,4 +1,5 @@
 import {type FormEvent, useCallback, useEffect, useRef, useState} from 'react';
+import {Link} from 'react-router-dom';
 import {API_CONFIG, apiFetch, getPayPageUrl} from '../../config/api';
 import {useToast} from '../../components/ToastContext';
 import {Drawer, DrawerSection, Field, Notice, Tag} from '../../ui/components';
@@ -14,6 +15,7 @@ import {
 } from '../../ui/format';
 import {getResponseErrorMessage} from '../../utils/errors';
 import type {BankSenderResponse} from '../../types/bankPayment';
+import type {InvoiceFilterRequest, InvoiceResponse} from '../../types/invoice';
 import type {MembershipCreateRequest, MembershipResponse} from '../../types/membership';
 import type {SubscriptionServiceResponse} from '../../types/subscription';
 import type {
@@ -22,7 +24,7 @@ import type {
     SubscriberResponse,
     UnpaidInvoiceDto
 } from '../../types/subscriber';
-import {evenShare, getJson} from './people';
+import {archivedSince, evenShare, getJson} from './people';
 
 interface Props {
     subscriber: SubscriberResponse;
@@ -63,6 +65,40 @@ const MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
 const membershipRange = (membership: MembershipResponse) =>
     membership.endMonth ? formatPeriod(membership.startMonth, membership.endMonth) : `since ${formatMonth(membership.startMonth)}`;
 
+/** "Netflix", "Netflix and Spotify", "Netflix, Spotify and YouTube". */
+const joinNames = (names: string[]) =>
+    names.length <= 1 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+
+/** "Archived on 1 Aug 2026. Their Netflix membership ended in Jul 2026 and the last invoice was paid on 3 Aug 2026." */
+const archivedSentence = (subscriber: SubscriberResponse) => {
+    const services = subscriber.formerServices;
+    const membership = subscriber.lastMembershipEndMonth
+        ? `Their ${joinNames(services)} ${services.length > 1 ? 'memberships' : 'membership'} ended in ${formatMonth(subscriber.lastMembershipEndMonth)}`
+        : 'They never had a membership';
+    const invoice = subscriber.billingExempt
+        ? 'their invoices are created already paid'
+        : subscriber.lastInvoicePaidAt
+            ? `the last invoice was paid on ${formatInstantDate(subscriber.lastInvoicePaidAt)}`
+            : 'they never had an invoice to pay';
+    return `Archived on ${formatInstantDate(archivedSince(subscriber))}. ${membership} and ${invoice}.`;
+};
+
+/** Paid invoices, newest first, for an archived person's invoice line. */
+const fetchPaidInvoices = async (subscriberId: string): Promise<InvoiceResponse[]> => {
+    const request: InvoiceFilterRequest = {subscriberId, status: 'PAID'};
+    const response = await apiFetch(`${API_CONFIG.INVOICES_URL}/filter`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(request)
+    });
+    if (!response.ok) throw new Error(await getResponseErrorMessage(response, 'Could not load invoices'));
+    const invoices = await response.json() as InvoiceResponse[];
+    return invoices.sort((a, b) => Date.parse(b.statusChangedAt) - Date.parse(a.statusChangedAt));
+};
+
+const invoiceMonth = (invoice: InvoiceResponse) =>
+    formatMonth(invoice.origin === 'MANUAL' ? invoice.invoiceDate.slice(0, 7) : invoice.toMonth);
+
 const invoicePeriod = (invoice: UnpaidInvoiceDto) =>
     invoice.origin === 'SUBSCRIPTION_LEDGER' ? formatPeriod(invoice.fromMonth, invoice.toMonth) : 'Manual invoice';
 
@@ -85,6 +121,19 @@ export default function SubscriberDetailDrawer({
     /** The archived person's "Add membership" form; null while closed. */
     const [joinForm, setJoinForm] = useState<{ serviceId: string; startMonth: string } | null>(null);
     const [joinError, setJoinError] = useState<string | null>(null);
+    /** An archived person's paid invoices; null while loading or when not archived. */
+    const [paidInvoices, setPaidInvoices] = useState<InvoiceResponse[] | null>(null);
+
+    useEffect(() => {
+        if (!subscriber.archived) return;
+        let current = true;
+        fetchPaidInvoices(subscriber.id)
+            .then((invoices) => current && setPaidInvoices(invoices))
+            .catch(() => current && setPaidInvoices([]));
+        return () => {
+            current = false;
+        };
+    }, [subscriber.id, subscriber.archived]);
     const includeCredit = useRef(false);
 
     const loadDetails = useCallback(async () => {
@@ -290,32 +339,40 @@ export default function SubscriberDetailDrawer({
                     <DrawerSection>
                         <span className="sub-detail-email">{subscriber.email}</span>
                         <span className="sub-detail-exempt"><Tag tone="grey">Archived</Tag></span>
-                        <Notice tone="grey">
-                            On no service
-                            {subscriber.lastMembershipEndMonth && ` since ${formatMonth(subscriber.lastMembershipEndMonth)}`},
-                            owes nothing and holds no credit, so they are out of the main list. Adding a membership
-                            moves them back to Active.
-                        </Notice>
-                        {joinForm === null ? (
-                            <div className="sub-detail-actions">
-                                <button
-                                    type="button"
-                                    className="ui-btn is-primary is-small"
-                                    onClick={() => {
-                                        setJoinError(null);
-                                        setJoinForm({serviceId: '', startMonth: currentMonth()});
-                                    }}
-                                    disabled={busy !== null}
-                                >
-                                    Add membership
-                                </button>
-                                <button type="button" className="ui-btn is-small" onClick={copyPayLink} disabled={!details}>
-                                    Copy pay link
-                                </button>
-                                <button type="button" className="ui-btn is-small sub-edit-btn" onClick={onEdit} disabled={busy !== null}>
-                                    Edit
-                                </button>
+                        <p className="sub-archived-why">{archivedSentence(subscriber)}</p>
+                        <div className="sub-figures">
+                            <div className="sub-figure">
+                                <span className="ui-label">Owes</span>
+                                <span className="sub-figure-value">{formatMoney(details?.totalAmountOwed ?? 0)}</span>
                             </div>
+                            <div className="sub-figure">
+                                <span className="ui-label">Balance</span>
+                                <span className="sub-figure-value">{formatMoney(balance)}</span>
+                            </div>
+                        </div>
+                        {joinForm === null ? (
+                            <>
+                                <div className="sub-detail-actions">
+                                    <button
+                                        type="button"
+                                        className="ui-btn is-primary is-small"
+                                        onClick={() => {
+                                            setJoinError(null);
+                                            setJoinForm({serviceId: '', startMonth: currentMonth()});
+                                        }}
+                                        disabled={busy !== null}
+                                    >
+                                        Add membership
+                                    </button>
+                                    <button type="button" className="ui-btn is-small" onClick={onEdit} disabled={busy !== null}>
+                                        Edit
+                                    </button>
+                                    <button type="button" className="ui-btn is-small sub-edit-btn" onClick={copyPayLink} disabled={!details}>
+                                        Copy pay link
+                                    </button>
+                                </div>
+                                <span className="sub-muted">Adding a membership moves them back to Active.</span>
+                            </>
                         ) : (
                             <form className="sub-join" onSubmit={addMembership} noValidate>
                                 {joinError && <Notice tone="red">{joinError}</Notice>}
@@ -375,10 +432,15 @@ export default function SubscriberDetailDrawer({
 
                     <DrawerSection title="Invoices">
                         <span className="sub-muted">
-                            {subscriber.lastInvoicePaidAt
-                                ? `All paid, the last on ${formatInstantDate(subscriber.lastInvoicePaidAt)}.`
-                                : 'Nothing open.'}
+                            {paidInvoices === null
+                                ? 'Loading…'
+                                : paidInvoices.length === 0
+                                    ? 'No invoices yet.'
+                                    : `All ${paidInvoices.length} paid · last: ${invoiceMonth(paidInvoices[0])}, ${formatMoney(paidInvoices[0].totalAmount)}`}
                         </span>
+                        <Link to={`/admin/invoices?subscriber=${subscriber.id}`} className="ui-link-btn sub-archived-link">
+                            See their invoices →
+                        </Link>
                     </DrawerSection>
                 </>
             ) : (
@@ -505,7 +567,8 @@ export default function SubscriberDetailDrawer({
                 ))}
                 {subscriber.archived && (
                     <span className="sub-muted">
-                        Their transfers still match automatically, and they can still sign in to their cabinet.
+                        Transfers from them still match automatically. The money lands on their balance and they show
+                        as Holds credit in Active. They can still sign in to their cabinet.
                     </span>
                 )}
             </DrawerSection>

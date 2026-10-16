@@ -3,7 +3,9 @@
  */
 import {API_CONFIG, apiFetch} from '../../config/api';
 import {getResponseErrorMessage} from '../../utils/errors';
+import {formatInstantDate} from '../../ui/format';
 import type {MembershipResponse} from '../../types/membership';
+import type {SubscriberResponse} from '../../types/subscriber';
 import type {SubscriptionServiceResponse} from '../../types/subscription';
 
 export async function getJson<T>(url: string, fallback: string): Promise<T> {
@@ -60,3 +62,24 @@ export const parseAmount = (text: string): number | null => {
     const value = Number(cleaned);
     return Number.isFinite(value) ? value : null;
 };
+
+/**
+ * When someone became archived, as an instant: the later of the first day after
+ * their last membership month and their last paid invoice; when they have
+ * neither, the day they were added.
+ */
+export const archivedSince = (subscriber: SubscriberResponse): string => {
+    const candidates: string[] = [];
+    if (subscriber.lastMembershipEndMonth) {
+        const [year, month] = subscriber.lastMembershipEndMonth.split('-').map(Number);
+        const next = month === 12 ? `${year + 1}-01` : `${year}-${String(month + 1).padStart(2, '0')}`;
+        // Midday UTC is the same calendar day in Kyiv whatever the offset.
+        candidates.push(`${next}-01T12:00:00Z`);
+    }
+    if (subscriber.lastInvoicePaidAt) candidates.push(subscriber.lastInvoicePaidAt);
+    if (candidates.length === 0) return subscriber.createdAt;
+    return candidates.reduce((latest, next) => (Date.parse(next) > Date.parse(latest) ? next : latest));
+};
+
+/** An instant → "Jul 2026" in Kyiv. */
+export const instantMonth = (instant: string) => formatInstantDate(instant).split(' ').slice(1).join(' ');

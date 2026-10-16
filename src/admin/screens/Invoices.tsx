@@ -1,4 +1,5 @@
 import {type ReactNode, useCallback, useEffect, useMemo, useState} from 'react';
+import {useSearchParams} from 'react-router-dom';
 import {useToast} from '../../components/ToastContext';
 import {API_CONFIG} from '../../config/api';
 import {EmptyState, Money, PageHeader, Segmented, TableSkeleton, Tag} from '../../ui/components';
@@ -97,7 +98,9 @@ export default function Invoices() {
     const [suggestion, setSuggestion] = useState<InvoiceSuggestion | null>(null);
 
     const [status, setStatus] = useState<StatusFilter>('ALL');
-    const [subscriberId, setSubscriberId] = useState('');
+    // "?subscriber=<id>" opens the list filtered to one person, e.g. from their drawer.
+    const [searchParams] = useSearchParams();
+    const [subscriberId, setSubscriberId] = useState(() => searchParams.get('subscriber') ?? '');
     const [origin, setOrigin] = useState<'' | InvoiceOrigin>('');
     const [dateFilter, setDateFilter] = useState<DateFilter>('any');
     const [customFrom, setCustomFrom] = useState('');

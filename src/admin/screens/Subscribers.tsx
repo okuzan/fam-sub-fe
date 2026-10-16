@@ -8,7 +8,7 @@ import type {FinanceSummary} from '../../types/finance';
 import type {MembershipResponse} from '../../types/membership';
 import type {SubscriberResponse} from '../../types/subscriber';
 import type {SubscriptionServiceResponse} from '../../types/subscription';
-import {activeMemberCounts, getAllMemberships, getJson, getServices, isActiveIn, sortByName} from './people';
+import {activeMemberCounts, archivedSince, getAllMemberships, getJson, getServices, isActiveIn, sortByName} from './people';
 import SubscriberDetailDrawer from './SubscriberDetailDrawer';
 import SubscriberFormDrawer from './SubscriberFormDrawer';
 import './Subscribers.css';
@@ -117,7 +117,12 @@ export default function Subscribers() {
         ? rows.filter((row) => `${row.subscriber.name} ${row.subscriber.surname ?? ''}`.toLocaleLowerCase().includes(query))
         : rows;
     const activeRows = searched.filter((row) => !row.subscriber.archived);
-    const archivedRows = searched.filter((row) => row.subscriber.archived);
+    // Most recently archived first.
+    const archivedRows = searched
+        .filter((row) => row.subscriber.archived)
+        .map((row) => ({row, since: Date.parse(archivedSince(row.subscriber))}))
+        .sort((a, b) => b.since - a.since)
+        .map(({row}) => row);
     const archivedTotal = rows.filter((row) => row.subscriber.archived).length;
     // A search in the main list also finds archived people, tagged Archived, after everyone else.
     const visible = view === 'archived'
@@ -176,6 +181,7 @@ export default function Subscribers() {
                             {value: 'exempt', label: 'Exempt', count: countOf('exempt')}
                         ]}
                     />}
+                    {view === 'archived' && <span className="ui-filter-note">Most recently archived first</span>}
                 </div>
 
                 {loading ? (
@@ -219,7 +225,11 @@ export default function Subscribers() {
                                         {subscriber.formerServices.length > 0 ? subscriber.formerServices.join(', ') : 'Never on a service'}
                                     </td>
                                     <td className="sub-services">{formatMonth(subscriber.lastMembershipEndMonth)}</td>
-                                    <td className="is-num sub-services">{formatInstantDate(subscriber.lastInvoicePaidAt)}</td>
+                                    <td className="is-num sub-services">
+                                        {subscriber.billingExempt
+                                            ? 'Exempt · created paid'
+                                            : formatInstantDate(subscriber.lastInvoicePaidAt)}
+                                    </td>
                                 </tr>
                             ))}
                             </tbody>
