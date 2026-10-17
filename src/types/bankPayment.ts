@@ -72,6 +72,10 @@ export interface BankSyncResult {
     appliedCount: number;
     needsReviewCount: number;
     ignoredCount: number;
+    /** Card payments added to a subscription's charge. */
+    chargedCount: number;
+    /** Card payments to a known merchant waiting on the card charges page. */
+    chargeReviewCount: number;
     syncedTo: string;
 }
 

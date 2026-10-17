@@ -4,6 +4,7 @@ import {API_CONFIG, apiFetch} from '../config/api';
 import {currentMonth} from '../ui/format';
 import {useEscapeClose} from '../utils/useEscapeClose';
 import type {BankPaymentsOverview, BankSyncStatus} from '../types/bankPayment';
+import type {BankChargesOverview} from '../types/bankCharge';
 import type {FinanceSummary} from '../types/finance';
 import type {SubscriptionServiceResponse} from '../types/subscription';
 import {getAllMemberships, isActiveIn} from './screens/people';
@@ -35,6 +36,7 @@ const NAV_GROUPS: NavGroup[] = [
         label: 'Billing',
         items: [
             {name: 'Bank payments', path: '/admin/bank-payments', badge: (c) => c.bankReview},
+            {name: 'Card charges', path: '/admin/card-charges', badge: (c) => c.cardChargeReview},
             {name: 'Invoices', path: '/admin/invoices', count: (c) => c.unpaidInvoices},
             {name: 'Ledger', path: '/admin/ledger'},
             {name: 'Charges', path: '/admin/charges'},
@@ -75,8 +77,9 @@ interface LoadedCounts {
 }
 
 const loadCounts = async (): Promise<LoadedCounts> => {
-    const [bank, finance, subscribers, services] = await Promise.all([
+    const [bank, cardCharges, finance, subscribers, services] = await Promise.all([
         fetchJson<BankPaymentsOverview>(`${API_CONFIG.ADMIN_BANK_PAYMENTS_URL}?status=UNMATCHED&limit=500`),
+        fetchJson<BankChargesOverview>(`${API_CONFIG.ADMIN_BANK_CHARGES_URL}?status=UNMATCHED&limit=500`),
         fetchJson<FinanceSummary>(API_CONFIG.ADMIN_FINANCE_SUMMARY_URL),
         fetchJson<unknown[]>(API_CONFIG.SUBSCRIBERS_URL),
         fetchJson<SubscriptionServiceResponse[]>(API_CONFIG.SUBSCRIPTION_SERVICES_URL),
@@ -87,6 +90,7 @@ const loadCounts = async (): Promise<LoadedCounts> => {
     return {
         counts: {
             bankReview: bank?.transactions.length,
+            cardChargeReview: cardCharges?.debits.length,
             unpaidInvoices: finance?.unpaidInvoiceCount,
             subscribers: subscribers?.length,
             activeMemberships: memberships?.filter((m) => isActiveIn(m, month)).length,

@@ -112,12 +112,15 @@ export default function BankPayments() {
             const response = await apiFetch(`${API_CONFIG.ADMIN_BANK_PAYMENTS_URL}/sync`, {method: 'POST'});
             if (response.ok) {
                 const result: BankSyncResult = await response.json();
+                const cardNote = result.chargedCount + result.chargeReviewCount > 0
+                    ? ` · card: ${result.chargedCount} charged, ${result.chargeReviewCount} to review`
+                    : '';
                 if (result.importedCount === 0) {
-                    showSuccess('No new transfers', `Read up to ${formatTime(result.syncedTo)}`);
+                    showSuccess('No new transfers', `Read up to ${formatTime(result.syncedTo)}${cardNote}`);
                 } else {
                     showSuccess(
                         plural(result.importedCount, 'new transfer'),
-                        `${result.appliedCount} applied · ${result.needsReviewCount} to review · ${result.ignoredCount} ignored`
+                        `${result.appliedCount} applied · ${result.needsReviewCount} to review · ${result.ignoredCount} ignored${cardNote}`
                     );
                 }
                 await afterChange();

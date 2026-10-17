@@ -5,6 +5,7 @@ export interface NavCounts {
     /** Worklist items; set by the Overview once it has computed them. */
     overview?: number;
     bankReview?: number;
+    cardChargeReview?: number;
     unpaidInvoices?: number;
     subscribers?: number;
     activeMemberships?: number;

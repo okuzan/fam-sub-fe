@@ -22,6 +22,7 @@ export const API_CONFIG = {
     ADMIN_INVITES_URL: `${API_BASE_URL}/admin/invites`,
     ADMIN_FINANCE_SUMMARY_URL: `${API_BASE_URL}/admin/finance/summary`,
     ADMIN_BANK_PAYMENTS_URL: `${API_BASE_URL}/admin/bank-payments`,
+    ADMIN_BANK_CHARGES_URL: `${API_BASE_URL}/admin/bank-charges`,
     PUBLIC_PAY_URL: `${API_BASE_URL}/public/pay`,
     ADMIN_INVITES_ACCEPT_URL: `${API_BASE_URL}/admin-invites/accept`,
     SUBSCRIBER_CABINET_URL: `${API_BASE_URL}/subscriber/cabinet`,

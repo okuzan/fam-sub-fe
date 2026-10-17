@@ -14,11 +14,12 @@ import './Services.css';
 interface ServiceForm {
     name: string;
     price: string;
+    fixedMonthlyCharge: boolean;
 }
 
 type FormErrors = Partial<Record<keyof ServiceForm, string>>;
 
-const EMPTY_FORM: ServiceForm = {name: '', price: ''};
+const EMPTY_FORM: ServiceForm = {name: '', price: '', fixedMonthlyCharge: false};
 
 function validate(form: ServiceForm): FormErrors {
     const errors: FormErrors = {};
@@ -67,7 +68,9 @@ export default function Services() {
 
     const openForm = (service: SubscriptionServiceResponse | null) => {
         setEditing(service);
-        setForm(service ? {name: service.name, price: String(service.price).replace('.', ',')} : EMPTY_FORM);
+        setForm(service
+            ? {name: service.name, price: String(service.price).replace('.', ','), fixedMonthlyCharge: service.fixedMonthlyCharge}
+            : EMPTY_FORM);
         setErrors({});
         setServerError(null);
         setFormOpen(true);
@@ -88,7 +91,8 @@ export default function Services() {
 
         const request: SubscriptionServiceCreateRequest = {
             name: form.name.trim(),
-            price: parseAmount(form.price) ?? 0
+            price: parseAmount(form.price) ?? 0,
+            fixedMonthlyCharge: form.fixedMonthlyCharge
         };
         setSaving(true);
         try {
@@ -172,7 +176,10 @@ export default function Services() {
                             <tbody>
                             {services.map((service) => (
                                 <tr key={service.id}>
-                                    <td className="svc-name">{service.name}</td>
+                                    <td className="svc-name">
+                                        {service.name}
+                                        {service.fixedMonthlyCharge && <span className="ui-cell-sub">Charged monthly at this price</span>}
+                                    </td>
                                     <td className="is-num">{formatMoney(service.price)}</td>
                                     <td className="is-num">{memberCounts.get(service.id) ?? 0}</td>
                                     <td className="is-actions">
@@ -235,6 +242,18 @@ export default function Services() {
                             placeholder="0,00"
                         />
                     </Field>
+                    <label className="ui-checkbox">
+                        <input
+                            type="checkbox"
+                            checked={form.fixedMonthlyCharge}
+                            onChange={(event) => setForm({...form, fixedMonthlyCharge: event.target.checked})}
+                        />
+                        Charge this price on its own every month
+                    </label>
+                    <span className="ui-muted">
+                        For a bill fixed in hryvnias that the card rules don’t catch, like YouTube through Google.
+                        A month that already has a charge is left alone.
+                    </span>
                 </form>
             </Drawer>
         </>

@@ -3,6 +3,7 @@ import AdminLayout from '../admin/AdminLayout';
 import Overview from '../admin/screens/Overview';
 import Finance from '../admin/screens/Finance';
 import BankPayments from '../admin/screens/BankPayments';
+import CardCharges from '../admin/screens/CardCharges';
 import Invoices from '../admin/screens/Invoices';
 import Ledger from '../admin/screens/Ledger';
 import Charges from '../admin/screens/Charges';
@@ -44,6 +45,8 @@ export default function AdminDashboard({
                 return <Finance/>;
             case '/admin/bank-payments':
                 return <BankPayments/>;
+            case '/admin/card-charges':
+                return <CardCharges/>;
             case '/admin/invoices':
                 return <Invoices/>;
             case '/admin/ledger':
