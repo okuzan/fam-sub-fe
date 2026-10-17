@@ -140,8 +140,11 @@
 }
 
 .pay-bank {
-  height: 48px;
+  min-height: 72px;
+  padding: 10px 4px;
   display: flex;
+  flex-direction: column;
+  gap: 6px;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--line-strong);
@@ -151,6 +154,20 @@
   color: var(--ink);
   text-decoration: none;
   text-align: center;
+}
+
+.pay-bank-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 700 15px/1 var(--sans);
+}
+
+.pay-bank-name {
+  font: 600 12.5px/1.15 var(--sans);
 }
 
 .pay-bank:active {

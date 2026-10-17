@@ -5,29 +5,8 @@ import {API_CONFIG, apiFetch} from '../config/api';
 import {getResponseErrorMessage} from '../utils/errors';
 import {formatMoney, formatMonthName, formatPeriod, plural} from '../ui/format';
 import type {PayPageInvoice, PayPageResponse} from '../types/bankPayment';
+import {bankUrl, banksFor, iosStoreFallback, STORE_FALLBACK_DELAY_MS} from './payBanks';
 import './PayPage.css';
-
-/*
- * Banking apps that claim https://bank.gov.ua/qr/ links, from NBU's own
- * assetlinks.json. On Android an intent:// URL can name the app, so each gets
- * a button. iOS cannot target an app, so there the one link opens whichever
- * registered app iOS picks.
- */
-const ANDROID_BANKS = [
-    {name: 'monobank', packageName: 'com.ftband.mono'},
-    {name: 'Privat24', packageName: 'ua.privatbank.ap24'},
-    {name: 'ПУМБ', packageName: 'com.fuib.android.spot.online'},
-    {name: 'A-Bank', packageName: 'ua.com.abank'},
-    {name: 'Raiffeisen', packageName: 'ua.raiffeisen.myraif'},
-    {name: 'izibank', packageName: 'ua.izibank.app'}
-];
-
-const androidBankUrl = (nbuQrUrl: string, packageName: string) => {
-    const withoutScheme = nbuQrUrl.replace(/^https:\/\//, '');
-    const storeUrl = `https://play.google.com/store/apps/details?id=${packageName}`;
-    return `intent://${withoutScheme}#Intent;scheme=https;package=${packageName};` +
-        `S.browser_fallback_url=${encodeURIComponent(storeUrl)};end`;
-};
 
 type Platform = 'android' | 'ios' | 'desktop';
 
@@ -156,6 +135,29 @@ export default function PayPage() {
         } catch {
             setCopied(null);
         }
+    };
+
+    /*
+     * An iOS URL scheme gives no signal when the app is missing, so if the
+     * page is still on screen after the delay, send them to the App Store.
+     * Safari's "Open in …?" sheet keeps the page visible, hence the long delay.
+     */
+    const openStoreIfStillHere = (storeUrl: string | null) => {
+        if (!storeUrl) return;
+        const timer = window.setTimeout(() => {
+            cleanup();
+            if (document.visibilityState === 'visible') window.location.assign(storeUrl);
+        }, STORE_FALLBACK_DELAY_MS);
+        const onHide = () => {
+            if (document.visibilityState !== 'visible') cleanup();
+        };
+        const cleanup = () => {
+            window.clearTimeout(timer);
+            document.removeEventListener('visibilitychange', onHide);
+            window.removeEventListener('pagehide', cleanup);
+        };
+        document.addEventListener('visibilitychange', onHide);
+        window.addEventListener('pagehide', cleanup);
     };
 
     if (!payToken && !error) {
@@ -307,6 +309,9 @@ export default function PayPage() {
                             {detailsBlock}
                             {notice}
                             <a className="pay-text-link" href={qrUrl!}>Open in your banking app instead →</a>
+                            <a className="pay-text-link" href="https://next.privat24.ua" target="_blank" rel="noopener noreferrer">
+                                Pay in Privat24 on the web →
+                            </a>
                         </div>
                     </div>
                 </section>
@@ -333,13 +338,25 @@ export default function PayPage() {
                     </div>
                 )}
 
-                {qrUrl && platform === 'android' && (
+                {qrUrl && platform !== 'desktop' && (
                     <div className="pay-banks-block">
                         <span className="pay-label">Or open a specific bank</span>
                         <div className="pay-banks">
-                            {ANDROID_BANKS.map((bank) => (
-                                <a key={bank.packageName} className="pay-bank" href={androidBankUrl(qrUrl, bank.packageName)}>
-                                    {bank.name}
+                            {banksFor(platform).map((bank) => (
+                                <a
+                                    key={bank.code}
+                                    className="pay-bank"
+                                    href={bankUrl(bank, platform, qrUrl)}
+                                    onClick={() => openStoreIfStillHere(iosStoreFallback(bank))}
+                                >
+                                    <span
+                                        className="pay-bank-badge"
+                                        style={{color: bank.color, background: bank.background}}
+                                        aria-hidden="true"
+                                    >
+                                        {bank.letter}
+                                    </span>
+                                    <span className="pay-bank-name">{bank.name}</span>
                                 </a>
                             ))}
                         </div>
