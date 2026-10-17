@@ -102,6 +102,8 @@ export interface InvoiceGenerationResult {
     invoicesCreated: number;
     ledgerEntriesAssigned: number;
     totalAmount: number;
+    /** Invoices their balance covered in full, created already paid. */
+    paidFromBalanceCount: number;
     items: InvoiceGenerationItemResult[];
 }
 
@@ -115,6 +117,8 @@ export interface InvoiceGenerationItemResult {
     ledgerEntryCount: number;
     emailRequested: boolean;
     emailSent: boolean;
+    /** Created already paid from their balance; its email is a receipt. */
+    paidFromBalance: boolean;
     message: string;
 }
 

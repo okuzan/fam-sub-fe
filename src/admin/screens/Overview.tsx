@@ -319,7 +319,10 @@ export default function Overview() {
                     });
                     showSuccess(
                         `Generated ${plural(result.invoicesCreated, 'invoice')}`,
-                        `${formatMoney(result.totalAmount)} from ${plural(result.ledgerEntriesAssigned, 'ledger entry', 'ledger entries')}`
+                        [
+                            `${formatMoney(result.totalAmount)} from ${plural(result.ledgerEntriesAssigned, 'ledger entry', 'ledger entries')}`,
+                            result.paidFromBalanceCount > 0 ? `${result.paidFromBalanceCount} paid from credit` : null
+                        ].filter(Boolean).join(' · ')
                     );
                 }
             });

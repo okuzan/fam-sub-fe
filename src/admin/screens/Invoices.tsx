@@ -76,8 +76,20 @@ type ReferenceData = [Result<SubscriberResponse[]>, Result<InvoiceSuggestion>];
 const fetchInvoices = (request: InvoiceFilterRequest) =>
     sendJson<InvoiceResponse[]>(`${API_CONFIG.INVOICES_URL}/filter`, 'POST', request, 'Could not load the invoices.');
 
+/** Matches InvoiceService.PAID_FROM_CREDIT_NOTE: created already paid from the subscriber's credit. */
+const PAID_FROM_CREDIT_NOTE = 'Paid from credit when created';
+
 const fetchDrafts = () =>
     sendJson<InvoiceResponse[]>(`${API_CONFIG.INVOICES_URL}/filter`, 'POST', {status: 'DRAFT'}, 'Could not load the drafts.');
+
+/** Invoices their credit paid at generation whose receipt "Email all drafts" still has to send. */
+const fetchUnsentReceipts = async () => {
+    const result = await sendJson<InvoiceResponse[]>(`${API_CONFIG.INVOICES_URL}/filter`, 'POST', {status: 'PAID'},
+        'Could not load the receipts.');
+    return 'data' in result && Array.isArray(result.data)
+        ? result.data.filter((invoice) => invoice.notes === PAID_FROM_CREDIT_NOTE && !invoice.emailSent)
+        : [];
+};
 
 const fetchReferenceData = (): Promise<ReferenceData> => Promise.all([
     getJson<SubscriberResponse[]>(API_CONFIG.SUBSCRIBERS_URL, 'Could not load subscribers.'),
@@ -98,6 +110,7 @@ export default function Invoices() {
 
     const [invoices, setInvoices] = useState<InvoiceResponse[] | null>(null);
     const [drafts, setDrafts] = useState<InvoiceResponse[]>([]);
+    const [receipts, setReceipts] = useState<InvoiceResponse[]>([]);
     const [subscribers, setSubscribers] = useState<SubscriberResponse[]>([]);
     const [suggestion, setSuggestion] = useState<InvoiceSuggestion | null>(null);
 
@@ -137,6 +150,7 @@ export default function Invoices() {
 
     const applyDrafts = useCallback((result: Result<InvoiceResponse[]>) => {
         if ('data' in result) setDrafts(Array.isArray(result.data) ? result.data : []);
+        void fetchUnsentReceipts().then(setReceipts);
     }, []);
 
     const applyReference = useCallback(([subscriberResult, suggestionResult]: ReferenceData) => {
@@ -251,12 +265,16 @@ export default function Invoices() {
     };
 
     const handleEmailDrafts = async () => {
-        if (drafts.length === 0) return;
+        const toEmail = drafts.length + receipts.length;
+        if (toEmail === 0) return;
         const total = drafts.reduce((sum, invoice) => sum + Number(invoice.totalAmount), 0);
         const shown = drafts.slice(0, 8);
         const text: ReactNode = (
             <>
                 Each subscriber gets their invoice with a pay link, and the drafts become sent. {formatMoney(total)} in all.
+                {receipts.length > 0 && (
+                    <> Plus {plural(receipts.length, 'receipt')} for invoices their credit already paid.</>
+                )}
                 <span className="inv-confirm-list">
                     {shown.map((invoice) => (
                         <span key={invoice.id} className="inv-confirm-row">
@@ -271,9 +289,9 @@ export default function Invoices() {
             </>
         );
         const {confirmed} = await confirm({
-            title: `Email ${plural(drafts.length, 'draft invoice')}?`,
+            title: drafts.length > 0 ? `Email ${plural(drafts.length, 'draft invoice')}?` : `Email ${plural(receipts.length, 'receipt')}?`,
             text,
-            confirmLabel: `Email ${drafts.length}`,
+            confirmLabel: `Email ${toEmail}`,
             tone: 'primary',
         });
         if (!confirmed) return;
@@ -356,8 +374,8 @@ export default function Invoices() {
             />
             <div className="inv-secondary-actions">
                 <button type="button" className="ui-btn is-small" onClick={handleEmailDrafts}
-                        disabled={drafts.length === 0 || bulkBusy !== null}>
-                    {bulkBusy === 'email' ? 'Emailing…' : `Email all drafts (${drafts.length})`}
+                        disabled={drafts.length + receipts.length === 0 || bulkBusy !== null}>
+                    {bulkBusy === 'email' ? 'Emailing…' : `Email all drafts (${drafts.length + receipts.length})`}
                 </button>
                 <button type="button" className="ui-btn is-small" onClick={handlePayDrafts}
                         disabled={drafts.length === 0 || bulkBusy !== null}>

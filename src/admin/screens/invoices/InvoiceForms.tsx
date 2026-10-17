@@ -60,9 +60,13 @@ export function GenerateDrawer({suggestion, subscribers, onClose, onDone}: Gener
         const exemptIds = new Set(subscribers.filter((s) => s.billingExempt).map((s) => s.id));
         const exempt = data.items.filter((item) => exemptIds.has(item.subscriberId)).length;
         const emailed = data.items.filter((item) => item.emailSent).length;
+        const covered = data.paidFromBalanceCount;
         const parts = [
-            sendEmail ? `${emailed} of ${data.items.length - exempt} emailed` : plural(data.invoicesCreated - exempt, 'draft'),
+            sendEmail
+                ? `${emailed} of ${data.items.length - exempt} emailed`
+                : plural(data.invoicesCreated - exempt - covered, 'draft'),
         ];
+        if (covered > 0) parts.push(`${covered} paid from credit`);
         if (exempt > 0) parts.push(`${exempt} paid for exempt family`);
         parts.push(formatMoney(data.totalAmount));
         const period = fromMonth === toMonth ? formatMonthLong(fromMonth) : formatPeriod(fromMonth, toMonth);
