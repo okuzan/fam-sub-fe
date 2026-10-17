@@ -459,7 +459,8 @@ export default function SubscriberDetailDrawer({
                             </div>
                             <div className="sub-figure">
                                 <span className="ui-label">Balance</span>
-                                <span className={`sub-figure-value ${balance > 0 ? 'is-green' : ''}`}>{formatMoney(balance)}</span>
+                                <span className={`sub-figure-value ${balance > 0 && owed <= 0 ? 'is-green' : ''}`}>{formatMoney(balance)}</span>
+                                {balance > 0 && owed > 0 && <span className="sub-figure-note">Counted in owes</span>}
                             </div>
                         </div>
                         <div className="sub-detail-actions">

@@ -36,7 +36,8 @@ const statusOf = (subscriber: SubscriberResponse, owes: number, onService: boole
 
 const matches = (row: Row, filter: Filter) => {
     if (filter === 'owes') return row.owes > 0;
-    if (filter === 'credit') return row.subscriber.balance > 0;
+    // Owes is already net of the balance, so credit counts only when nothing is left owing.
+    if (filter === 'credit') return row.owes <= 0 && row.subscriber.balance > 0;
     if (filter === 'exempt') return row.subscriber.billingExempt;
     return true;
 };
@@ -265,9 +266,17 @@ export default function Subscribers() {
                                     <td className={`is-num ${owes > 0 ? '' : 'sub-zero'}`}>
                                         {debts !== null && owes > 0 ? formatMoney(owes) : '—'}
                                     </td>
-                                    <td className={`is-num ${subscriber.balance > 0 ? 'sub-credit' : 'sub-zero'}`}>
-                                        {subscriber.balance > 0 ? formatMoney(subscriber.balance) : '—'}
-                                    </td>
+                                    {subscriber.balance > 0 && owes > 0 ? (
+                                        // Too small to pay any one invoice, so it sits on the balance; Owes already subtracts it.
+                                        <td className="is-num sub-zero">
+                                            {formatMoney(subscriber.balance)}
+                                            <span className="ui-cell-sub">counted in owes</span>
+                                        </td>
+                                    ) : (
+                                        <td className={`is-num ${subscriber.balance > 0 ? 'sub-credit' : 'sub-zero'}`}>
+                                            {subscriber.balance > 0 ? formatMoney(subscriber.balance) : '—'}
+                                        </td>
+                                    )}
                                     <td className="is-num"><Tag tone={status.tone}>{status.label}</Tag></td>
                                 </tr>
                             ))}
