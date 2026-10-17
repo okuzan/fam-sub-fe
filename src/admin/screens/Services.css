@@ -28,3 +28,13 @@
     min-height: 44px;
   }
 }
+
+.svc-price-row {
+  display: flex;
+  gap: 8px;
+}
+
+.svc-price-row .ui-input {
+  flex: 1;
+  min-width: 0;
+}

@@ -3,7 +3,7 @@ import {API_CONFIG, apiFetch} from '../../config/api';
 import {useToast} from '../../components/ToastContext';
 import {Drawer, EmptyState, Field, Notice, PageHeader, TableSkeleton} from '../../ui/components';
 import {useConfirm} from '../../ui/confirmContext';
-import {currentMonth, formatMoney, plural} from '../../ui/format';
+import {currentMonth, formatPrice, plural} from '../../ui/format';
 import {getResponseErrorMessage} from '../../utils/errors';
 import {useAdminNav} from '../adminNavContext';
 import type {MembershipResponse} from '../../types/membership';
@@ -16,12 +16,26 @@ import {useSort} from '../../ui/useSort';
 interface ServiceForm {
     name: string;
     price: string;
+    currency: string;
     fixedMonthlyCharge: boolean;
 }
 
 type FormErrors = Partial<Record<keyof ServiceForm, string>>;
 
-const EMPTY_FORM: ServiceForm = {name: '', price: '', fixedMonthlyCharge: false};
+const EMPTY_FORM: ServiceForm = {name: '', price: '', currency: 'USD', fixedMonthlyCharge: false};
+const CURRENCIES = ['USD', 'EUR', 'UAH'];
+
+/** Prices in different currencies don't add up; "$307.99 + €9.99 + ₴897,00". */
+const totalByCurrency = (services: SubscriptionServiceResponse[]) => {
+    const cents = new Map<string, number>();
+    for (const service of services) {
+        cents.set(service.currency, (cents.get(service.currency) ?? 0) + Math.round(Number(service.price) * 100));
+    }
+    return [...cents.entries()]
+        .sort(([a], [b]) => CURRENCIES.indexOf(a) - CURRENCIES.indexOf(b))
+        .map(([currency, total]) => formatPrice(total / 100, currency))
+        .join(' + ');
+};
 
 function validate(form: ServiceForm): FormErrors {
     const errors: FormErrors = {};
@@ -31,6 +45,9 @@ function validate(form: ServiceForm): FormErrors {
     else if (price === null) errors.price = 'Enter a number, e.g. 351,00.';
     else if (price <= 0) errors.price = 'The price must be more than zero.';
     else if (Math.abs(Math.round(price * 100) - price * 100) > 1e-6) errors.price = 'Use at most two decimal places.';
+    if (form.fixedMonthlyCharge && form.currency !== 'UAH') {
+        errors.fixedMonthlyCharge = 'Only a price in hryvnias can be charged on its own.';
+    }
     return errors;
 }
 
@@ -70,13 +87,17 @@ export default function Services() {
         price: (service: SubscriptionServiceResponse) => Number(service.price),
         members: (service: SubscriptionServiceResponse) => memberCounts.get(service.id) ?? 0
     });
-    const totalPrice = services.reduce((sum, service) => sum + Number(service.price), 0);
     const totalMembers = services.reduce((sum, service) => sum + (memberCounts.get(service.id) ?? 0), 0);
 
     const openForm = (service: SubscriptionServiceResponse | null) => {
         setEditing(service);
         setForm(service
-            ? {name: service.name, price: String(service.price).replace('.', ','), fixedMonthlyCharge: service.fixedMonthlyCharge}
+            ? {
+                name: service.name,
+                price: String(service.price).replace('.', ','),
+                currency: service.currency,
+                fixedMonthlyCharge: service.fixedMonthlyCharge
+            }
             : EMPTY_FORM);
         setErrors({});
         setServerError(null);
@@ -99,6 +120,7 @@ export default function Services() {
         const request: SubscriptionServiceCreateRequest = {
             name: form.name.trim(),
             price: parseAmount(form.price) ?? 0,
+            currency: form.currency,
             fixedMonthlyCharge: form.fixedMonthlyCharge
         };
         setSaving(true);
@@ -187,7 +209,7 @@ export default function Services() {
                                         {service.name}
                                         {service.fixedMonthlyCharge && <span className="ui-cell-sub">Charged monthly at this price</span>}
                                     </td>
-                                    <td className="is-num">{formatMoney(service.price)}</td>
+                                    <td className="is-num">{formatPrice(service.price, service.currency)}</td>
                                     <td className="is-num">{memberCounts.get(service.id) ?? 0}</td>
                                     <td className="is-actions">
                                         <button type="button" className="ui-link-btn" onClick={() => openForm(service)}>Edit</button>
@@ -199,7 +221,7 @@ export default function Services() {
                             <tfoot>
                             <tr>
                                 <td className="svc-total-label">{plural(services.length, 'service')}</td>
-                                <td className="is-num">{formatMoney(totalPrice)}</td>
+                                <td className="is-num">{totalByCurrency(services)}</td>
                                 <td className="is-num">{totalMembers}</td>
                                 <td/>
                             </tr>
@@ -238,27 +260,43 @@ export default function Services() {
                         label="Price per month"
                         htmlFor="svc-price"
                         error={errors.price}
-                        hint="The whole bill for the family, in hryvnias."
+                        hint="The plan price as the service states it, e.g. $7.99. What it costs in hryvnias comes from the card each month."
                     >
-                        <input
-                            id="svc-price"
-                            className="ui-input is-money"
-                            inputMode="decimal"
-                            value={form.price}
-                            onChange={(event) => setForm({...form, price: event.target.value})}
-                            placeholder="0,00"
-                        />
+                        <div className="svc-price-row">
+                            <input
+                                id="svc-price"
+                                className="ui-input is-money"
+                                inputMode="decimal"
+                                value={form.price}
+                                onChange={(event) => setForm({...form, price: event.target.value})}
+                                placeholder="0,00"
+                            />
+                            <select
+                                aria-label="Currency"
+                                className="ui-select"
+                                value={form.currency}
+                                onChange={(event) => setForm({
+                                    ...form,
+                                    currency: event.target.value,
+                                    fixedMonthlyCharge: event.target.value === 'UAH' && form.fixedMonthlyCharge
+                                })}
+                            >
+                                {CURRENCIES.map((currency) => <option key={currency} value={currency}>{currency}</option>)}
+                            </select>
+                        </div>
                     </Field>
                     <label className="ui-checkbox">
                         <input
                             type="checkbox"
                             checked={form.fixedMonthlyCharge}
+                            disabled={form.currency !== 'UAH'}
                             onChange={(event) => setForm({...form, fixedMonthlyCharge: event.target.checked})}
                         />
                         Charge this price on its own every month
                     </label>
+                    {errors.fixedMonthlyCharge && <Notice tone="red">{errors.fixedMonthlyCharge}</Notice>}
                     <span className="ui-muted">
-                        For a bill fixed in hryvnias that the card rules don’t catch, like YouTube through Google.
+                        Only for a price in hryvnias that the card rules don’t catch, like YouTube through Google.
                         A month that already has a charge is left alone.
                     </span>
                 </form>

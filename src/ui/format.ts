@@ -105,6 +105,15 @@ export const currentMonth = () => kyivDay(new Date()).slice(0, 7);
 
 export const plural = (count: number, one: string, many = `${one}s`) => `${count} ${count === 1 ? one : many}`;
 
+const CURRENCY_SYMBOLS: Record<string, string> = {USD: '$', EUR: '€'};
+
+/** A price as the merchant states it: "$7.99", "€9.99", hryvnias as everywhere else, "12.00 PLN" otherwise. */
+export const formatPrice = (amount: number | string, currency: string) => {
+    if (currency === 'UAH') return formatMoney(amount);
+    const fixed = Number(amount).toFixed(2);
+    return CURRENCY_SYMBOLS[currency] ? `${CURRENCY_SYMBOLS[currency]}${fixed}` : `${fixed} ${currency}`;
+};
+
 /** "split 4 ways" for an even split, "2/6 share" when members carry different weights. */
 export const shareLabel = (entry: { participantCount: number; shareWeight: number; totalWeight: number }) =>
     entry.totalWeight === entry.participantCount

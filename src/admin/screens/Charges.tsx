@@ -276,6 +276,15 @@ interface ChargeDrawerProps {
 }
 
 function ChargeDrawer({charge, services, charges, defaultServiceId, defaultMonth, onClose, onSaved}: ChargeDrawerProps) {
+    /** The service's latest bill in hryvnias, or its price when that is in hryvnias and it was never billed. */
+    const lastBillInput = (serviceId: string) => {
+        const latest = charges
+            .filter((existing) => existing.subscriptionServiceId === serviceId)
+            .sort((a, b) => b.chargeMonth.localeCompare(a.chargeMonth))[0];
+        if (latest) return amountInput(latest.amount);
+        const service = services.find((candidate) => candidate.id === serviceId);
+        return service?.currency === 'UAH' ? amountInput(service.price) : '';
+    };
     const [form, setForm] = useState<ChargeForm>(() => {
         if (charge) {
             return {
@@ -285,11 +294,10 @@ function ChargeDrawer({charge, services, charges, defaultServiceId, defaultMonth
                 notes: charge.description ?? ''
             };
         }
-        const service = services.find((candidate) => candidate.id === defaultServiceId);
         return {
             serviceId: defaultServiceId,
             month: defaultMonth,
-            amount: service ? amountInput(service.price) : '',
+            amount: lastBillInput(defaultServiceId),
             notes: ''
         };
     });
@@ -332,10 +340,9 @@ function ChargeDrawer({charge, services, charges, defaultServiceId, defaultMonth
     const update = (field: FieldName, value: string) => {
         setForm((current) => {
             const next = {...current, [field]: value};
-            // A new charge usually costs what the service costs: prefill until the admin types an amount.
+            // A new charge usually costs what the last one did: prefill until the admin types an amount.
             if (field === 'serviceId' && !charge && !touched.amount) {
-                const service = services.find((candidate) => candidate.id === value);
-                next.amount = service ? amountInput(service.price) : '';
+                next.amount = lastBillInput(value);
             }
             return next;
         });

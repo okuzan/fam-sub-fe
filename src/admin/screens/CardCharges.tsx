@@ -5,7 +5,7 @@ import {useToast} from '../../components/ToastContext';
 import {useConfirm} from '../../ui/confirmContext';
 import {useAdminNav} from '../adminNavContext';
 import {EmptyState, PageHeader, TableSkeleton, Tabs, Tag, type Tone} from '../../ui/components';
-import {formatInstantDate, formatMoney, formatMonth, formatWhen} from '../../ui/format';
+import {formatInstantDate, formatMoney, formatMonth, formatPrice, formatWhen} from '../../ui/format';
 import type {SubscriptionServiceResponse} from '../../types/subscription';
 import type {
     BankChargeMatchMethod,
@@ -27,14 +27,6 @@ const CURRENCIES = ['USD', 'EUR', 'UAH'];
 const MATCH_TAGS: Record<BankChargeMatchMethod, { label: string; tone: Tone }> = {
     RULE: {label: 'Rule', tone: 'green'},
     ADMIN: {label: 'Admin', tone: 'grey'}
-};
-
-const SYMBOLS: Record<string, string> = {USD: '$', EUR: '€', UAH: '₴'};
-
-/** "$100.00", "€9.99", or "100.00 PLN" for a currency without a symbol here. */
-const formatOriginal = (amount: number, currency: string) => {
-    const fixed = Number(amount).toFixed(2);
-    return SYMBOLS[currency] ? `${SYMBOLS[currency]}${fixed}` : `${fixed} ${currency}`;
 };
 
 const merchantName = (debit: BankDebitResponse) => debit.description ?? debit.merchant;
@@ -156,7 +148,7 @@ export default function CardCharges() {
             const result: BankDebitResponse = await response.json();
             showSuccess(
                 `Charged ${formatMoney(debit.amount)} to ${result.subscriptionServiceName ?? 'the service'}`,
-                [formatMonth(result.chargeMonth), draft.rememberAmount ? `${formatOriginal(debit.originalAmount, debit.currency)} remembered` : null]
+                [formatMonth(result.chargeMonth), draft.rememberAmount ? `${formatPrice(debit.originalAmount, debit.currency)} remembered` : null]
                     .filter(Boolean).join(' · ')
             );
             setDrafts((current) => {
@@ -170,7 +162,7 @@ export default function CardCharges() {
     };
 
     const handleIgnore = async (debit: BankDebitResponse, rememberAmount: boolean) => {
-        const what = `${merchantName(debit)} ${formatOriginal(debit.originalAmount, debit.currency)}`;
+        const what = `${merchantName(debit)} ${formatPrice(debit.originalAmount, debit.currency)}`;
         if (rememberAmount) {
             const {confirmed} = await confirm({
                 title: `Always ignore ${what}?`,
@@ -228,14 +220,14 @@ export default function CardCharges() {
         };
         const response = await post(`${API_CONFIG.ADMIN_BANK_CHARGES_URL}/rules`, request, 'Could not add the rule');
         if (response) {
-            showSuccess('Rule added', `${request.merchant} ${formatOriginal(amount, request.currency)}`);
+            showSuccess('Rule added', `${request.merchant} ${formatPrice(amount, request.currency)}`);
             setRuleForm(EMPTY_RULE);
             await afterChange();
         }
     };
 
     const handleRemoveRule = async (rule: BankMerchantRuleResponse) => {
-        const what = `${rule.merchant} ${formatOriginal(rule.amount, rule.currency)}`;
+        const what = `${rule.merchant} ${formatPrice(rule.amount, rule.currency)}`;
         const {confirmed} = await confirm({
             title: `Remove the rule for ${what}?`,
             text: 'Its next payment waits here for review. Charges already made stay as they are.',
@@ -335,7 +327,7 @@ export default function CardCharges() {
                                 {rules.map((rule) => (
                                     <tr key={rule.id}>
                                         <td className="bank-strong">{rule.merchant}</td>
-                                        <td className="is-num">{formatOriginal(rule.amount, rule.currency)}</td>
+                                        <td className="is-num">{formatPrice(rule.amount, rule.currency)}</td>
                                         <td>
                                             {rule.ignored || !rule.subscriptionServiceName
                                                 ? <span className="ui-faint">Ignored</span>
@@ -409,7 +401,7 @@ interface ReviewCardProps {
 }
 
 function ReviewCard({debit, draft, services, busy, onDraft, onCharge, onIgnore}: ReviewCardProps) {
-    const original = formatOriginal(debit.originalAmount, debit.currency);
+    const original = formatPrice(debit.originalAmount, debit.currency);
     return (
         <article className="bank-card">
             <div className="bank-card-top">
@@ -495,7 +487,7 @@ function DebitTable({list, busyId, onUndo, onOpenTab}: {
                         <tr key={debit.id} className={open ? 'is-clickable' : ''} onClick={open}>
                             <td className="bank-mono-cell">{formatWhen(debit.occurredAt)}</td>
                             <td className="bank-strong">{merchantName(debit)}</td>
-                            <td className="is-num">{formatOriginal(debit.originalAmount, debit.currency)}</td>
+                            <td className="is-num">{formatPrice(debit.originalAmount, debit.currency)}</td>
                             <td className="is-num">{formatMoney(debit.amount)}</td>
                             <td>
                                 {debit.status === 'CHARGED'
