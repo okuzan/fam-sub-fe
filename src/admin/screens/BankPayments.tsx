@@ -15,8 +15,7 @@ import type {
     BankSyncResult,
     BankSyncStatus,
     BankTransactionResponse,
-    BankTransactionStatus
-} from '../../types/bankPayment';
+    BankTransactionStatus, BankPaymentUndoResult} from '../../types/bankPayment';
 import './BankPayments.css';
 import SubscriberOptions from './SubscriberOptions';
 import {primeSubscriberNames, useSubscriberNames} from '../subscriberNames';
@@ -225,6 +224,45 @@ export default function BankPayments() {
         }
     };
 
+    const handleUndo = async (transaction: BankTransactionResponse) => {
+        const who = transaction.subscriberName
+            ? names.full(transaction.subscriberId, transaction.subscriberName)
+            : 'the subscriber';
+        const reopens = transaction.settledInvoiceCount > 0
+            ? ` The ${plural(transaction.settledInvoiceCount, 'invoice')} it paid reopen, and what they took from the balance goes back.`
+            : '';
+        const {confirmed} = await confirm({
+            title: `Undo ${formatMoney(transaction.amount)} applied to ${who}?`,
+            text: `Takes ${formatMoney(transaction.amount)} back off ${who}’s balance.${reopens} ` +
+                'The transfer goes back to Needs review, where you can apply it to someone else or mark it not FamSub money.',
+            confirmLabel: 'Undo payment',
+            tone: 'danger'
+        });
+        if (!confirmed) return;
+        setBusyId(transaction.id);
+        try {
+            const response = await apiFetch(`${API_CONFIG.ADMIN_BANK_PAYMENTS_URL}/${transaction.id}/undo`, {method: 'POST'});
+            if (response.ok) {
+                const result: BankPaymentUndoResult = await response.json();
+                showSuccess(
+                    `Undid ${formatMoney(transaction.amount)} from ${who}`,
+                    [
+                        result.reopenedInvoiceIds.length > 0 ? `${plural(result.reopenedInvoiceIds.length, 'invoice')} reopened` : null,
+                        `balance ${formatMoney(result.balanceAfter)}`
+                    ].filter(Boolean).join(' · ')
+                );
+                await afterChange();
+            } else {
+                showError(await getResponseErrorMessage(response, 'Could not undo the payment'));
+            }
+        } catch (err) {
+            console.error(err);
+            showError('Could not undo the payment');
+        } finally {
+            setBusyId(null);
+        }
+    };
+
     const handleForget = async (sender: BankSenderResponse) => {
         const name = sender.senderName ?? 'this sender';
         const {confirmed} = await confirm({
@@ -298,7 +336,7 @@ export default function BankPayments() {
                                     All {byStatus.APPLIED.length} applied →
                                 </button>
                             </div>
-                            <TransactionTable list={byStatus.APPLIED.slice(0, RECENT_APPLIED)}/>
+                            <TransactionTable list={byStatus.APPLIED.slice(0, RECENT_APPLIED)} busyId={busyId} onUndo={handleUndo}/>
                         </section>
                     )}
                 </>
@@ -320,7 +358,7 @@ export default function BankPayments() {
         }
         return (
             <section className="bank-section">
-                <TransactionTable list={list} onOpenTab={setTab}/>
+                <TransactionTable list={list} onOpenTab={setTab} busyId={busyId} onUndo={handleUndo}/>
                 {transactions.length >= FETCH_LIMIT && (
                     <p className="bank-hint">Showing the latest {FETCH_LIMIT} transfers.</p>
                 )}
@@ -545,9 +583,11 @@ function ReviewCard({transaction, draft, subscribers, busy, onDraft, onAssign, o
     );
 }
 
-function TransactionTable({list, onOpenTab}: {
+function TransactionTable({list, onOpenTab, busyId, onUndo}: {
     list: BankTransactionResponse[];
     onOpenTab?: (tab: TabKey) => void;
+    busyId: string | null;
+    onUndo: (transaction: BankTransactionResponse) => void;
 }) {
     const names = useSubscriberNames();
     return (
@@ -561,6 +601,7 @@ function TransactionTable({list, onOpenTab}: {
                     <th className="is-num">Amount</th>
                     <th>Went to</th>
                     <th className="bank-col-end">Matched by</th>
+                    <th aria-label="Actions"/>
                 </tr>
                 </thead>
                 <tbody>
@@ -591,6 +632,18 @@ function TransactionTable({list, onOpenTab}: {
                                     <Tag tone={MATCH_TAGS[transaction.matchMethod].tone}>
                                         {MATCH_TAGS[transaction.matchMethod].label}
                                     </Tag>
+                                )}
+                            </td>
+                            <td className="bank-col-end">
+                                {transaction.status === 'APPLIED' && (
+                                    <button type="button" className="ui-link-btn is-muted"
+                                            disabled={busyId === transaction.id}
+                                            onClick={(event) => {
+                                                event.stopPropagation();
+                                                onUndo(transaction);
+                                            }}>
+                                        Undo
+                                    </button>
                                 )}
                             </td>
                         </tr>

@@ -77,6 +77,7 @@ const ACTION_META: Record<AdminActionType, ActionMeta> = {
     BANK_PAYMENTS_SYNCED: {label: 'Bank synced', tag: 'Bank sync', tone: 'clay'},
     BANK_PAYMENT_ASSIGNED: {label: 'Bank payment applied', tag: 'Bank payment', tone: 'clay'},
     BANK_PAYMENT_IGNORED: {label: 'Bank payment ignored', tag: 'Bank ignored', tone: 'clay'},
+    BANK_PAYMENT_UNDONE: {label: 'Bank payment undone', tag: 'Bank undone', tone: 'clay'},
     BANK_SENDER_FORGOTTEN: {label: 'Bank sender forgotten', tag: 'Bank sender', tone: 'clay'},
 };
 

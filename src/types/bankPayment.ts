@@ -48,6 +48,14 @@ export interface BankPaymentResolution {
     senderRemembered: boolean;
 }
 
+export interface BankPaymentUndoResult {
+    transaction: BankTransactionResponse;
+    subscriberId: string;
+    subscriberName: string;
+    reopenedInvoiceIds: string[];
+    balanceAfter: number;
+}
+
 export interface BankSenderResponse {
     id: string;
     senderName: string | null;
