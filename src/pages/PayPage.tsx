@@ -85,7 +85,6 @@ export default function PayPage() {
     const [copied, setCopied] = useState<string | null>(null);
     const [platform] = useState(detectPlatform);
     const [isWide, setIsWide] = useState(() => window.matchMedia('(min-width: 900px)').matches);
-    const [showQr, setShowQr] = useState(false);
 
     useEffect(() => {
         const query = window.matchMedia('(min-width: 900px)');
@@ -363,15 +362,8 @@ export default function PayPage() {
                     </div>
                 )}
 
-                {qrUrl && (showQr || platform === 'desktop'
-                    ? qrBlock(platform === 'desktop'
-                        ? 'Scan with your phone camera or your bank app.'
-                        : 'Scan with another phone’s camera or a banking app’s QR scanner.')
-                    : (
-                        <button type="button" className="pay-text-link pay-show-qr" onClick={() => setShowQr(true)}>
-                            Show QR code
-                        </button>
-                    ))}
+                {/* A phone can't scan its own screen, so the QR is for computers only. */}
+                {qrUrl && platform === 'desktop' && qrBlock('Scan with your phone camera or your bank app.')}
 
                 {qrUrl && (
                     <div className="pay-divider">

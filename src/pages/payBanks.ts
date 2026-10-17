@@ -10,8 +10,10 @@
  *   domain. A scheme gives no "not installed" signal, so the page goes to
  *   the App Store when it is still on screen after a delay.
  *
- * The routes follow the registry foppay.com.ua (fop.one) ships on its pay
- * page; a bank with no known route on a platform is left out there.
+ * The routes follow the ones foppay.com.ua (fop.one) and perfectmeals.com.ua
+ * ship on their pay pages; where they differ (Raiffeisen), the universal link
+ * wins, because it needs no App Store guess. A bank with no known route on a
+ * platform is left out there.
  */
 
 export const NBU_QR_PREFIX = 'https://bank.gov.ua/qr/';
@@ -66,7 +68,7 @@ export const PAY_BANKS: PayBank[] = [
     },
     {
         code: 'raiff', name: 'Raiffeisen', letter: 'R', color: '#000', background: '#fee600',
-        ios: {type: 'scheme', prefix: 'myraif://bank.gov.ua/qr/', store: 'https://apps.apple.com/ua/app/id1582978231'},
+        ios: {type: 'universal', prefix: 'https://my-raif.apps.raiffeisen.ua/qr?payload='},
         android: {package: 'ua.raiffeisen.myraif'}
     },
     {
