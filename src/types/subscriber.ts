@@ -40,9 +40,12 @@ export interface SubscriberUpdateRequest {
 export interface ActiveSubscriptionDto {
     id: string;
     serviceName: string;
+    /** What the service costs a month in UAH: its latest bill. */
     servicePrice: number;
     startMonth: string;
     endMonth?: string;
+    /** This subscriber's part of servicePrice, by this month's share weights. */
+    monthlyShare: number;
 }
 
 export interface UnpaidInvoiceDto {

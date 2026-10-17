@@ -48,10 +48,6 @@ export const activeMemberCounts = (memberships: MembershipResponse[], month: str
     return counts;
 };
 
-/** A member's even share of a price, rounded down to cents as the backend's first-cut split. */
-export const evenShare = (price: number, members: number) =>
-    members > 0 ? Math.floor(Math.round(Number(price) * 100) / members) / 100 : Number(price);
-
 export const sortByName = <T extends { name: string }>(items: T[]) =>
     [...items].sort((a, b) => a.name.localeCompare(b.name));
 

@@ -24,7 +24,7 @@ import type {
     SubscriberResponse,
     UnpaidInvoiceDto
 } from '../../types/subscriber';
-import {archivedSince, evenShare, getJson} from './people';
+import {archivedSince, getJson} from './people';
 import {fullName} from '../subscriberNames';
 
 interface Props {
@@ -498,10 +498,10 @@ export default function SubscriberDetailDrawer({
                                             <span
                                                 className="sub-line-amount"
                                                 title={members > 0
-                                                    ? `${formatMoney(membership.servicePrice)} split ${members} ways`
-                                                    : 'Full price'}
+                                                    ? `Their share of the latest ${formatMoney(membership.servicePrice)} bill, split ${members} ways by weight`
+                                                    : 'The latest bill'}
                                             >
-                                                {formatMoney(evenShare(membership.servicePrice, members))}
+                                                {formatMoney(membership.monthlyShare)}
                                             </span>
                                         </div>
                                     );

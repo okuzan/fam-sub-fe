@@ -309,13 +309,13 @@ export default function SubscriberCabinet({userEmail, canAccessAdmin = false, on
                                                 </span>
                                             </span>
                                             <span className="cab-row-amount is-small is-muted ui-money"
-                                                  title="Full price, split with everyone on it">
-                                                {formatMoney(subscription.servicePrice)}
+                                                  title={`Your share of the latest ${formatMoney(subscription.servicePrice)} bill`}>
+                                                {formatMoney(subscription.monthlyShare)}
                                             </span>
                                         </div>
                                     ))}
                                     <div className="cab-card-foot">
-                                        Full prices, split evenly with everyone on each. Your share is on each invoice.
+                                        Your share of each service’s latest bill. The exact amount is on each invoice.
                                     </div>
                                 </>
                             ) : (
