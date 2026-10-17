@@ -25,6 +25,7 @@ import type {
     UnpaidInvoiceDto
 } from '../../types/subscriber';
 import {archivedSince, evenShare, getJson} from './people';
+import {fullName} from '../subscriberNames';
 
 interface Props {
     subscriber: SubscriberResponse;
@@ -333,7 +334,7 @@ export default function SubscriberDetailDrawer({
     const payLink = details ? getPayPageUrl(details.payToken) : '';
 
     return (
-        <Drawer open title={subscriber.name} onClose={() => busy === null && onClose()} flush wide>
+        <Drawer open title={fullName(subscriber)} onClose={() => busy === null && onClose()} flush wide>
             {subscriber.archived ? (
                 <>
                     <DrawerSection>

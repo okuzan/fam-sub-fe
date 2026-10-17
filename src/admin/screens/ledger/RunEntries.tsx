@@ -2,6 +2,7 @@ import type {LedgerEntry} from '../../../types/ledger';
 import {Tag} from '../../../ui/components';
 import {formatAmount, formatMoney, formatMonth, plural} from '../../../ui/format';
 import {groupByCharge, sumAmounts} from './ledgerModel';
+import {useSubscriberNames} from '../../subscriberNames';
 
 interface EntriesProps {
     entries: LedgerEntry[];
@@ -10,6 +11,7 @@ interface EntriesProps {
 
 /** A run's entries, one row per charge: "510,00 ÷ 4", who shared it, and each share. */
 export function GroupedEntries({entries, onOpenEntry, showMonth}: EntriesProps & { showMonth: boolean }) {
+    const names = useSubscriberNames();
     const groups = groupByCharge(entries);
     return (
         <>
@@ -27,9 +29,9 @@ export function GroupedEntries({entries, onOpenEntry, showMonth}: EntriesProps &
                             {group.entries.map((entry) => (
                                 <button key={entry.id} type="button"
                                         className={`led-chip ${entry.invoiceId ? '' : 'is-open'}`}
-                                        title={`${entry.subscriberName} · ${formatMoney(entry.amount)}${entry.invoiceId ? ' · invoiced' : ' · not invoiced'}`}
+                                        title={`${names.full(entry.subscriberId, entry.subscriberName)} · ${formatMoney(entry.amount)}${entry.invoiceId ? ' · invoiced' : ' · not invoiced'}`}
                                         onClick={() => onOpenEntry(entry.id)}>
-                                    {entry.subscriberName}
+                                    {names.short(entry.subscriberId, entry.subscriberName)}
                                 </button>
                             ))}
                         </div>
@@ -54,6 +56,7 @@ export function GroupedEntries({entries, onOpenEntry, showMonth}: EntriesProps &
 
 /** Filter results: one row per entry, click for the full record. */
 export function EntryTable({entries, onOpenEntry}: EntriesProps) {
+    const names = useSubscriberNames();
     return (
         <>
             <div className="ui-table-wrap">
@@ -81,7 +84,7 @@ export function EntryTable({entries, onOpenEntry}: EntriesProps) {
                                     {entry.chargeDescription && ` · ${entry.chargeDescription}`}
                                 </span>
                             </td>
-                            <td>{entry.subscriberName}</td>
+                            <td>{names.short(entry.subscriberId, entry.subscriberName)}</td>
                             <td>{formatMonth(entry.recordedMonth)}</td>
                             <td className="is-num">{formatMoney(entry.amount)}</td>
                             <td>{entry.invoiceId ? <Tag tone="green">Invoiced</Tag> : <Tag tone="grey">Open</Tag>}</td>

@@ -7,6 +7,7 @@ import {Drawer, DrawerSection, Field, Notice, Tag} from '../../../ui/components'
 import {formatMoney, formatMonthLong, formatPeriod, formatWhen} from '../../../ui/format';
 import {getResponseErrorMessage} from '../../../utils/errors';
 import {actorName, ADVANCED_KEYS, isUuid, type LedgerFilters} from './ledgerModel';
+import {useSubscriberNames} from '../../subscriberNames';
 
 /* ── Calculate a range of months ───────────────────────── */
 
@@ -174,6 +175,7 @@ function Row({label, children}: { label: ReactNode; children: ReactNode }) {
 }
 
 export function EntryDrawer({entryId, subscribers, onClose}: EntryDrawerProps) {
+    const names = useSubscriberNames();
     const [load, setLoad] = useState<EntryLoad | null>(null);
 
     useEffect(() => {
@@ -199,7 +201,7 @@ export function EntryDrawer({entryId, subscribers, onClose}: EntryDrawerProps) {
     const entry = current?.entry;
 
     return (
-        <Drawer open flush eyebrow="Ledger entry" title={entry ? `${entry.subscriberName} · ${entry.subscriptionServiceName}` : 'Ledger entry'}
+        <Drawer open flush eyebrow="Ledger entry" title={entry ? `${names.full(entry.subscriberId, entry.subscriberName)} · ${entry.subscriptionServiceName}` : 'Ledger entry'}
                 onClose={onClose}>
             {!current && <DrawerSection><span className="ui-skeleton-bar" style={{width: '60%'}}/></DrawerSection>}
             {current?.error && <DrawerSection><Notice tone="red">{current.error}</Notice></DrawerSection>}

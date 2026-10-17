@@ -1,6 +1,7 @@
 import {Drawer, Money, Tag} from '../../../ui/components';
 import {formatMoney, plural} from '../../../ui/format';
 import type {InvoiceBulkBalancePaymentItemResult, InvoiceBulkBalancePaymentResult} from '../../../types/invoice';
+import {useSubscriberNames} from '../../subscriberNames';
 
 const outcome = (item: InvoiceBulkBalancePaymentItemResult) => {
     if (item.paid) return <Tag tone="green">Paid</Tag>;
@@ -13,6 +14,7 @@ export default function BalancePaymentResultDrawer({result, onClose}: {
     result: InvoiceBulkBalancePaymentResult;
     onClose: () => void;
 }) {
+    const names = useSubscriberNames();
     return (
         <Drawer
             open
@@ -42,7 +44,7 @@ export default function BalancePaymentResultDrawer({result, onClose}: {
                         {result.items.map((item) => (
                             <tr key={item.invoiceId}>
                                 <td>
-                                    <span className="is-strong">{item.subscriberName}</span>
+                                    <span className="is-strong">{names.short(item.subscriberId, item.subscriberName)}</span>
                                     {item.message && <span className="ui-cell-sub">{item.message}</span>}
                                 </td>
                                 <td className="is-num"><Money value={item.invoiceAmount}/></td>

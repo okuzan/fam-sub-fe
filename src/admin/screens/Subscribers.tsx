@@ -12,6 +12,7 @@ import {activeMemberCounts, archivedSince, getAllMemberships, getJson, getServic
 import SubscriberDetailDrawer from './SubscriberDetailDrawer';
 import SubscriberFormDrawer from './SubscriberFormDrawer';
 import './Subscribers.css';
+import {fullName, primeSubscriberNames} from '../subscriberNames';
 
 type Filter = 'everyone' | 'owes' | 'credit' | 'exempt';
 type View = 'active' | 'archived';
@@ -64,6 +65,7 @@ export default function Subscribers() {
                 getServices()
             ]);
             setSubscribers(sortByName(loadedSubscribers));
+            primeSubscriberNames(loadedSubscribers);
             setServices(loadedServices);
             const [loadedMemberships, summary] = await Promise.all([
                 getAllMemberships(loadedServices),
@@ -219,7 +221,7 @@ export default function Subscribers() {
                                     aria-label={`Open ${subscriber.name}`}
                                 >
                                     <td>
-                                        <span className="sub-name">{subscriber.name}{subscriber.surname && ` ${subscriber.surname}`}</span>
+                                        <span className="sub-name">{fullName(subscriber)}</span>
                                         <span className="ui-cell-sub is-mono sub-email">{subscriber.email}</span>
                                     </td>
                                     <td className="sub-services">
@@ -259,7 +261,7 @@ export default function Subscribers() {
                                     aria-label={`Open ${subscriber.name}`}
                                 >
                                     <td>
-                                        <span className="sub-name">{subscriber.name}{subscriber.surname && ` ${subscriber.surname}`}</span>
+                                        <span className="sub-name">{fullName(subscriber)}</span>
                                         <span className="ui-cell-sub is-mono sub-email">{subscriber.email}</span>
                                     </td>
                                     <td className="sub-services">{names.length > 0 ? names.join(', ') : '—'}</td>

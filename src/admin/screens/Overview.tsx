@@ -30,6 +30,7 @@ import type {LedgerEntryResponse} from '../../types/ledger';
 import type {BankMatchMethod, BankPaymentsOverview, BankSyncStatus, BankTransactionResponse} from '../../types/bankPayment';
 import type {AdminActionResponse} from '../../types/adminAction';
 import './Overview.css';
+import {useSubscriberNames} from '../subscriberNames';
 
 type TaskTone = 'red' | 'clay' | 'green' | 'slate';
 
@@ -219,6 +220,7 @@ async function loadOverview(): Promise<{ data: OverviewData; errors: string[]; b
 }
 
 export default function Overview() {
+    const names = useSubscriberNames();
     const navigate = useNavigate();
     const confirm = useConfirm();
     const {showSuccess, showError} = useToast();
@@ -431,7 +433,7 @@ export default function Overview() {
                 key: 'oldest',
                 tone: 'slate',
                 tag: 'Oldest',
-                title: `${oldest.subscriberName} · invoice open ${plural(oldest.ageDays, 'day')}`,
+                title: `${names.short(oldest.subscriberId, oldest.subscriberName)} · invoice open ${plural(oldest.ageDays, 'day')}`,
                 detail: `${plural(openCount, 'open invoice')}. ${lastSent ? `Last emailed ${formatInstantDate(lastSent)}.` : 'Never emailed.'}`,
                 amount: debtor?.unpaidInvoiceAmount ?? oldest.amount,
                 action: 'Email situation',
@@ -450,7 +452,7 @@ export default function Overview() {
         }
 
         return list;
-    }, [confirm, data, showError, showSuccess]);
+    }, [confirm, data, names, showError, showSuccess]);
 
     useEffect(() => {
         if (!loading) setOverviewCount(tasks.length);
@@ -459,7 +461,7 @@ export default function Overview() {
     const done = useMemo<DoneItem[]>(() => {
         const fromBank = data.bankApplied.map((transaction) => ({
             key: `bank-${transaction.id}`,
-            text: `${transaction.subscriberName ?? 'Someone'} paid ${formatMoney(transaction.amount)}${
+            text: `${transaction.subscriberName ? names.short(transaction.subscriberId, transaction.subscriberName) : 'Someone'} paid ${formatMoney(transaction.amount)}${
                 transaction.matchMethod ? ` · ${MATCH_WORDS[transaction.matchMethod]}` : ''}`,
             meta: transaction.settledInvoiceCount > 0
                 ? `settled ${plural(transaction.settledInvoiceCount, 'invoice')}`
@@ -472,7 +474,7 @@ export default function Overview() {
         return [...fromBank, ...fromActions]
             .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())
             .slice(0, 6);
-    }, [data.actions, data.bankApplied]);
+    }, [data.actions, data.bankApplied, names]);
 
     const finance = data.finance;
     const sync = bankSync ?? navBankSync;
@@ -512,7 +514,7 @@ export default function Overview() {
         {
             label: 'Oldest unpaid',
             value: oldest ? plural(oldest.ageDays, 'day') : 'None',
-            note: oldest ? `${oldest.subscriberName} · ${formatMoney(oldest.amount)}` : 'Every invoice is paid',
+            note: oldest ? `${names.short(oldest.subscriberId, oldest.subscriberName)} · ${formatMoney(oldest.amount)}` : 'Every invoice is paid',
             tone: oldest ? 'red' : undefined
         },
         bankTile

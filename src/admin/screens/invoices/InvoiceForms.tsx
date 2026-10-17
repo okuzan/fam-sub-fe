@@ -14,6 +14,7 @@ import type {
 import type {SubscriberResponse} from '../../../types/subscriber';
 import {invoiceName, invoiceUrl, sendJson, suggestedPeriod, todayIso} from './invoiceUtils';
 import SubscriberOptions from '../SubscriberOptions';
+import {fullName} from '../../subscriberNames';
 
 interface GenerateDrawerProps {
     suggestion: InvoiceSuggestion | null;
@@ -203,7 +204,7 @@ export function ManualInvoiceDrawer({source, subscribers, onClose, onDone}: Manu
                             onChange={(event) => setSubscriberId(event.target.value)}>
                         <option value="">Select subscriber</option>
                         <SubscriberOptions subscribers={subscribers}
-                            label={(subscriber) => `${subscriber.name}${subscriber.billingExempt ? ' · exempt' : ''}`}/>
+                            label={(subscriber) => `${fullName(subscriber)}${subscriber.billingExempt ? ' · exempt' : ''}`}/>
                     </select>
                 </Field>
                 <div className="inv-form-row">

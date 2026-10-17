@@ -13,6 +13,7 @@ import {
     AdminActionType,
 } from '../../types/adminAction';
 import './ActivityLog.css';
+import {fullName} from '../subscriberNames';
 
 /** The backend caps one request at 200 rows; paging is done here. */
 const FETCH_LIMIT = 200;
@@ -251,7 +252,7 @@ export default function ActivityLog() {
         [subscribers]
     );
     const subscriberName = useMemo(
-        () => Object.fromEntries(subscribers.map((s) => [s.id, s.name])),
+        () => Object.fromEntries(subscribers.map((s) => [s.id, fullName(s)])),
         [subscribers]
     );
 
@@ -473,7 +474,7 @@ export default function ActivityLog() {
                     >
                         <option value="">Any subscriber</option>
                         {sortedSubscribers.map((subscriber) => (
-                            <option key={subscriber.id} value={subscriber.id}>{subscriber.name}</option>
+                            <option key={subscriber.id} value={subscriber.id}>{fullName(subscriber)}</option>
                         ))}
                     </select>
                 </Field>

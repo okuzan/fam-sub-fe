@@ -23,6 +23,7 @@ import {GenerateDrawer, ManualInvoiceDrawer} from './invoices/InvoiceForms';
 import {addMonths, getJson, invoicePeriodLabel, invoiceSubLine, sendJson, statusTone} from './invoices/invoiceUtils';
 import './invoices/Invoices.css';
 import SubscriberOptions from './SubscriberOptions';
+import {useSubscriberNames} from '../subscriberNames';
 
 const PAGE_SIZE = 25;
 
@@ -88,6 +89,7 @@ const byNewest = (a: InvoiceResponse, b: InvoiceResponse) =>
     || a.subscriberName.localeCompare(b.subscriberName);
 
 export default function Invoices() {
+    const names = useSubscriberNames();
     const {showSuccess, showError} = useToast();
     const confirm = useConfirm();
     const {refreshCounts} = useAdminNav();
@@ -248,7 +250,7 @@ export default function Invoices() {
                 <span className="inv-confirm-list">
                     {shown.map((invoice) => (
                         <span key={invoice.id} className="inv-confirm-row">
-                            <span>{invoice.subscriberName} · {invoicePeriodLabel(invoice)}</span>
+                            <span>{names.short(invoice.subscriberId, invoice.subscriberName)} · {invoicePeriodLabel(invoice)}</span>
                             <Money value={invoice.totalAmount}/>
                         </span>
                     ))}
@@ -449,7 +451,7 @@ export default function Invoices() {
                                         }}
                                         tabIndex={0}
                                     >
-                                        <td className="inv-who">{invoice.subscriberName}</td>
+                                        <td className="inv-who">{names.short(invoice.subscriberId, invoice.subscriberName)}</td>
                                         <td className="inv-period">{invoicePeriodLabel(invoice)}</td>
                                         <td>
                                             {formatDate(invoice.invoiceDate)}

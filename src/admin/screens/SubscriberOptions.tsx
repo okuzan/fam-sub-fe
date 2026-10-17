@@ -1,11 +1,12 @@
 import type {SubscriberResponse} from '../../types/subscriber';
 import {archivedSince, instantMonth} from './people';
+import {fullName} from '../subscriberNames';
 
 /**
  * The `<option>`s of a subscriber dropdown: active people first, archived
  * people grouped at the bottom, each marked "since Jul 2026", in the order given.
  */
-export default function SubscriberOptions({subscribers, label = (subscriber) => subscriber.name}: {
+export default function SubscriberOptions({subscribers, label = fullName}: {
     subscribers: SubscriberResponse[];
     label?: (subscriber: SubscriberResponse) => string;
 }) {

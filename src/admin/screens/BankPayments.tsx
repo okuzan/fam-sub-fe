@@ -19,6 +19,7 @@ import type {
 } from '../../types/bankPayment';
 import './BankPayments.css';
 import SubscriberOptions from './SubscriberOptions';
+import {primeSubscriberNames, useSubscriberNames} from '../subscriberNames';
 
 type TabKey = BankTransactionStatus | 'ALL';
 
@@ -47,6 +48,7 @@ const settledText = (transaction: BankTransactionResponse) =>
         : 'to balance';
 
 export default function BankPayments() {
+    const names = useSubscriberNames();
     const {showError, showSuccess} = useToast();
     const confirm = useConfirm();
     const {refreshCounts} = useAdminNav();
@@ -86,8 +88,10 @@ export default function BankPayments() {
     useEffect(() => {
         apiFetch(API_CONFIG.SUBSCRIBERS_URL)
             .then((response) => response.ok ? response.json() : [])
-            .then((list: SubscriberResponse[]) =>
-                setSubscribers([...list].sort((a, b) => a.name.localeCompare(b.name))))
+            .then((list: SubscriberResponse[]) => {
+                setSubscribers([...list].sort((a, b) => a.name.localeCompare(b.name)));
+                primeSubscriberNames(list);
+            })
             .catch((err) => console.error(err));
     }, []);
 
@@ -369,7 +373,7 @@ export default function BankPayments() {
                                         <td>
                                             {sender.ignored || !sender.subscriberName
                                                 ? <span className="ui-faint">Ignored</span>
-                                                : <span className="is-strong">{sender.subscriberName}</span>}
+                                                : <span className="is-strong">{names.short(sender.subscriberId, sender.subscriberName)}</span>}
                                         </td>
                                         <td className="ui-muted">
                                             {sender.learnedAutomatically ? 'From payment code' : 'By an admin'}
@@ -456,6 +460,7 @@ interface ReviewCardProps {
 }
 
 function ReviewCard({transaction, draft, subscribers, busy, onDraft, onAssign, onIgnore}: ReviewCardProps) {
+    const names = useSubscriberNames();
     const purpose = purposeOf(transaction);
     const unmatched = transaction.status === 'UNMATCHED';
     return (
@@ -484,7 +489,7 @@ function ReviewCard({transaction, draft, subscribers, busy, onDraft, onAssign, o
                             onClick={() => onDraft({subscriberId: suggestion.subscriberId})}
                             disabled={busy}
                         >
-                            <span className="bank-chip-name">{suggestion.subscriberName}</span>
+                            <span className="bank-chip-name">{names.short(suggestion.subscriberId, suggestion.subscriberName)}</span>
                             <span className="bank-chip-reason">{suggestion.reason}</span>
                         </button>
                     ))}
@@ -544,6 +549,7 @@ function TransactionTable({list, onOpenTab}: {
     list: BankTransactionResponse[];
     onOpenTab?: (tab: TabKey) => void;
 }) {
+    const names = useSubscriberNames();
     return (
         <div className="ui-table-wrap">
             <table className="ui-table bank-table">
@@ -573,7 +579,7 @@ function TransactionTable({list, onOpenTab}: {
                             <td>
                                 {transaction.status === 'APPLIED' ? (
                                     <>
-                                        <strong className="is-strong">{transaction.subscriberName ?? '—'}</strong>
+                                        <strong className="is-strong">{transaction.subscriberName ? names.short(transaction.subscriberId, transaction.subscriberName) : '—'}</strong>
                                         {' · '}{settledText(transaction)}
                                     </>
                                 ) : <span className="ui-faint">—</span>}

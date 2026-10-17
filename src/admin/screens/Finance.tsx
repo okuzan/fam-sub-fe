@@ -5,11 +5,13 @@ import {getResponseErrorMessage} from '../../utils/errors';
 import {EmptyState, Notice, PageHeader, TableSkeleton} from '../../ui/components';
 import {formatInstantDate, formatMoney, plural} from '../../ui/format';
 import './Finance.css';
+import {useSubscriberNames} from '../subscriberNames';
 
 const PERCENT = new Intl.NumberFormat('uk-UA', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 const formatPercent = (value: number) => `${PERCENT.format(value)}%`;
 
 export default function Finance() {
+    const names = useSubscriberNames();
     const [summary, setSummary] = useState<FinanceSummary | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -68,7 +70,7 @@ export default function Finance() {
             label: 'Oldest unpaid invoice',
             value: oldest ? `open ${plural(oldest.ageDays, 'day')}` : 'None',
             note: oldest
-                ? `${oldest.subscriberName} · ${formatMoney(oldest.amount)} · ${formatInstantDate(oldest.createdAt)}`
+                ? `${names.short(oldest.subscriberId, oldest.subscriberName)} · ${formatMoney(oldest.amount)} · ${formatInstantDate(oldest.createdAt)}`
                 : 'Every invoice is paid'
         }
     ] : [];
@@ -141,7 +143,7 @@ export default function Finance() {
                             <tbody>
                                 {summary.debtors.map((debtor) => (
                                     <tr key={debtor.subscriberId}>
-                                        <td className="is-strong">{debtor.subscriberName}</td>
+                                        <td className="is-strong">{names.short(debtor.subscriberId, debtor.subscriberName)}</td>
                                         <td className="is-num fin-muted">{debtor.unpaidInvoiceCount}</td>
                                         <td className="is-num">{formatMoney(debtor.unpaidInvoiceAmount)}</td>
                                         <td className={`is-num ${debtor.cabinetBalance > 0 ? 'fin-credit' : 'fin-faint'}`}>

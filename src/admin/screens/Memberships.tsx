@@ -17,6 +17,7 @@ import type {SubscriptionServiceResponse} from '../../types/subscription';
 import {getAllMemberships, getJson, getServices, isEnded, sortByName} from './people';
 import './Memberships.css';
 import SubscriberOptions from './SubscriberOptions';
+import {fullName, primeSubscriberNames, useSubscriberNames} from '../subscriberNames';
 
 type StateFilter = 'active' | 'ended' | 'all';
 
@@ -61,6 +62,7 @@ export default function Memberships() {
     const {showSuccess, showError} = useToast();
     const confirm = useConfirm();
     const {refreshCounts} = useAdminNav();
+    const names = useSubscriberNames();
     const [memberships, setMemberships] = useState<MembershipResponse[]>([]);
     const [subscribers, setSubscribers] = useState<SubscriberResponse[]>([]);
     const [services, setServices] = useState<SubscriptionServiceResponse[]>([]);
@@ -82,6 +84,7 @@ export default function Memberships() {
             ]);
             setServices(sortByName(loadedServices));
             setSubscribers(sortByName(loadedSubscribers));
+            primeSubscriberNames(loadedSubscribers);
             setMemberships(await getAllMemberships(loadedServices));
         } catch (error) {
             showError('Could not load memberships', error instanceof Error ? error.message : undefined);
@@ -295,7 +298,7 @@ export default function Memberships() {
                                 const upcoming = membership.startMonth > month;
                                 return (
                                     <tr key={membership.id} className={ended ? 'mem-ended' : ''}>
-                                        <td className="is-strong">{membership.subscriberName}</td>
+                                        <td className="is-strong">{names.short(membership.subscriberId, membership.subscriberName)}</td>
                                         <td>{membership.subscriptionServiceName}</td>
                                         <td>
                                             {formatMonth(membership.startMonth)}
@@ -359,7 +362,7 @@ export default function Memberships() {
                                         onChange={(event) => setForm({...form, subscriberId: event.target.value})}
                                     >
                                         <option value="">Choose a subscriber</option>
-                                        <SubscriberOptions subscribers={subscribers} label={(subscriber) => `${subscriber.name} (${subscriber.email})`}/>
+                                        <SubscriberOptions subscribers={subscribers} label={(subscriber) => `${fullName(subscriber)} (${subscriber.email})`}/>
                                     </select>
                                 </Field>
                                 <Field label="Service" htmlFor="mem-service" error={errors.serviceId}>
@@ -378,7 +381,7 @@ export default function Memberships() {
                             </>
                         ) : (
                             <div className="mem-who">
-                                <span className="mem-who-name">{mode.membership.subscriberName}</span>
+                                <span className="mem-who-name">{names.full(mode.membership.subscriberId, mode.membership.subscriberName)}</span>
                                 <span className="mem-who-meta">
                                     {mode.membership.subscriptionServiceName} · since {formatMonth(mode.membership.startMonth)}
                                 </span>
