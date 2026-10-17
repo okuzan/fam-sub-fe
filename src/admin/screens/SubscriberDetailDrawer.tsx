@@ -182,6 +182,8 @@ export default function SubscriberDetailDrawer({
             }
             const result = await response.json().catch(() => null) as { message?: string } | null;
             showSuccess(`Situation email sent to ${subscriber.name}`, result?.message);
+            // The drafts it listed are now sent.
+            await Promise.all([loadDetails(), onChanged()]);
         } catch {
             showError('Could not send the email', 'Could not reach the server.');
         } finally {
