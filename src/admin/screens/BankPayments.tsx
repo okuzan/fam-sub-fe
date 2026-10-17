@@ -191,6 +191,46 @@ export default function BankPayments() {
         }
     };
 
+    const handleAlreadyRecorded = async (transaction: BankTransactionResponse) => {
+        const draft = draftFor(transaction);
+        if (!draft.subscriberId) {
+            showError('Choose whose payment this is');
+            return;
+        }
+        setBusyId(transaction.id);
+        try {
+            const response = await apiFetch(`${API_CONFIG.ADMIN_BANK_PAYMENTS_URL}/${transaction.id}/already-recorded`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    subscriberId: draft.subscriberId,
+                    rememberSender: transaction.senderName !== null && draft.rememberSender
+                })
+            });
+            if (response.ok) {
+                const result: BankPaymentResolution = await response.json();
+                showSuccess(
+                    `Filed ${formatMoney(transaction.amount)} as already recorded for ${
+                        names.full(result.transaction.subscriberId, result.transaction.subscriberName ?? 'subscriber')}`,
+                    ['Balance unchanged', result.senderRemembered ? 'sender remembered' : null].filter(Boolean).join(' · ')
+                );
+                setDrafts((current) => {
+                    const next = {...current};
+                    delete next[transaction.id];
+                    return next;
+                });
+                await afterChange();
+            } else {
+                showError(await getResponseErrorMessage(response, 'Could not file the payment'));
+            }
+        } catch (err) {
+            console.error(err);
+            showError('Could not file the payment');
+        } finally {
+            setBusyId(null);
+        }
+    };
+
     const handleIgnore = async (transaction: BankTransactionResponse, ignoreSender: boolean) => {
         const who = transaction.senderName ?? 'this sender';
         if (ignoreSender) {
@@ -312,6 +352,7 @@ export default function BankPayments() {
                     onDraft={(change) => updateDraft(transaction, change)}
                     onAssign={() => handleAssign(transaction)}
                     onIgnore={(ignoreSender) => handleIgnore(transaction, ignoreSender)}
+                    onAlreadyRecorded={() => handleAlreadyRecorded(transaction)}
                 />
             ))}
         </div>
@@ -498,9 +539,10 @@ interface ReviewCardProps {
     onDraft: (change: Partial<AssignDraft>) => void;
     onAssign: () => void;
     onIgnore: (ignoreSender: boolean) => void;
+    onAlreadyRecorded: () => void;
 }
 
-function ReviewCard({transaction, draft, subscribers, busy, onDraft, onAssign, onIgnore}: ReviewCardProps) {
+function ReviewCard({transaction, draft, subscribers, busy, onDraft, onAssign, onIgnore, onAlreadyRecorded}: ReviewCardProps) {
     const names = useSubscriberNames();
     const purpose = purposeOf(transaction);
     const unmatched = transaction.status === 'UNMATCHED';
@@ -516,7 +558,13 @@ function ReviewCard({transaction, draft, subscribers, busy, onDraft, onAssign, o
                 <span className="bank-card-when">{formatWhen(transaction.occurredAt)}</span>
             </div>
 
-            {transaction.reviewNote && <p className="bank-card-row bank-card-note">{transaction.reviewNote}</p>}
+            {transaction.alreadyRecorded ? (
+                <p className="bank-card-row bank-card-note">
+                    Already recorded by hand for{' '}
+                    <strong>{names.full(transaction.subscriberId, transaction.subscriberName ?? 'a subscriber')}</strong>.
+                    Their balance was left as it was.
+                </p>
+            ) : transaction.reviewNote && <p className="bank-card-row bank-card-note">{transaction.reviewNote}</p>}
 
             {transaction.suggestions.length > 0 ? (
                 <div className="bank-card-row bank-chips">
@@ -556,6 +604,13 @@ function ReviewCard({transaction, draft, subscribers, busy, onDraft, onAssign, o
                         disabled={busy || !draft.subscriberId}>
                     {busy ? 'Applying…' : 'Apply'}
                 </button>
+                {unmatched && (
+                    <button type="button" className="ui-btn" onClick={onAlreadyRecorded}
+                            disabled={busy || !draft.subscriberId}
+                            title="Their balance and invoices stay as they are">
+                        Already recorded
+                    </button>
+                )}
                 {transaction.senderName && (
                     <label className="ui-checkbox bank-remember">
                         <input

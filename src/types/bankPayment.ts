@@ -33,6 +33,8 @@ export interface BankTransactionResponse {
     settledInvoiceCount: number;
     settledAmount: number | null;
     resolvedAt: string | null;
+    /** Ignored because the money had already been recorded by hand for subscriberId. */
+    alreadyRecorded: boolean;
     suggestions: BankPaymentSuggestion[];
 }
 
