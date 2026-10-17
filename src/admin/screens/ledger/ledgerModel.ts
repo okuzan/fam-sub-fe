@@ -11,6 +11,8 @@ export interface ChargeGroup {
     month: string;
     description: string | null;
     participantCount: number;
+    /** Members carried different weights, so the parts are not equal by design. */
+    weighted: boolean;
     total: number;
     minAmount: number;
     maxAmount: number;
@@ -35,6 +37,7 @@ export function groupByCharge(entries: LedgerEntry[]): ChargeGroup[] {
                 month: first.recordedMonth,
                 description: first.chargeDescription,
                 participantCount: first.participantCount,
+                weighted: first.totalWeight !== first.participantCount,
                 total: sumAmounts(amounts),
                 minAmount: Math.min(...amounts),
                 maxAmount: Math.max(...amounts),

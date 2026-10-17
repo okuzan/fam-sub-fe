@@ -11,7 +11,8 @@ import {
     formatMonthLong,
     formatPeriod,
     formatWhen,
-    plural
+    plural,
+    shareLabel
 } from '../ui/format';
 import type {SubscriberCabinetResponse, SubscriberInvoiceDetail, SubscriberInvoiceSummary} from '../types/cabinet';
 import type {SubscriberPaymentResponse} from '../types/bankPayment';
@@ -389,7 +390,7 @@ export default function SubscriberCabinet({userEmail, canAccessAdmin = false, on
                                             <span className="cab-row-text">
                                                 <span className="cab-row-title is-light">{entry.subscriptionServiceName}</span>
                                                 <span className="cab-row-meta">
-                                                    {formatMonth(entry.recordedMonth)} · split {entry.participantCount} ways
+                                                    {formatMonth(entry.recordedMonth)} · {shareLabel(entry)}
                                                 </span>
                                             </span>
                                             <span className="ui-money">{formatMoney(entry.amount)}</span>

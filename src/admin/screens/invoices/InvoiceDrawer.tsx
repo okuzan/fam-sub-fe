@@ -272,7 +272,7 @@ export default function InvoiceDrawer({invoice: summary, onClose, onChanged, onD
                                             {entry.subscriptionServiceName}
                                             <span className="ui-muted">
                                                 {invoice.fromMonth !== invoice.toMonth && ` · ${formatMonth(entry.recordedMonth)}`}
-                                                {` · ÷ ${entry.participantCount}`}
+                                                {entry.totalWeight === entry.participantCount ? ` · ÷ ${entry.participantCount}` : ` · ${entry.shareWeight}/${entry.totalWeight}`}
                                             </span>
                                         </span>
                                         <Money value={entry.amount}/>

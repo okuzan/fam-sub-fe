@@ -104,3 +104,9 @@ export const formatToday = () => {
 export const currentMonth = () => kyivDay(new Date()).slice(0, 7);
 
 export const plural = (count: number, one: string, many = `${one}s`) => `${count} ${count === 1 ? one : many}`;
+
+/** "split 4 ways" for an even split, "2/6 share" when members carry different weights. */
+export const shareLabel = (entry: { participantCount: number; shareWeight: number; totalWeight: number }) =>
+    entry.totalWeight === entry.participantCount
+        ? `split ${entry.participantCount} ways`
+        : `${entry.shareWeight}/${entry.totalWeight} share`;

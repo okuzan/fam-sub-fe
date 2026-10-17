@@ -24,6 +24,9 @@ export interface LedgerEntry {
     recordedMonth: string;
     amount: number;
     participantCount: number;
+    /** This subscriber's weight out of totalWeight; 1 of participantCount for an even split. */
+    shareWeight: number;
+    totalWeight: number;
     calculatedAt: string;
     calculationBatchId: string;
     calculationBatchFromMonth: string;

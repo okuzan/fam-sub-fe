@@ -1,6 +1,6 @@
 import type {LedgerEntry} from '../../../types/ledger';
 import {Tag} from '../../../ui/components';
-import {formatAmount, formatMoney, formatMonth, plural} from '../../../ui/format';
+import {formatAmount, formatMoney, formatMonth, plural, shareLabel} from '../../../ui/format';
 import {groupByCharge, sumAmounts} from './ledgerModel';
 import {useSubscriberNames} from '../../subscriberNames';
 
@@ -21,7 +21,7 @@ export function GroupedEntries({entries, onOpenEntry, showMonth}: EntriesProps &
                         <div className="led-group-service">
                             <span className="led-group-name">{group.serviceName}</span>
                             <span className="led-group-split">
-                                {formatAmount(group.total)} ÷ {group.participantCount}
+                                {formatAmount(group.total)} {group.weighted ? 'by share' : `÷ ${group.participantCount}`}
                                 {showMonth && <> · {formatMonth(group.month)}</>}
                             </span>
                         </div>
@@ -80,7 +80,7 @@ export function EntryTable({entries, onOpenEntry}: EntriesProps) {
                             <td className="is-strong">
                                 {entry.subscriptionServiceName}
                                 <span className="ui-cell-sub">
-                                    Split {entry.participantCount} ways
+                                    {shareLabel(entry).replace(/^./, (first) => first.toUpperCase())}
                                     {entry.chargeDescription && ` · ${entry.chargeDescription}`}
                                 </span>
                             </td>

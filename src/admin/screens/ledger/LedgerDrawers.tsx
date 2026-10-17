@@ -4,7 +4,7 @@ import type {CostCalculationSuggestion} from '../../../types/costCalculation';
 import type {LedgerEntry} from '../../../types/ledger';
 import type {SubscriberResponse} from '../../../types/subscriber';
 import {Drawer, DrawerSection, Field, Notice, Tag} from '../../../ui/components';
-import {formatMoney, formatMonthLong, formatPeriod, formatWhen} from '../../../ui/format';
+import {formatMoney, formatMonthLong, formatPeriod, formatWhen, shareLabel} from '../../../ui/format';
 import {getResponseErrorMessage} from '../../../utils/errors';
 import {actorName, ADVANCED_KEYS, isUuid, type LedgerFilters} from './ledgerModel';
 import {useSubscriberNames} from '../../subscriberNames';
@@ -211,7 +211,7 @@ export function EntryDrawer({entryId, subscribers, onClose}: EntryDrawerProps) {
                         <div className="led-detail-amount">{formatMoney(entry.amount)}</div>
                         <Row label="Month">{formatMonthLong(entry.recordedMonth)}</Row>
                         <Row label="Charge">
-                            {formatMonthLong(entry.chargeMonth)} bill split {entry.participantCount} ways
+                            {formatMonthLong(entry.chargeMonth)} bill, {shareLabel(entry)}
                         </Row>
                         {entry.chargeDescription && <Row label="Charge notes">{entry.chargeDescription}</Row>}
                         <Row label="Invoice">

@@ -26,6 +26,7 @@ interface MembershipForm {
     serviceId: string;
     startMonth: string;
     endMonth: string;
+    shareWeight: string;
 }
 
 type FormErrors = Partial<Record<keyof MembershipForm, string>>;
@@ -51,6 +52,9 @@ function validate(form: MembershipForm, mode: DrawerMode): FormErrors {
     } else if (form.endMonth && !MONTH_PATTERN.test(form.endMonth)) {
         errors.endMonth = 'Use a month, e.g. 2026-10.';
     }
+    if (mode.kind !== 'end' && !/^([1-9]\d?|100)$/.test(form.shareWeight.trim())) {
+        errors.shareWeight = 'Use a whole number from 1 to 100.';
+    }
     const start = mode.kind === 'end' ? mode.membership.startMonth : form.startMonth;
     if (!errors.endMonth && form.endMonth && start && form.endMonth < start) {
         errors.endMonth = `The end can’t be before the start, ${formatMonth(start)}.`;
@@ -71,7 +75,7 @@ export default function Memberships() {
     const [serviceFilter, setServiceFilter] = useState('');
     const [stateFilter, setStateFilter] = useState<StateFilter>('active');
     const [mode, setMode] = useState<DrawerMode | null>(null);
-    const [form, setForm] = useState<MembershipForm>({subscriberId: '', serviceId: '', startMonth: '', endMonth: ''});
+    const [form, setForm] = useState<MembershipForm>({subscriberId: '', serviceId: '', startMonth: '', endMonth: '', shareWeight: '1'});
     const [errors, setErrors] = useState<FormErrors>({});
     const [serverError, setServerError] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
@@ -124,7 +128,7 @@ export default function Memberships() {
         setErrors({});
         setServerError(null);
         if (next.kind === 'create') {
-            setForm({subscriberId: subscriberFilter, serviceId: serviceFilter, startMonth: month, endMonth: ''});
+            setForm({subscriberId: subscriberFilter, serviceId: serviceFilter, startMonth: month, endMonth: '', shareWeight: '1'});
         } else {
             const {membership} = next;
             setForm({
@@ -133,7 +137,8 @@ export default function Memberships() {
                 startMonth: membership.startMonth,
                 endMonth: next.kind === 'end'
                     ? (membership.startMonth > month ? membership.startMonth : month)
-                    : membership.endMonth ?? ''
+                    : membership.endMonth ?? '',
+                shareWeight: String(membership.shareWeight)
             });
         }
     };
@@ -160,12 +165,13 @@ export default function Memberships() {
                 subscriberId: form.subscriberId,
                 subscriptionServiceId: form.serviceId,
                 startMonth: form.startMonth,
-                endMonth: form.endMonth || undefined
+                endMonth: form.endMonth || undefined,
+                shareWeight: Number(form.shareWeight)
             };
         } else if (mode.kind === 'edit') {
             url = `${API_CONFIG.MEMBERSHIPS_URL}/${mode.membership.id}`;
             method = 'PUT';
-            body = {startMonth: form.startMonth, endMonth: form.endMonth || null};
+            body = {startMonth: form.startMonth, endMonth: form.endMonth || null, shareWeight: Number(form.shareWeight)};
         } else {
             url = `${API_CONFIG.MEMBERSHIPS_URL}/${mode.membership.id}/end`;
             method = 'POST';
@@ -299,7 +305,10 @@ export default function Memberships() {
                                 return (
                                     <tr key={membership.id} className={ended ? 'mem-ended' : ''}>
                                         <td className="is-strong">{names.short(membership.subscriberId, membership.subscriberName)}</td>
-                                        <td>{membership.subscriptionServiceName}</td>
+                                        <td>
+                                            {membership.subscriptionServiceName}
+                                            {membership.shareWeight !== 1 && <span className="ui-cell-sub">Share ×{membership.shareWeight}</span>}
+                                        </td>
                                         <td>
                                             {formatMonth(membership.startMonth)}
                                             {upcoming && <span className="ui-cell-sub">Starts later</span>}
@@ -422,6 +431,25 @@ export default function Memberships() {
                                 onChange={(event) => setForm({...form, endMonth: event.target.value})}
                             />
                         </Field>
+                        {mode.kind !== 'end' && (
+                            <Field
+                                label="Share"
+                                htmlFor="mem-share"
+                                error={errors.shareWeight}
+                                hint="Their part relative to the others. Weights 2, 2, 1, 1 split a bill 2/6, 2/6, 1/6, 1/6; 1 for everyone splits it evenly. Bills already calculated keep the split they had."
+                            >
+                                <input
+                                    id="mem-share"
+                                    type="number"
+                                    min={1}
+                                    max={100}
+                                    step={1}
+                                    className="ui-input"
+                                    value={form.shareWeight}
+                                    onChange={(event) => setForm({...form, shareWeight: event.target.value})}
+                                />
+                            </Field>
+                        )}
                         {mode.kind === 'edit' && (
                             <span className="mem-note">
                                 To move someone to another service, end this membership and add a new one.
