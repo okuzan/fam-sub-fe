@@ -17,12 +17,14 @@ interface ServiceForm {
     name: string;
     price: string;
     currency: string;
+    /** Empty for a shared account. */
+    seats: string;
     fixedMonthlyCharge: boolean;
 }
 
 type FormErrors = Partial<Record<keyof ServiceForm, string>>;
 
-const EMPTY_FORM: ServiceForm = {name: '', price: '', currency: 'USD', fixedMonthlyCharge: false};
+const EMPTY_FORM: ServiceForm = {name: '', price: '', currency: 'USD', seats: '', fixedMonthlyCharge: false};
 const CURRENCIES = ['USD', 'EUR', 'UAH'];
 
 /** Prices in different currencies don't add up; "$307.99 + €9.99 + ₴897,00". */
@@ -45,6 +47,9 @@ function validate(form: ServiceForm): FormErrors {
     else if (price === null) errors.price = 'Enter a number, e.g. 351,00.';
     else if (price <= 0) errors.price = 'The price must be more than zero.';
     else if (Math.abs(Math.round(price * 100) - price * 100) > 1e-6) errors.price = 'Use at most two decimal places.';
+    if (form.seats.trim() && !/^([1-9]\d?|100)$/.test(form.seats.trim())) {
+        errors.seats = 'Use a whole number from 1 to 100, or leave it empty.';
+    }
     if (form.fixedMonthlyCharge && form.currency !== 'UAH') {
         errors.fixedMonthlyCharge = 'Only a price in hryvnias can be charged on its own.';
     }
@@ -96,6 +101,7 @@ export default function Services() {
                 name: service.name,
                 price: String(service.price).replace('.', ','),
                 currency: service.currency,
+                seats: service.seats ? String(service.seats) : '',
                 fixedMonthlyCharge: service.fixedMonthlyCharge
             }
             : EMPTY_FORM);
@@ -121,6 +127,7 @@ export default function Services() {
             name: form.name.trim(),
             price: parseAmount(form.price) ?? 0,
             currency: form.currency,
+            seats: form.seats.trim() ? Number(form.seats.trim()) : null,
             fixedMonthlyCharge: form.fixedMonthlyCharge
         };
         setSaving(true);
@@ -198,7 +205,7 @@ export default function Services() {
                             <tr>
                                 <SortHeader column="name" label="Service" sort={sort} onSort={toggle}/>
                                 <SortHeader column="price" label="Price / month" sort={sort} onSort={toggle} className="is-num"/>
-                                <SortHeader column="members" label="Active members" sort={sort} onSort={toggle} className="is-num"/>
+                                <SortHeader column="members" label="Members" sort={sort} onSort={toggle} className="is-num"/>
                                 <th aria-label="Actions"/>
                             </tr>
                             </thead>
@@ -209,8 +216,17 @@ export default function Services() {
                                         {service.name}
                                         {service.fixedMonthlyCharge && <span className="ui-cell-sub">Charged monthly at this price</span>}
                                     </td>
-                                    <td className="is-num">{formatPrice(service.price, service.currency)}</td>
-                                    <td className="is-num">{memberCounts.get(service.id) ?? 0}</td>
+                                    <td className="is-num">
+                                        {formatPrice(service.price, service.currency)}
+                                        {service.seats && (
+                                            <span className="ui-cell-sub">
+                                                {formatPrice(Math.round(Number(service.price) * 100 / service.seats) / 100, service.currency)} per seat
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td className="is-num">
+                                        <SeatUsage members={memberCounts.get(service.id) ?? 0} seats={service.seats}/>
+                                    </td>
                                     <td className="is-actions">
                                         <button type="button" className="ui-link-btn" onClick={() => openForm(service)}>Edit</button>
                                         <button type="button" className="ui-link-btn is-muted" onClick={() => handleDelete(service)}>Delete</button>
@@ -285,6 +301,24 @@ export default function Services() {
                             </select>
                         </div>
                     </Field>
+                    <Field
+                        label="Seats"
+                        optional
+                        htmlFor="svc-seats"
+                        error={errors.seats}
+                        hint="For a family plan, how many people it can hold (Spotify Family: 6). Leave empty for an account that is simply shared, like ChatGPT. Members still split the whole bill, empty seats included."
+                    >
+                        <input
+                            id="svc-seats"
+                            type="number"
+                            min={1}
+                            max={100}
+                            step={1}
+                            className="ui-input"
+                            value={form.seats}
+                            onChange={(event) => setForm({...form, seats: event.target.value})}
+                        />
+                    </Field>
                     <label className="ui-checkbox">
                         <input
                             type="checkbox"
@@ -301,6 +335,20 @@ export default function Services() {
                     </span>
                 </form>
             </Drawer>
+        </>
+    );
+}
+
+/** "6 of 6 seats", "14 of 18 seats" with the free ones called out, or a plain count for a shared account. */
+function SeatUsage({members, seats}: { members: number; seats: number | null }) {
+    if (!seats) return <>{members}</>;
+    const free = seats - members;
+    return (
+        <>
+            {members} of {seats}
+            <span className="ui-cell-sub">
+                {free > 0 ? `${plural(free, 'seat')} free` : free === 0 ? 'Full' : `${plural(-free, 'member')} over`}
+            </span>
         </>
     );
 }
