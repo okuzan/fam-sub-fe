@@ -847,3 +847,45 @@
     width: 100vw;
   }
 }
+
+/* Sortable column headers (ui/sorting.tsx) */
+.ui-table th.ui-sort-th {
+  padding: 0;
+}
+
+.ui-sort {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 10px;
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+}
+
+.ui-table th.is-num .ui-sort {
+  justify-content: flex-end;
+}
+
+.ui-sort:hover,
+.ui-sort.is-active {
+  color: var(--ink);
+}
+
+.ui-sort:focus-visible {
+  outline: 2px solid var(--ink-3);
+  outline-offset: -2px;
+}
+
+.ui-sort-mark {
+  opacity: 0.35;
+}
+
+.ui-sort.is-active .ui-sort-mark {
+  opacity: 1;
+}

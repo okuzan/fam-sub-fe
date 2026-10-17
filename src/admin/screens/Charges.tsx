@@ -9,6 +9,8 @@ import {currentMonth, formatAmount, formatMoney, formatMonth, formatMonthLong, p
 import {getResponseErrorMessage} from '../../utils/errors';
 import {errorMessage, fetchAllCharges, fetchServices, isChargeCalculated} from './chargeData';
 import './Charges.css';
+import {SortHeader} from '../../ui/sorting';
+import {useSort} from '../../ui/useSort';
 
 const PAGE_SIZE = 10;
 
@@ -71,9 +73,14 @@ export default function Charges() {
         [charges, serviceFilter, monthFilter]
     );
 
-    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    const {sorted, sort, toggle} = useSort(filtered, {
+        service: (charge: ChargeResponse) => charge.subscriptionServiceName,
+        month: (charge: ChargeResponse) => charge.chargeMonth,
+        amount: (charge: ChargeResponse) => Number(charge.amount)
+    });
+    const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
     const safePage = Math.min(page, totalPages - 1);
-    const visible = filtered.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE);
+    const visible = sorted.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE);
     const hasFilters = Boolean(serviceFilter || monthFilter);
 
     const clearFilters = () => {
@@ -198,9 +205,9 @@ export default function Charges() {
                             <table className="ui-table chg-table">
                                 <thead>
                                 <tr>
-                                    <th>Service</th>
-                                    <th>Month</th>
-                                    <th className="is-num">Amount</th>
+                                    <SortHeader column="service" label="Service" sort={sort} onSort={toggle}/>
+                                    <SortHeader column="month" label="Month" sort={sort} onSort={toggle}/>
+                                    <SortHeader column="amount" label="Amount" sort={sort} onSort={toggle} className="is-num"/>
                                     <th>Notes</th>
                                     <th><span className="chg-sr">Actions</span></th>
                                 </tr>

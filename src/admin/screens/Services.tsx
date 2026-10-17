@@ -10,6 +10,8 @@ import type {MembershipResponse} from '../../types/membership';
 import type {SubscriptionServiceCreateRequest, SubscriptionServiceResponse} from '../../types/subscription';
 import {activeMemberCounts, getAllMemberships, getServices, parseAmount, sortByName} from './people';
 import './Services.css';
+import {SortHeader} from '../../ui/sorting';
+import {useSort} from '../../ui/useSort';
 
 interface ServiceForm {
     name: string;
@@ -63,6 +65,11 @@ export default function Services() {
     }, [load]);
 
     const memberCounts = useMemo(() => activeMemberCounts(memberships, currentMonth()), [memberships]);
+    const {sorted, sort, toggle} = useSort(services, {
+        name: (service: SubscriptionServiceResponse) => service.name,
+        price: (service: SubscriptionServiceResponse) => Number(service.price),
+        members: (service: SubscriptionServiceResponse) => memberCounts.get(service.id) ?? 0
+    });
     const totalPrice = services.reduce((sum, service) => sum + Number(service.price), 0);
     const totalMembers = services.reduce((sum, service) => sum + (memberCounts.get(service.id) ?? 0), 0);
 
@@ -167,14 +174,14 @@ export default function Services() {
                         <table className="ui-table svc-table">
                             <thead>
                             <tr>
-                                <th>Service</th>
-                                <th className="is-num">Price / month</th>
-                                <th className="is-num">Active members</th>
+                                <SortHeader column="name" label="Service" sort={sort} onSort={toggle}/>
+                                <SortHeader column="price" label="Price / month" sort={sort} onSort={toggle} className="is-num"/>
+                                <SortHeader column="members" label="Active members" sort={sort} onSort={toggle} className="is-num"/>
                                 <th aria-label="Actions"/>
                             </tr>
                             </thead>
                             <tbody>
-                            {services.map((service) => (
+                            {sorted.map((service) => (
                                 <tr key={service.id}>
                                     <td className="svc-name">
                                         {service.name}

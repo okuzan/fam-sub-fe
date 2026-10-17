@@ -3,6 +3,8 @@ import {Tag} from '../../../ui/components';
 import {formatAmount, formatMoney, formatMonth, plural, shareLabel} from '../../../ui/format';
 import {groupByCharge, sumAmounts} from './ledgerModel';
 import {useSubscriberNames} from '../../subscriberNames';
+import {SortHeader} from '../../../ui/sorting';
+import {useSort} from '../../../ui/useSort';
 
 interface EntriesProps {
     entries: LedgerEntry[];
@@ -57,21 +59,27 @@ export function GroupedEntries({entries, onOpenEntry, showMonth}: EntriesProps &
 /** Filter results: one row per entry, click for the full record. */
 export function EntryTable({entries, onOpenEntry}: EntriesProps) {
     const names = useSubscriberNames();
+    const {sorted, sort, toggle} = useSort(entries, {
+        service: (entry: LedgerEntry) => entry.subscriptionServiceName,
+        subscriber: (entry: LedgerEntry) => names.full(entry.subscriberId, entry.subscriberName),
+        month: (entry: LedgerEntry) => entry.recordedMonth,
+        share: (entry: LedgerEntry) => Number(entry.amount)
+    });
     return (
         <>
             <div className="ui-table-wrap">
                 <table className="ui-table led-entry-table">
                     <thead>
                     <tr>
-                        <th>Service</th>
-                        <th>Subscriber</th>
-                        <th>Month</th>
-                        <th className="is-num">Share</th>
+                        <SortHeader column="service" label="Service" sort={sort} onSort={toggle}/>
+                        <SortHeader column="subscriber" label="Subscriber" sort={sort} onSort={toggle}/>
+                        <SortHeader column="month" label="Month" sort={sort} onSort={toggle}/>
+                        <SortHeader column="share" label="Share" sort={sort} onSort={toggle} className="is-num"/>
                         <th>Invoice</th>
                     </tr>
                     </thead>
                     <tbody>
-                    {entries.map((entry) => (
+                    {sorted.map((entry) => (
                         <tr key={entry.id} className="is-clickable" tabIndex={0}
                             onClick={() => onOpenEntry(entry.id)}
                             onKeyDown={(event) => {

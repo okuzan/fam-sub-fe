@@ -13,6 +13,8 @@ import SubscriberDetailDrawer from './SubscriberDetailDrawer';
 import SubscriberFormDrawer from './SubscriberFormDrawer';
 import './Subscribers.css';
 import {fullName, primeSubscriberNames} from '../subscriberNames';
+import {SortHeader} from '../../ui/sorting';
+import {useSort} from '../../ui/useSort';
 
 type Filter = 'everyone' | 'owes' | 'credit' | 'exempt';
 type View = 'active' | 'archived';
@@ -131,6 +133,17 @@ export default function Subscribers() {
     const visible = view === 'archived'
         ? archivedRows
         : [...activeRows.filter((row) => matches(row, filter)), ...(query ? archivedRows : [])];
+    const STATUS_ORDER = ['Owes', 'Holds credit', 'Credit', 'Settled', 'Exempt', 'Archived'];
+    const {sorted, sort, toggle} = useSort(visible, {
+        name: (row: Row) => fullName(row.subscriber),
+        services: (row: Row) => row.services.join(', '),
+        owes: (row: Row) => row.owes,
+        balance: (row: Row) => row.subscriber.balance,
+        status: (row: Row) => -STATUS_ORDER.indexOf(row.status.label),
+        wasOn: (row: Row) => row.subscriber.formerServices.join(', '),
+        ended: (row: Row) => row.subscriber.lastMembershipEndMonth,
+        lastPaid: (row: Row) => row.subscriber.lastInvoicePaidAt
+    });
     const countOf = (value: Filter) => activeRows.filter((row) => matches(row, value)).length;
 
     const openOnKey = (event: KeyboardEvent, id: string) => {
@@ -204,14 +217,14 @@ export default function Subscribers() {
                         <table className="ui-table sub-table">
                             <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Was on</th>
-                                <th>Last membership ended</th>
-                                <th className="is-num">Last invoice paid</th>
+                                <SortHeader column="name" label="Name" sort={sort} onSort={toggle}/>
+                                <SortHeader column="wasOn" label="Was on" sort={sort} onSort={toggle}/>
+                                <SortHeader column="ended" label="Last membership ended" sort={sort} onSort={toggle}/>
+                                <SortHeader column="lastPaid" label="Last invoice paid" sort={sort} onSort={toggle} className="is-num"/>
                             </tr>
                             </thead>
                             <tbody>
-                            {visible.map(({subscriber}) => (
+                            {sorted.map(({subscriber}) => (
                                 <tr
                                     key={subscriber.id}
                                     className={`is-clickable ${subscriber.id === selectedId ? 'is-selected' : ''}`}
@@ -243,15 +256,15 @@ export default function Subscribers() {
                         <table className="ui-table sub-table">
                             <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Services</th>
-                                <th className="is-num">Owes</th>
-                                <th className="is-num">Balance</th>
-                                <th className="is-num">Status</th>
+                                <SortHeader column="name" label="Name" sort={sort} onSort={toggle}/>
+                                <SortHeader column="services" label="Services" sort={sort} onSort={toggle}/>
+                                <SortHeader column="owes" label="Owes" sort={sort} onSort={toggle} className="is-num"/>
+                                <SortHeader column="balance" label="Balance" sort={sort} onSort={toggle} className="is-num"/>
+                                <SortHeader column="status" label="Status" sort={sort} onSort={toggle} className="is-num"/>
                             </tr>
                             </thead>
                             <tbody>
-                            {visible.map(({subscriber, services: names, owes, status}) => (
+                            {sorted.map(({subscriber, services: names, owes, status}) => (
                                 <tr
                                     key={subscriber.id}
                                     className={`is-clickable ${subscriber.id === selectedId ? 'is-selected' : ''}`}

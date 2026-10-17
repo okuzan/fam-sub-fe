@@ -18,6 +18,8 @@ import {getAllMemberships, getJson, getServices, isEnded, sortByName} from './pe
 import './Memberships.css';
 import SubscriberOptions from './SubscriberOptions';
 import {fullName, primeSubscriberNames, useSubscriberNames} from '../subscriberNames';
+import {SortHeader} from '../../ui/sorting';
+import {useSort} from '../../ui/useSort';
 
 type StateFilter = 'active' | 'ended' | 'all';
 
@@ -122,6 +124,13 @@ export default function Memberships() {
             || a.subscriptionServiceName.localeCompare(b.subscriptionServiceName)
             || a.startMonth.localeCompare(b.startMonth)
         ), [scoped, stateFilter, month]);
+
+    const {sorted, sort, toggle} = useSort(rows, {
+        subscriber: (membership: MembershipResponse) => names.full(membership.subscriberId, membership.subscriberName),
+        service: (membership: MembershipResponse) => membership.subscriptionServiceName,
+        start: (membership: MembershipResponse) => membership.startMonth,
+        end: (membership: MembershipResponse) => membership.endMonth ?? '9999-12'
+    });
 
     const openDrawer = (next: DrawerMode) => {
         setMode(next);
@@ -291,15 +300,15 @@ export default function Memberships() {
                         <table className="ui-table mem-table">
                             <thead>
                             <tr>
-                                <th>Subscriber</th>
-                                <th>Service</th>
-                                <th>Start</th>
-                                <th>End</th>
+                                <SortHeader column="subscriber" label="Subscriber" sort={sort} onSort={toggle}/>
+                                <SortHeader column="service" label="Service" sort={sort} onSort={toggle}/>
+                                <SortHeader column="start" label="Start" sort={sort} onSort={toggle}/>
+                                <SortHeader column="end" label="End" sort={sort} onSort={toggle}/>
                                 <th aria-label="Actions"/>
                             </tr>
                             </thead>
                             <tbody>
-                            {rows.map((membership) => {
+                            {sorted.map((membership) => {
                                 const ended = isEnded(membership, month);
                                 const upcoming = membership.startMonth > month;
                                 return (

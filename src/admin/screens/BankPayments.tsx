@@ -19,6 +19,8 @@ import type {
 import './BankPayments.css';
 import SubscriberOptions from './SubscriberOptions';
 import {primeSubscriberNames, useSubscriberNames} from '../subscriberNames';
+import {SortHeader} from '../../ui/sorting';
+import {useSort} from '../../ui/useSort';
 
 type TabKey = BankTransactionStatus | 'ALL';
 
@@ -648,22 +650,30 @@ function TransactionTable({list, onOpenTab, busyId, onUndo}: {
     onUndo: (transaction: BankTransactionResponse) => void;
 }) {
     const names = useSubscriberNames();
+    const {sorted, sort, toggle} = useSort(list, {
+        time: (transaction: BankTransactionResponse) => transaction.occurredAt,
+        sender: (transaction: BankTransactionResponse) => transaction.senderName,
+        amount: (transaction: BankTransactionResponse) => Number(transaction.amount),
+        to: (transaction: BankTransactionResponse) => transaction.subscriberName
+            ? names.full(transaction.subscriberId, transaction.subscriberName)
+            : null
+    });
     return (
         <div className="ui-table-wrap">
             <table className="ui-table bank-table">
                 <thead>
                 <tr>
-                    <th>Time</th>
-                    <th>Sender</th>
+                    <SortHeader column="time" label="Time" sort={sort} onSort={toggle}/>
+                    <SortHeader column="sender" label="Sender" sort={sort} onSort={toggle}/>
                     <th>Purpose</th>
-                    <th className="is-num">Amount</th>
-                    <th>Went to</th>
+                    <SortHeader column="amount" label="Amount" sort={sort} onSort={toggle} className="is-num"/>
+                    <SortHeader column="to" label="Went to" sort={sort} onSort={toggle}/>
                     <th className="bank-col-end">Matched by</th>
                     <th aria-label="Actions"/>
                 </tr>
                 </thead>
                 <tbody>
-                {list.map((transaction) => {
+                {sorted.map((transaction) => {
                     const purpose = purposeOf(transaction);
                     // Unresolved rows in the All list open the tab where they can be resolved.
                     const open = transaction.status !== 'APPLIED' && onOpenTab

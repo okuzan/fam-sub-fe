@@ -1,11 +1,13 @@
 import {useCallback, useEffect, useState} from 'react';
 import {API_CONFIG, apiFetch} from '../../config/api';
-import type {FinanceSummary} from '../../types/finance';
+import type {DebtorFinance, FinanceSummary} from '../../types/finance';
 import {getResponseErrorMessage} from '../../utils/errors';
 import {EmptyState, Notice, PageHeader, TableSkeleton} from '../../ui/components';
 import {formatInstantDate, formatMoney, plural} from '../../ui/format';
 import './Finance.css';
 import {useSubscriberNames} from '../subscriberNames';
+import {SortHeader} from '../../ui/sorting';
+import {useSort} from '../../ui/useSort';
 
 const PERCENT = new Intl.NumberFormat('uk-UA', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 const formatPercent = (value: number) => `${PERCENT.format(value)}%`;
@@ -75,6 +77,13 @@ export default function Finance() {
         }
     ] : [];
 
+    const {sorted: debtors, sort, toggle} = useSort(summary?.debtors ?? [], {
+        subscriber: (debtor: DebtorFinance) => names.full(debtor.subscriberId, debtor.subscriberName),
+        invoices: (debtor: DebtorFinance) => debtor.unpaidInvoiceCount,
+        unpaid: (debtor: DebtorFinance) => Number(debtor.unpaidInvoiceAmount),
+        balance: (debtor: DebtorFinance) => Number(debtor.cabinetBalance),
+        net: (debtor: DebtorFinance) => Number(debtor.netDebt)
+    });
     const maxNet = summary ? Math.max(0, ...summary.debtors.map((debtor) => debtor.netDebt)) : 0;
 
     return (
@@ -132,16 +141,16 @@ export default function Finance() {
                         <table className="ui-table fin-table">
                             <thead>
                                 <tr>
-                                    <th>Subscriber</th>
-                                    <th className="is-num">Invoices</th>
-                                    <th className="is-num">Unpaid</th>
-                                    <th className="is-num">Balance</th>
-                                    <th className="is-num">Net debt</th>
+                                    <SortHeader column="subscriber" label="Subscriber" sort={sort} onSort={toggle}/>
+                                    <SortHeader column="invoices" label="Invoices" sort={sort} onSort={toggle} className="is-num"/>
+                                    <SortHeader column="unpaid" label="Unpaid" sort={sort} onSort={toggle} className="is-num"/>
+                                    <SortHeader column="balance" label="Balance" sort={sort} onSort={toggle} className="is-num"/>
+                                    <SortHeader column="net" label="Net debt" sort={sort} onSort={toggle} className="is-num"/>
                                     <th className="fin-share-col">Share</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {summary.debtors.map((debtor) => (
+                                {debtors.map((debtor) => (
                                     <tr key={debtor.subscriberId}>
                                         <td className="is-strong">{names.short(debtor.subscriberId, debtor.subscriberName)}</td>
                                         <td className="is-num fin-muted">{debtor.unpaidInvoiceCount}</td>

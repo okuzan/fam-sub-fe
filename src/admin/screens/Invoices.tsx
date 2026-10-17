@@ -24,6 +24,8 @@ import {addMonths, getJson, invoicePeriodLabel, invoiceSubLine, sendJson, status
 import './invoices/Invoices.css';
 import SubscriberOptions from './SubscriberOptions';
 import {useSubscriberNames} from '../subscriberNames';
+import {SortHeader} from '../../ui/sorting';
+import {useSort} from '../../ui/useSort';
 
 const PAGE_SIZE = 25;
 
@@ -204,9 +206,17 @@ export default function Invoices() {
         () => (invoices ?? []).filter((invoice) => status === 'ALL' || invoice.status === status),
         [invoices, status]
     );
-    const pageCount = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
+    const STATUS_ORDER = ['DRAFT', 'SENT', 'PAID', 'VOID'];
+    const {sorted, sort, toggle} = useSort(visible, {
+        who: (invoice: InvoiceResponse) => names.short(invoice.subscriberId, invoice.subscriberName),
+        period: (invoice: InvoiceResponse) => `${invoice.fromMonth} ${invoice.toMonth}`,
+        date: (invoice: InvoiceResponse) => invoice.invoiceDate,
+        status: (invoice: InvoiceResponse) => STATUS_ORDER.indexOf(invoice.status),
+        amount: (invoice: InvoiceResponse) => Number(invoice.totalAmount)
+    });
+    const pageCount = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
     const currentPage = Math.min(page, pageCount - 1);
-    const pageRows = visible.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
+    const pageRows = sorted.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
 
     const filtersActive = status !== 'ALL' || Boolean(subscriberId) || Boolean(origin) || dateFilter !== 'any';
 
@@ -426,11 +436,11 @@ export default function Invoices() {
                             <table className="ui-table inv-table">
                                 <thead>
                                 <tr>
-                                    <th>Subscriber</th>
-                                    <th>Period</th>
-                                    <th>Invoice date</th>
-                                    <th>Status</th>
-                                    <th className="is-num">Amount</th>
+                                    <SortHeader column="who" label="Subscriber" sort={sort} onSort={toggle}/>
+                                    <SortHeader column="period" label="Period" sort={sort} onSort={toggle}/>
+                                    <SortHeader column="date" label="Invoice date" sort={sort} onSort={toggle}/>
+                                    <SortHeader column="status" label="Status" sort={sort} onSort={toggle}/>
+                                    <SortHeader column="amount" label="Amount" sort={sort} onSort={toggle} className="is-num"/>
                                 </tr>
                                 </thead>
                                 <tbody>
