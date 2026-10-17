@@ -349,13 +349,7 @@ export default function PayPage() {
                                     href={bankUrl(bank, platform, qrUrl)}
                                     onClick={() => openStoreIfStillHere(iosStoreFallback(bank))}
                                 >
-                                    <span
-                                        className="pay-bank-badge"
-                                        style={{color: bank.color, background: bank.background}}
-                                        aria-hidden="true"
-                                    >
-                                        {bank.letter}
-                                    </span>
+                                    <img className="pay-bank-icon" src={bank.icon} alt="" width={40} height={40}/>
                                     <span className="pay-bank-name">{bank.name}</span>
                                 </a>
                             ))}

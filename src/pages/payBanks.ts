@@ -32,52 +32,50 @@ interface AndroidLaunch {
 export interface PayBank {
     code: string;
     name: string;
-    /** Shown in the round badge, in the bank's colours. */
-    letter: string;
-    color: string;
-    background: string;
+    /** The bank's own App Store icon, under public/banks. */
+    icon: string;
     ios: IosLaunch | null;
     android: AndroidLaunch | null;
 }
 
 export const PAY_BANKS: PayBank[] = [
     {
-        code: 'mono', name: 'monobank', letter: 'm', color: '#fff', background: '#000',
+        code: 'mono', name: 'monobank', icon: '/banks/mono.png',
         ios: {type: 'scheme', prefix: 'mono://bank.gov.ua/qr/', store: 'https://apps.apple.com/ua/app/id1287005205'},
         android: {package: 'com.ftband.mono'}
     },
     {
-        code: 'privat', name: 'Privat24', letter: 'P', color: '#fff', background: '#5aa831',
+        code: 'privat', name: 'Privat24', icon: '/banks/privat.png',
         ios: {type: 'scheme', prefix: 'privat24://bank.gov.ua/qr/', store: 'https://apps.apple.com/ua/app/id1333984846'},
         android: {package: 'ua.privatbank.ap24'}
     },
     {
-        code: 'oschad', name: 'Ощадбанк', letter: 'О', color: '#fff', background: '#0c7a43',
+        code: 'oschad', name: 'Ощадбанк', icon: '/banks/oschad.png',
         ios: {type: 'universal', prefix: 'https://online.oschadbank.ua/images/deeplinks/flumo/'},
         android: {package: 'ua.oschadbank.flumo', applink: 'online.oschadbank.ua/images/deeplinks/flumo/'}
     },
     {
-        code: 'abank', name: 'А-Банк', letter: 'A', color: '#fff', background: '#2f9e44',
+        code: 'abank', name: 'А-Банк', icon: '/banks/abank.png',
         ios: {type: 'scheme', prefix: 'abank24://bank.gov.ua/qr/', store: 'https://apps.apple.com/ua/app/id1261267716'},
         android: {package: 'ua.com.abank'}
     },
     {
-        code: 'pumb', name: 'ПУМБ', letter: 'П', color: '#fff', background: '#d6202b',
+        code: 'pumb', name: 'ПУМБ', icon: '/banks/pumb.png',
         ios: {type: 'universal', prefix: 'https://mobile-app.pumb.ua/bank.gov.ua/qr/'},
         android: {package: 'com.fuib.android.spot.online'}
     },
     {
-        code: 'raiff', name: 'Raiffeisen', letter: 'R', color: '#000', background: '#fee600',
+        code: 'raiff', name: 'Raiffeisen', icon: '/banks/raiff.png',
         ios: {type: 'universal', prefix: 'https://my-raif.apps.raiffeisen.ua/qr?payload='},
         android: {package: 'ua.raiffeisen.myraif'}
     },
     {
-        code: 'sense', name: 'Sense', letter: 'S', color: '#fff', background: '#e2001a',
+        code: 'sense', name: 'Sense', icon: '/banks/sense.png',
         ios: {type: 'nbu'},
         android: {package: 'ua.alfabank.mobile.android'}
     },
     {
-        code: 'izi', name: 'izibank', letter: 'i', color: '#fff', background: '#1f1f1f',
+        code: 'izi', name: 'izibank', icon: '/banks/izi.png',
         ios: null,
         android: {package: 'ua.izibank.app'}
     }
