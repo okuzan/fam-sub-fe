@@ -1,7 +1,7 @@
 import {type FormEvent, useState} from 'react';
 import {useToast} from '../../../components/ToastContext';
 import {API_CONFIG} from '../../../config/api';
-import {Drawer, Field} from '../../../ui/components';
+import {DateInput, Drawer, Field} from '../../../ui/components';
 import {formatMoney, formatMonth, formatMonthLong, formatPeriod, plural} from '../../../ui/format';
 import type {
     InvoiceDuplicateRequest,
@@ -217,8 +217,7 @@ export function ManualInvoiceDrawer({source, subscribers, onClose, onDone}: Manu
                                placeholder="0,00" onChange={(event) => setAmount(event.target.value)}/>
                     </Field>
                     <Field label="Invoice date" htmlFor="inv-manual-date" error={errors.invoiceDate}>
-                        <input id="inv-manual-date" type="date" className="ui-input" value={invoiceDate}
-                               onChange={(event) => setInvoiceDate(event.target.value)}/>
+                        <DateInput id="inv-manual-date" value={invoiceDate} onChange={setInvoiceDate}/>
                     </Field>
                 </div>
                 <Field label="Description" optional={Boolean(source)} htmlFor="inv-manual-notes" error={errors.notes}

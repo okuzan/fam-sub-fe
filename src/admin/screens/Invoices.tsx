@@ -2,7 +2,7 @@ import {type ReactNode, useCallback, useEffect, useMemo, useState} from 'react';
 import {useSearchParams} from 'react-router-dom';
 import {useToast} from '../../components/ToastContext';
 import {API_CONFIG} from '../../config/api';
-import {EmptyState, Money, PageHeader, Segmented, TableSkeleton, Tag} from '../../ui/components';
+import {DateInput, EmptyState, Money, PageHeader, Segmented, TableSkeleton, Tag} from '../../ui/components';
 import {useConfirm} from '../../ui/confirmContext';
 import {currentMonth, formatDate, formatMoney, plural} from '../../ui/format';
 import type {
@@ -404,13 +404,11 @@ export default function Invoices() {
                 </select>
                 {dateFilter === 'custom' && (
                     <span className="inv-date-range">
-                        <input type="date" className="ui-input is-compact" value={customFrom}
-                               aria-label="Invoice date from" max={customTo || undefined}
-                               onChange={(event) => withPageReset(setCustomFrom)(event.target.value)}/>
+                        <DateInput compact value={customFrom} aria-label="Invoice date from" max={customTo || undefined}
+                                   onChange={withPageReset(setCustomFrom)}/>
                         <span className="ui-faint">–</span>
-                        <input type="date" className="ui-input is-compact" value={customTo}
-                               aria-label="Invoice date to" min={customFrom || undefined}
-                               onChange={(event) => withPageReset(setCustomTo)(event.target.value)}/>
+                        <DateInput compact value={customTo} aria-label="Invoice date to" min={customFrom || undefined}
+                                   onChange={withPageReset(setCustomTo)}/>
                     </span>
                 )}
                 <select className="ui-select is-compact" value={origin} aria-label="Origin"

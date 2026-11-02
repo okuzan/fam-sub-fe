@@ -119,3 +119,20 @@ export const shareLabel = (entry: { participantCount: number; shareWeight: numbe
     entry.totalWeight === entry.participantCount
         ? `split ${entry.participantCount} ways`
         : `${entry.shareWeight}/${entry.totalWeight} share`;
+
+/** A LocalDate "2029-12-31" → "31.12.2029", the way a date is typed. */
+export const formatDateInput = (isoDate: string | null | undefined) => {
+    if (!isoDate) return '';
+    const [year, month, day] = isoDate.slice(0, 10).split('-');
+    return `${day}.${month}.${year}`;
+};
+
+/** "31.12.2029" (or 31/12/2029, 31-12-2029) → "2029-12-31"; null when it is not a real date. */
+export const parseDateInput = (text: string): string | null => {
+    const match = /^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/.exec(text.trim());
+    if (!match) return null;
+    const [day, month, year] = [Number(match[1]), Number(match[2]), Number(match[3])];
+    const date = new Date(Date.UTC(year, month - 1, day));
+    if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return null;
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+};

@@ -2,7 +2,7 @@ import {useCallback, useEffect, useMemo, useState} from 'react';
 import {API_CONFIG, apiFetch} from '../../config/api';
 import {getResponseErrorMessage} from '../../utils/errors';
 import {useToast} from '../../components/ToastContext';
-import {Drawer, DrawerSection, EmptyState, Field, PageHeader, TableSkeleton, Tag, type Tone} from '../../ui/components';
+import {DateInput, Drawer, DrawerSection, EmptyState, Field, PageHeader, TableSkeleton, Tag, type Tone} from '../../ui/components';
 import {formatInstantDate, formatPeriod, formatTime, kyivDayMonth, plural} from '../../ui/format';
 import type {AccountResponse} from '../../types/account';
 import type {SubscriberResponse} from '../../types/subscriber';
@@ -504,21 +504,17 @@ export default function ActivityLog() {
                 </Field>
                 <div className="log-field-pair">
                     <Field label="From day" optional htmlFor="log-date-from">
-                        <input
+                        <DateInput
                             id="log-date-from"
-                            type="date"
-                            className="ui-input"
                             value={draft.dateFrom}
-                            onChange={(event) => updateDraft('dateFrom', event.target.value)}
+                            onChange={(value) => updateDraft('dateFrom', value)}
                         />
                     </Field>
                     <Field label="To day" optional htmlFor="log-date-to">
-                        <input
+                        <DateInput
                             id="log-date-to"
-                            type="date"
-                            className="ui-input"
                             value={draft.dateTo}
-                            onChange={(event) => updateDraft('dateTo', event.target.value)}
+                            onChange={(value) => updateDraft('dateTo', value)}
                         />
                     </Field>
                 </div>

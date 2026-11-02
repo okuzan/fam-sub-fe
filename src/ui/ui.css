@@ -889,3 +889,54 @@
 .ui-sort.is-active .ui-sort-mark {
   opacity: 1;
 }
+
+.ui-date-input {
+  position: relative;
+  display: block;
+}
+
+.ui-date-input.is-compact {
+  display: inline-block;
+}
+
+.ui-date-input > .ui-input {
+  padding-right: 36px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-date-input.is-compact > .ui-input {
+  min-width: 132px;
+  width: 132px;
+}
+
+.ui-date-input-button {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+
+.ui-date-input-button:hover {
+  color: var(--ink);
+}
+
+.ui-date-input-picker {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}

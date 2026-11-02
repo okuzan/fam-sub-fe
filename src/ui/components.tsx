@@ -1,7 +1,7 @@
-import {type ReactNode, useEffect} from 'react';
+import {type ReactNode, useEffect, useRef, useState} from 'react';
 import {createPortal} from 'react-dom';
 import {useEscapeClose} from '../utils/useEscapeClose';
-import {formatMoney} from './format';
+import {formatDateInput, formatMoney, parseDateInput} from './format';
 import './ui.css';
 
 export type Tone = 'red' | 'clay' | 'green' | 'slate' | 'grey' | 'dark';
@@ -288,5 +288,69 @@ export function Brand({href = '/', label = 'FamSub'}: { href?: string; label?: R
             <img src="/favicon.svg" alt="" width={18} height={18}/>
             {label}
         </a>
+    );
+}
+
+interface DateInputProps {
+    /** A LocalDate "2029-12-31", or "" for none. */
+    value: string;
+    onChange: (value: string) => void;
+    id?: string;
+    min?: string;
+    max?: string;
+    compact?: boolean;
+    'aria-label'?: string;
+}
+
+/**
+ * A day typed and shown as 31.12.2029 whatever the browser's locale, since a
+ * native date input follows it and writes 12/31/2029 in en-US. The calendar
+ * button opens the native picker from a hidden date input.
+ */
+export function DateInput({value, onChange, id, min, max, compact = false, 'aria-label': ariaLabel}: DateInputProps) {
+    const [text, setText] = useState(() => formatDateInput(value));
+    const [shown, setShown] = useState(value);
+    const picker = useRef<HTMLInputElement>(null);
+
+    if (value !== shown) {
+        setShown(value);
+        setText(formatDateInput(value));
+    }
+
+    const type = (next: string) => {
+        setText(next);
+        if (next.trim() === '') {
+            onChange('');
+            return;
+        }
+        const parsed = parseDateInput(next);
+        if (parsed && (!min || parsed >= min) && (!max || parsed <= max)) onChange(parsed);
+    };
+
+    const openPicker = () => {
+        const input = picker.current;
+        if (!input) return;
+        try {
+            input.showPicker();
+        } catch {
+            input.focus();
+        }
+    };
+
+    return (
+        <span className={`ui-date-input${compact ? ' is-compact' : ''}`}>
+            <input id={id} className={`ui-input${compact ? ' is-compact' : ''}`} inputMode="numeric"
+                   placeholder="dd.mm.yyyy" aria-label={ariaLabel} value={text}
+                   onChange={(event) => type(event.target.value)}
+                   onBlur={() => setText(formatDateInput(value))}/>
+            <button type="button" className="ui-date-input-button" aria-label="Choose a date" onClick={openPicker}>
+                <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">
+                    <rect x="2" y="3" width="12" height="11" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.4"/>
+                    <path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                </svg>
+            </button>
+            <input ref={picker} type="date" className="ui-date-input-picker" tabIndex={-1} aria-hidden="true"
+                   value={value} min={min} max={max} onChange={(event) => onChange(event.target.value)}/>
+        </span>
     );
 }
