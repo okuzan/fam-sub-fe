@@ -101,5 +101,11 @@ material decision from them — and in those cases say plainly that the changes
 are uncommitted and why.
 
 A change to a backend DTO field name must land here too; coordinate the two
-commits so the deployed pair are never far apart. Committing is not deploying —
-this repository deploys on push to `main`, which is a separate explicit step.
+commits so the deployed pair are never far apart.
+
+Then push. The owner's standing instruction for this project is to commit
+**and push** every finished task, without asking. Pushing to `main` deploys to
+prod, so push only after `tsc -b`, the build and lint pass, and when a task
+spans both repositories push `fam-sub-be` first unless the change needs the
+frontend first. Do not push work that is blocked or waiting on the owner's
+decision.
