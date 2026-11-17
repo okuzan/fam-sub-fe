@@ -25,7 +25,6 @@ export interface SubscriberCreateRequest {
     name: string;
     surname: string | null;
     email: string;
-    balance?: number;
     billingExempt: boolean;
 }
 
@@ -33,7 +32,6 @@ export interface SubscriberUpdateRequest {
     name: string;
     surname: string | null;
     email: string;
-    balance: number;
     billingExempt: boolean;
 }
 

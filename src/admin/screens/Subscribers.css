@@ -250,3 +250,10 @@
   color: var(--ink-2);
   text-decoration: line-through;
 }
+
+/* The edit form's balance: shown, never typed; credit notes change it */
+.sub-form .ui-input[readonly] {
+  background: var(--sand);
+  color: var(--ink-2);
+  cursor: default;
+}

@@ -5,17 +5,15 @@ import {Drawer, Field, Notice} from '../../ui/components';
 import {formatMoney} from '../../ui/format';
 import {getResponseErrorMessage} from '../../utils/errors';
 import type {SubscriberCreateRequest, SubscriberResponse, SubscriberUpdateRequest} from '../../types/subscriber';
-import {parseAmount} from './people';
 
 interface SubscriberForm {
     name: string;
     surname: string;
     email: string;
-    balance: string;
     billingExempt: boolean;
 }
 
-type FormErrors = Partial<Record<'name' | 'email' | 'balance', string>>;
+type FormErrors = Partial<Record<'name' | 'email', string>>;
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -24,12 +22,6 @@ function validate(form: SubscriberForm): FormErrors {
     if (!form.name.trim()) errors.name = 'Enter their name.';
     if (!form.email.trim()) errors.email = 'Enter the email they sign in with.';
     else if (!EMAIL_PATTERN.test(form.email.trim())) errors.email = 'That doesn’t look like an email address.';
-    if (form.balance.trim()) {
-        const balance = parseAmount(form.balance);
-        if (balance === null) errors.balance = 'Enter a number, e.g. 120,00.';
-        else if (balance < 0) errors.balance = 'Credit balance cannot be negative. Use a manual invoice to record debt.';
-        else if (Math.abs(Math.round(balance * 100) - balance * 100) > 1e-6) errors.balance = 'Use at most two decimal places.';
-    }
     return errors;
 }
 
@@ -48,10 +40,9 @@ export default function SubscriberFormDrawer({subscriber, onClose, onSaved}: Pro
             name: subscriber.name,
             surname: subscriber.surname ?? '',
             email: subscriber.email,
-            balance: String(subscriber.balance).replace('.', ','),
             billingExempt: subscriber.billingExempt
         }
-        : {name: '', surname: '', email: '', balance: '', billingExempt: false});
+        : {name: '', surname: '', email: '', billingExempt: false});
     const [errors, setErrors] = useState<FormErrors>({});
     const [serverError, setServerError] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
@@ -71,7 +62,6 @@ export default function SubscriberFormDrawer({subscriber, onClose, onSaved}: Pro
             name: form.name.trim(),
             surname: form.surname.trim() || null,
             email: form.email.trim(),
-            balance: parseAmount(form.balance) ?? 0,
             billingExempt: form.billingExempt
         };
         setSaving(true);
@@ -153,24 +143,15 @@ export default function SubscriberFormDrawer({subscriber, onClose, onSaved}: Pro
                         placeholder="name@gmail.com"
                     />
                 </Field>
-                <Field
-                    label="Credit balance"
-                    optional
-                    htmlFor="sub-balance"
-                    error={errors.balance}
-                    hint={subscriber
-                        ? `Prepaid credit, now ${formatMoney(subscriber.balance)}. Saving replaces it with this value; only the activity log keeps the old one.`
-                        : 'Prepaid credit they start with, in hryvnias.'}
-                >
-                    <input
-                        id="sub-balance"
-                        className="ui-input is-money"
-                        inputMode="decimal"
-                        value={form.balance}
-                        onChange={(event) => setForm({...form, balance: event.target.value})}
-                        placeholder="0,00"
-                    />
-                </Field>
+                {subscriber && (
+                    <Field
+                        label="Credit balance"
+                        htmlFor="sub-balance"
+                        hint="Read only. To give them credit, record a credit note under Paid on our behalf in their details."
+                    >
+                        <input id="sub-balance" className="ui-input is-money" value={formatMoney(subscriber.balance)} readOnly/>
+                    </Field>
+                )}
                 <div className="ui-field">
                     <label className="ui-checkbox" htmlFor="sub-exempt">
                         <input
