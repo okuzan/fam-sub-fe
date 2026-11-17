@@ -476,6 +476,58 @@
 }
 
 /* ── Form fields ──────────────────────────────────────── */
+.ui-choice-list {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.ui-choice-list legend {
+  margin-bottom: 7px;
+  padding: 0;
+}
+
+.ui-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--white);
+  cursor: pointer;
+}
+
+.ui-choice.is-active {
+  border-color: var(--ink);
+  background: var(--panel);
+}
+
+.ui-choice input {
+  margin: 3px 0 0;
+  accent-color: var(--ink);
+}
+
+.ui-choice-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ui-choice-label {
+  font: 600 14px/1.3 var(--sans);
+  color: var(--ink);
+}
+
+.ui-choice-hint {
+  font: 400 13px/1.4 var(--sans);
+  color: var(--ink-3);
+}
+
 .ui-field {
   display: flex;
   flex-direction: column;

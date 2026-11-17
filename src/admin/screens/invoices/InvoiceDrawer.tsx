@@ -167,13 +167,33 @@ export default function InvoiceDrawer({invoice: summary, onClose, onChanged, onD
 
     const handleVoid = async () => {
         const paid = invoice.status === 'PAID';
-        const {confirmed, reason} = await confirm({
+        const lines = (detail?.entries ?? []).filter((entry) => !entry.writtenOffAt);
+        const credit = paid
+            ? ` It is already paid, so ${formatMoney(invoice.totalAmount)} goes back to ${invoice.subscriberName}’s balance (unless they’re billing-exempt).`
+            : '';
+        const email = invoice.status === 'SENT' ? ` ${invoice.subscriberName} gets a cancellation email.` : '';
+        const {confirmed, reason, choice} = await confirm({
             title: paid ? `Void paid ${name}?` : `Void ${name}?`,
-            text: paid
-                ? `This invoice is already paid. Voiding it credits ${formatMoney(invoice.totalAmount)} back to ${invoice.subscriberName}’s balance (unless they’re billing-exempt), and its ledger lines can be invoiced again. No cancellation email goes out. It stays in the list as void with your reason.`
-                : `The ${formatMoney(invoice.totalAmount)} invoice stops counting toward their debt and its ledger lines can be invoiced again. It stays in the list as void with your reason.`,
+            text: `It stops counting toward their debt and stays in the list as void with your reason.${credit}${email}`,
             confirmLabel: paid ? 'Void and credit balance' : 'Void invoice',
             tone: 'danger',
+            choice: lines.length > 0 ? {
+                label: `Its ${plural(lines.length, 'ledger line')}`,
+                initial: '',
+                options: [
+                    {
+                        value: 'rebill',
+                        label: 'Bill them again later',
+                        hint: 'They go back to the uninvoiced ledger, and the next invoice run picks them up. For a wrong invoice whose costs are still owed.',
+                    },
+                    {
+                        value: 'write-off',
+                        label: 'Write them off',
+                        hint: `Nobody pays the ${formatMoney(lines.reduce((sum, entry) => sum + Number(entry.amount), 0))}. They stay on this void invoice, struck through.`,
+                        confirmLabel: paid ? 'Void, write off, credit balance' : 'Void and write off',
+                    },
+                ],
+            } : undefined,
             reason: {
                 label: 'Reason',
                 placeholder: 'e.g. duplicate of the May invoice',
@@ -183,31 +203,40 @@ export default function InvoiceDrawer({invoice: summary, onClose, onChanged, onD
         });
         if (!confirmed) return;
         await run('void', async () => {
-            const result = await sendJson<InvoiceVoidResult>(invoiceUrl(invoice.id, '/void'), 'PATCH',
-                {reason: reason.trim()}, 'The invoice could not be voided.');
+            const result = choice === 'write-off'
+                ? await sendJson<InvoiceWriteOffResult>(invoiceUrl(invoice.id, '/write-off'), 'POST',
+                    {ledgerEntryIds: lines.map((entry) => entry.ledgerEntryId), reason: reason.trim()},
+                    'The invoice could not be voided.')
+                : await sendJson<InvoiceVoidResult>(invoiceUrl(invoice.id, '/void'), 'PATCH',
+                    {reason: reason.trim()}, 'The invoice could not be voided.');
             if ('error' in result) {
                 showError(`Couldn’t void ${name}`, result.error);
                 return;
             }
             const credited = result.data?.balanceCredited;
-            await afterChange('Invoice voided', credited
+            const what = choice === 'write-off' ? 'Invoice voided, lines written off' : 'Invoice voided';
+            await afterChange(what, credited
                 ? `${name} · ${formatMoney(credited)} credited to ${invoice.subscriberName}’s balance`
                 : name);
         });
     };
 
-    const canWriteOff = open && invoice.origin === 'SUBSCRIPTION_LEDGER';
+    const canWriteOff = invoice.status !== 'VOID' && invoice.origin === 'SUBSCRIPTION_LEDGER';
 
     const handleWriteOff = async (entry: InvoiceLedgerEntryResponse) => {
         const rest = (detail?.entries ?? [])
             .filter((other) => other.ledgerEntryId !== entry.ledgerEntryId && !other.writtenOffAt)
             .reduce((sum, other) => sum + Number(other.amount), 0);
         const line = `${entry.subscriptionServiceName} · ${formatMonth(entry.recordedMonth)}`;
+        const paid = invoice.status === 'PAID';
+        const credit = paid
+            ? ` It was paid, so its ${formatMoney(invoice.totalAmount)} goes back to ${invoice.subscriberName}’s balance first${rest > 0 ? ', which pays the new invoice if it covers it' : ''}.`
+            : '';
         const {confirmed, reason} = await confirm({
             title: `Write off ${line}?`,
             text: rest > 0
-                ? `Nobody will pay its ${formatMoney(entry.amount)}. ${name} becomes void, and a new ${formatMoney(rest)} invoice for the other lines takes its place.${invoice.status === 'SENT' ? ` ${invoice.subscriberName} gets a cancellation email, then the new invoice.` : ''}`
-                : `Nobody will pay its ${formatMoney(entry.amount)}. It is the only line left, so ${name} just becomes void.${invoice.status === 'SENT' ? ` ${invoice.subscriberName} gets a cancellation email.` : ''}`,
+                ? `Nobody will pay its ${formatMoney(entry.amount)}. ${name} becomes void, and a new ${formatMoney(rest)} invoice for the other lines takes its place.${credit}${invoice.status === 'SENT' ? ` ${invoice.subscriberName} gets a cancellation email, then the new invoice.` : ''}`
+                : `Nobody will pay its ${formatMoney(entry.amount)}. It is the only line left, so ${name} just becomes void.${credit}${invoice.status === 'SENT' ? ` ${invoice.subscriberName} gets a cancellation email.` : ''}`,
             confirmLabel: rest > 0 ? 'Write off and reissue' : 'Write off and void',
             tone: 'danger',
             reason: {

@@ -102,6 +102,8 @@ export interface InvoiceWriteOffResult {
     reissuedInvoice: InvoiceResponse | null;
     writtenOffAmount: number;
     writtenOffLines: string[];
+    /** Credited back because the voided invoice had been paid. */
+    balanceCredited?: number | null;
 }
 
 export interface InvoiceDetailResponse {

@@ -13,11 +13,28 @@ export interface ConfirmOptions {
         required?: boolean;
         requiredMessage?: string;
     };
+    /** One of several ways to go ahead, shown as radio cards above the reason. */
+    choice?: {
+        label: string;
+        options: ConfirmChoiceOption[];
+        /** '' makes the admin pick one before confirming. */
+        initial: string;
+    };
+}
+
+export interface ConfirmChoiceOption {
+    value: string;
+    label: string;
+    hint?: ReactNode;
+    /** Replaces confirmLabel while this option is picked. */
+    confirmLabel?: string;
 }
 
 export interface ConfirmResult {
     confirmed: boolean;
     reason: string;
+    /** The picked choice value; '' when the dialog had no choice. */
+    choice: string;
 }
 
 export type ConfirmFn = (options: ConfirmOptions) => Promise<ConfirmResult>;
