@@ -10,7 +10,8 @@ import type {
     InvoiceDetailResponse,
     InvoiceResponse,
     InvoiceStatus,
-    InvoiceStatusHistoryResponse
+    InvoiceStatusHistoryResponse,
+    InvoiceVoidResult
 } from '../../../types/invoice';
 import type {SubscriberResponse} from '../../../types/subscriber';
 import {
@@ -161,10 +162,13 @@ export default function InvoiceDrawer({invoice: summary, onClose, onChanged, onD
     };
 
     const handleVoid = async () => {
+        const paid = invoice.status === 'PAID';
         const {confirmed, reason} = await confirm({
-            title: `Void ${name}?`,
-            text: `The ${formatMoney(invoice.totalAmount)} invoice stops counting toward their debt and its ledger lines can be invoiced again. It stays in the list as void with your reason.`,
-            confirmLabel: 'Void invoice',
+            title: paid ? `Void paid ${name}?` : `Void ${name}?`,
+            text: paid
+                ? `This invoice is already paid. Voiding it credits ${formatMoney(invoice.totalAmount)} back to ${invoice.subscriberName}’s balance (unless they’re billing-exempt), and its ledger lines can be invoiced again. No cancellation email goes out. It stays in the list as void with your reason.`
+                : `The ${formatMoney(invoice.totalAmount)} invoice stops counting toward their debt and its ledger lines can be invoiced again. It stays in the list as void with your reason.`,
+            confirmLabel: paid ? 'Void and credit balance' : 'Void invoice',
             tone: 'danger',
             reason: {
                 label: 'Reason',
@@ -175,10 +179,16 @@ export default function InvoiceDrawer({invoice: summary, onClose, onChanged, onD
         });
         if (!confirmed) return;
         await run('void', async () => {
-            const result = await sendJson<InvoiceResponse>(invoiceUrl(invoice.id, '/void'), 'PATCH',
+            const result = await sendJson<InvoiceVoidResult>(invoiceUrl(invoice.id, '/void'), 'PATCH',
                 {reason: reason.trim()}, 'The invoice could not be voided.');
-            if ('error' in result) showError(`Couldn’t void ${name}`, result.error);
-            else await afterChange('Invoice voided', name);
+            if ('error' in result) {
+                showError(`Couldn’t void ${name}`, result.error);
+                return;
+            }
+            const credited = result.data?.balanceCredited;
+            await afterChange('Invoice voided', credited
+                ? `${name} · ${formatMoney(credited)} credited to ${invoice.subscriberName}’s balance`
+                : name);
         });
     };
 
@@ -314,7 +324,7 @@ export default function InvoiceDrawer({invoice: summary, onClose, onChanged, onD
                                     disabled={busy !== null}>
                                 Duplicate
                             </button>
-                            {open && (
+                            {invoice.status !== 'VOID' && (
                                 <button type="button" className="ui-btn is-small inv-danger-btn" onClick={handleVoid}
                                         disabled={busy !== null}>
                                     {busy === 'void' ? 'Voiding…' : 'Void…'}

@@ -68,6 +68,13 @@ export interface InvoiceResponse {
     paidByBankTransactionId?: string | null;
 }
 
+/** PATCH /admin/invoices/{id}/void */
+export interface InvoiceVoidResult {
+    invoice: InvoiceResponse;
+    /** Credited to the subscriber's balance because the voided invoice had been paid. */
+    balanceCredited?: number | null;
+}
+
 export interface InvoiceLedgerEntryResponse {
     ledgerEntryId: string;
     chargeId: string;
