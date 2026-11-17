@@ -52,6 +52,7 @@ const ACTION_META: Record<AdminActionType, ActionMeta> = {
     INVOICE_EMAIL_SENT: {label: 'Invoice email sent', tag: 'Invoice email', tone: 'slate'},
     INVOICE_BULK_EMAIL_SENT: {label: 'Invoice emails sent in bulk', tag: 'Invoice emails', tone: 'slate'},
     INVOICE_VOIDED: {label: 'Invoice voided', tag: 'Invoice void', tone: 'red'},
+    INVOICE_LINES_WRITTEN_OFF: {label: 'Invoice lines written off', tag: 'Write-off', tone: 'red'},
     INVOICE_DELETED: {label: 'Invoice deleted', tag: 'Invoice deleted', tone: 'red'},
     INVOICE_NOTES_UPDATED: {label: 'Invoice notes changed', tag: 'Invoice notes', tone: 'slate'},
     SUBSCRIBER_CREATED: {label: 'Subscriber added', tag: 'Subscriber added', tone: 'grey'},

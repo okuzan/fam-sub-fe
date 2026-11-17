@@ -89,6 +89,19 @@ export interface InvoiceLedgerEntryResponse {
     shareWeight: number;
     totalWeight: number;
     calculatedAt: string;
+    /** Set when the line was written off: the invoice was voided and reissued without it. */
+    writtenOffAt?: string | null;
+    writtenOffReason?: string | null;
+}
+
+/** POST /admin/invoices/{id}/write-off */
+export interface InvoiceWriteOffResult {
+    /** The original, now VOID, still holding the written-off lines. */
+    voidedInvoice: InvoiceResponse;
+    /** The same period without those lines; null when every line was written off. */
+    reissuedInvoice: InvoiceResponse | null;
+    writtenOffAmount: number;
+    writtenOffLines: string[];
 }
 
 export interface InvoiceDetailResponse {

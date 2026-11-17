@@ -10,8 +10,10 @@ import type {
     InvoiceDetailResponse,
     InvoiceResponse,
     InvoiceStatus,
+    InvoiceLedgerEntryResponse,
     InvoiceStatusHistoryResponse,
-    InvoiceVoidResult
+    InvoiceVoidResult,
+    InvoiceWriteOffResult
 } from '../../../types/invoice';
 import type {SubscriberResponse} from '../../../types/subscriber';
 import {
@@ -41,9 +43,11 @@ interface InvoiceDrawerProps {
     /** Something changed: refetch the list and the sidebar counts. */
     onChanged: () => void;
     onDuplicate: (invoice: InvoiceResponse) => void;
+    /** Show another invoice in the drawer, e.g. the one reissued after a write-off. */
+    onOpenInvoice: (invoice: InvoiceResponse) => void;
 }
 
-export default function InvoiceDrawer({invoice: summary, onClose, onChanged, onDuplicate}: InvoiceDrawerProps) {
+export default function InvoiceDrawer({invoice: summary, onClose, onChanged, onDuplicate, onOpenInvoice}: InvoiceDrawerProps) {
     const {showSuccess, showError} = useToast();
     const confirm = useConfirm();
     const [detail, setDetail] = useState<InvoiceDetailResponse | null>(null);
@@ -192,6 +196,46 @@ export default function InvoiceDrawer({invoice: summary, onClose, onChanged, onD
         });
     };
 
+    const canWriteOff = open && invoice.origin === 'SUBSCRIPTION_LEDGER';
+
+    const handleWriteOff = async (entry: InvoiceLedgerEntryResponse) => {
+        const rest = (detail?.entries ?? [])
+            .filter((other) => other.ledgerEntryId !== entry.ledgerEntryId && !other.writtenOffAt)
+            .reduce((sum, other) => sum + Number(other.amount), 0);
+        const line = `${entry.subscriptionServiceName} · ${formatMonth(entry.recordedMonth)}`;
+        const {confirmed, reason} = await confirm({
+            title: `Write off ${line}?`,
+            text: rest > 0
+                ? `Nobody will pay its ${formatMoney(entry.amount)}. ${name} becomes void, and a new ${formatMoney(rest)} invoice for the other lines takes its place.${invoice.status === 'SENT' ? ` ${invoice.subscriberName} gets a cancellation email, then the new invoice.` : ''}`
+                : `Nobody will pay its ${formatMoney(entry.amount)}. It is the only line left, so ${name} just becomes void.${invoice.status === 'SENT' ? ` ${invoice.subscriberName} gets a cancellation email.` : ''}`,
+            confirmLabel: rest > 0 ? 'Write off and reissue' : 'Write off and void',
+            tone: 'danger',
+            reason: {
+                label: 'Reason',
+                placeholder: 'e.g. left Claude in October',
+                required: true,
+                requiredMessage: 'Add a reason to write this line off.',
+            },
+        });
+        if (!confirmed) return;
+        await run(`writeoff-${entry.ledgerEntryId}`, async () => {
+            const result = await sendJson<InvoiceWriteOffResult>(invoiceUrl(invoice.id, '/write-off'), 'POST',
+                {ledgerEntryIds: [entry.ledgerEntryId], reason: reason.trim()}, 'The line could not be written off.');
+            if ('error' in result) {
+                showError(`Couldn’t write off ${line}`, result.error);
+                return;
+            }
+            const reissued = result.data?.reissuedInvoice;
+            showSuccess(`${line} written off`, reissued
+                ? `Reissued as ${formatMoney(reissued.totalAmount)} · ${reissued.status.toLowerCase()}`
+                : `${name} voided`);
+            onChanged();
+            window.dispatchEvent(new CustomEvent('subscriber-refresh-needed'));
+            if (reissued) onOpenInvoice(reissued);
+            else await load();
+        });
+    };
+
     const handleDelete = async () => {
         const {confirmed} = await confirm({
             title: `Delete ${name}?`,
@@ -277,15 +321,30 @@ export default function InvoiceDrawer({invoice: summary, onClose, onChanged, onD
                         {detail.entries.length > 0 ? (
                             <div className="inv-lines">
                                 {detail.entries.map((entry) => (
-                                    <div key={entry.ledgerEntryId} className="inv-line">
+                                    <div key={entry.ledgerEntryId}
+                                         className={['inv-line', entry.writtenOffAt ? 'is-written-off' : ''].filter(Boolean).join(' ')}>
                                         <span>
                                             {entry.subscriptionServiceName}
                                             <span className="ui-muted">
                                                 {invoice.fromMonth !== invoice.toMonth && ` · ${formatMonth(entry.recordedMonth)}`}
                                                 {entry.totalWeight === entry.participantCount ? ` · ÷ ${entry.participantCount}` : ` · ${entry.shareWeight}/${entry.totalWeight}`}
                                             </span>
+                                            {entry.writtenOffAt && (
+                                                <span className="inv-line-note">
+                                                    Written off{entry.writtenOffReason ? `: ${entry.writtenOffReason}` : ''}
+                                                </span>
+                                            )}
                                         </span>
-                                        <Money value={entry.amount}/>
+                                        <span className="inv-line-end">
+                                            <Money value={entry.amount}/>
+                                            {canWriteOff && (
+                                                <button type="button" className="inv-line-writeoff"
+                                                        onClick={() => void handleWriteOff(entry)} disabled={busy !== null}
+                                                        title="Write this line off" aria-label={`Write off ${entry.subscriptionServiceName}`}>
+                                                    {busy === `writeoff-${entry.ledgerEntryId}` ? '…' : 'Write off'}
+                                                </button>
+                                            )}
+                                        </span>
                                     </div>
                                 ))}
                             </div>

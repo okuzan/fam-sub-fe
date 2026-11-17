@@ -516,6 +516,7 @@ export default function Invoices() {
                     invoice={selected}
                     onClose={() => setSelected(null)}
                     onChanged={refreshAll}
+                    onOpenInvoice={setSelected}
                     onDuplicate={(invoice) => {
                         setSelected(null);
                         setPanel({kind: 'manual', source: invoice});

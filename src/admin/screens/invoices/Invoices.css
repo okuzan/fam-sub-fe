@@ -175,6 +175,49 @@
   font-size: 14px;
 }
 
+.inv-line-end {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inv-line-writeoff {
+  padding: 1px 6px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: none;
+  color: var(--red);
+  font: 400 12px/1.4 var(--sans);
+  cursor: pointer;
+  opacity: 0;
+}
+
+.inv-line:hover .inv-line-writeoff,
+.inv-line-writeoff:focus-visible {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .inv-line-writeoff {
+    opacity: 1;
+  }
+}
+
+.inv-line-writeoff:hover:not(:disabled) {
+  border-color: #e8c9c2;
+  background: var(--red-bg);
+}
+
+.inv-line.is-written-off .ui-money {
+  text-decoration: line-through;
+}
+
+.inv-line-note {
+  display: block;
+  color: var(--red);
+  font-size: 12px;
+}
+
 .inv-action-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

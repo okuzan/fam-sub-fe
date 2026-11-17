@@ -71,6 +71,7 @@ const HISTORY_TEXT: Record<string, string> = {
     INVOICE_PAID_FROM_BALANCE: 'Paid from balance',
     INVOICE_MARKED_PAID: 'Marked paid',
     INVOICE_VOIDED: 'Voided',
+    INVOICE_LINES_WRITTEN_OFF: 'Voided: line written off',
 };
 
 /** The backend summary repeats the invoice UUID; say what happened instead. */
