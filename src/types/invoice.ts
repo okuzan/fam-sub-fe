@@ -66,6 +66,8 @@ export interface InvoiceResponse {
     invoiceGenerationRunId?: string | null;
     /** Set when a bank transfer settled it; GET /admin/bank-payments/{id} describes the transfer. */
     paidByBankTransactionId?: string | null;
+    /** Set when a credit note settled it. */
+    paidByCreditNoteId?: string | null;
 }
 
 /** PATCH /admin/invoices/{id}/void */

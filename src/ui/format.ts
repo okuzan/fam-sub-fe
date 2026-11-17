@@ -100,6 +100,9 @@ export const formatToday = () => {
     return `${weekday}, ${day} ${MONTHS_LONG[month - 1]} ${year}`;
 };
 
+/** Today in Kyiv as a LocalDate, "2026-10-16". */
+export const kyivToday = () => kyivDay(new Date());
+
 /** The current month in Kyiv as "2026-10". */
 export const currentMonth = () => kyivDay(new Date()).slice(0, 7);
 

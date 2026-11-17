@@ -25,6 +25,7 @@ import type {
     UnpaidInvoiceDto
 } from '../../types/subscriber';
 import {archivedSince, getJson} from './people';
+import CreditNotesSection from './CreditNotesSection';
 import {fullName} from '../subscriberNames';
 
 interface Props {
@@ -550,6 +551,13 @@ export default function SubscriberDetailDrawer({
                     )}
                 </>
             )}
+
+            <CreditNotesSection
+                subscriber={subscriber}
+                onChanged={async () => {
+                    await Promise.all([loadDetails(), onChanged()]);
+                }}
+            />
 
             <DrawerSection title={`Bank senders who pay for ${subscriber.name}`}>
                 {senders === null ? (

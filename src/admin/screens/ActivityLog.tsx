@@ -80,6 +80,8 @@ const ACTION_META: Record<AdminActionType, ActionMeta> = {
     BANK_PAYMENT_UNDONE: {label: 'Bank payment undone', tag: 'Bank undone', tone: 'clay'},
     BANK_PAYMENT_ALREADY_RECORDED: {label: 'Bank payment already recorded', tag: 'Bank recorded', tone: 'clay'},
     BANK_SENDER_FORGOTTEN: {label: 'Bank sender forgotten', tag: 'Bank sender', tone: 'clay'},
+    CREDIT_NOTE_CREATED: {label: 'Credit note recorded', tag: 'Credit note', tone: 'slate'},
+    CREDIT_NOTE_UNDONE: {label: 'Credit note undone', tag: 'Credit note undone', tone: 'red'},
 };
 
 const TARGET_LABEL: Record<AdminActionTargetType, string> = {
@@ -95,6 +97,7 @@ const TARGET_LABEL: Record<AdminActionTargetType, string> = {
     ADMIN_INVITE: 'Admin invite',
     BANK_TRANSACTION: 'Bank transaction',
     BANK_SENDER: 'Bank sender',
+    CREDIT_NOTE: 'Credit note',
 };
 
 const metaFor = (type: string): ActionMeta =>

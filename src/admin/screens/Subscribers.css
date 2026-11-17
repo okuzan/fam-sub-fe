@@ -224,3 +224,29 @@
 .sub-archived-link {
   align-self: flex-start;
 }
+
+/* "Paid on our behalf": credit notes in the drawer */
+.sub-credit-note {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.sub-credit-note-text {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sub-credit-note-reason {
+  font: 400 14px/1.35 var(--sans);
+  overflow-wrap: anywhere;
+}
+
+.sub-credit-note.is-undone .sub-credit-note-reason,
+.sub-credit-note.is-undone .sub-line-amount {
+  color: var(--ink-2);
+  text-decoration: line-through;
+}
